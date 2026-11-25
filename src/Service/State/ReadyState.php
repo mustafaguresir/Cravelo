@@ -20,10 +20,16 @@ final class ReadyState implements OrderStateInterface
             return;
         }
 
-        // Kuryeli siparişlerde Hazır durumundan sadece 'Yolda' aşamasına geçilebilir
+        // Kuryeli siparişlerde Hazır durumundan sadece 'Yolda' aşamasına geçilebilir ve kurye atanmış olmalıdır
         if ($nextStatus !== OrderStatus::YOLDA) {
             throw new InvalidOrderTransitionException(
                 "Hazır aşamasındaki sipariş yalnızca 'yolda' durumuna geçebilir. İstenen: {$nextStatus->value}"
+            );
+        }
+
+        if ($order->courierId === null || $order->courierId <= 0) {
+            throw new InvalidOrderTransitionException(
+                "Kurye atanmamış bir sipariş 'yolda' durumuna geçirilemez! Lütfen önce müsait bir kurye atanmasını bekleyin."
             );
         }
     }

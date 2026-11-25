@@ -1173,7 +1173,7 @@
                 var next = current === 'light' ? 'dark' : 'light';
                 document.documentElement.setAttribute('data-theme', next);
                 if (typeof localStorage !== 'undefined' && localStorage.setItem) {
-                    localStorage.setItem('gustogo-theme', next);
+                    localStorage.setItem('cravelo-theme', next);
                 }
                 syncAuthThemeIcon();
             } catch (e) {}
@@ -1194,7 +1194,7 @@
 
         try {
             if (typeof document !== 'undefined' && document.documentElement && typeof document.documentElement.setAttribute === 'function') {
-                const savedTheme = (typeof localStorage !== 'undefined' && localStorage.getItem) ? (localStorage.getItem('gustogo-theme') || 'dark') : 'dark';
+                const savedTheme = (typeof localStorage !== 'undefined' && localStorage.getItem) ? (localStorage.getItem('cravelo-theme') || localStorage.getItem('gustogo-theme') || 'dark') : 'dark';
                 document.documentElement.setAttribute('data-theme', savedTheme);
                 syncAuthThemeIcon();
             }
@@ -1236,7 +1236,7 @@
         // Yerel depolamadaki kayıtlı kullanıcılar
         function getRegisteredUsers() {
             try {
-                const raw = localStorage.getItem('gustogo_registered_users');
+                const raw = localStorage.getItem('cravelo_registered_users') || localStorage.getItem('gustogo_registered_users');
                 return raw ? JSON.parse(raw) : [];
             } catch (err) {
                 return [];
@@ -1245,7 +1245,7 @@
 
         function saveRegisteredUsers(list) {
             try {
-                localStorage.setItem('gustogo_registered_users', JSON.stringify(list));
+                localStorage.setItem('cravelo_registered_users', JSON.stringify(list));
             } catch (err) {}
         }
 
@@ -1358,9 +1358,6 @@
                 selectedCourierId: foundUser.cId || 1
             };
             localStorage.setItem('cravelo_session', JSON.stringify(sessionData));
-            localStorage.setItem('kuryo_session', JSON.stringify(sessionData));
-            localStorage.setItem('gustogo_session', JSON.stringify(sessionData));
-            localStorage.setItem('tgo_session', JSON.stringify(sessionData));
 
             try {
                 const rawState = localStorage.getItem('cravelo_state_v2') || localStorage.getItem('kuryo_state_v2') || localStorage.getItem('gustogo_state_v2') || localStorage.getItem('tgo_state_v2');
@@ -1370,9 +1367,6 @@
                 if (foundUser.rId) st.selectedVendorRestId = foundUser.rId;
                 if (foundUser.cId) st.selectedCourierId = foundUser.cId;
                 localStorage.setItem('cravelo_state_v2', JSON.stringify(st));
-                localStorage.setItem('kuryo_state_v2', JSON.stringify(st));
-                localStorage.setItem('gustogo_state_v2', JSON.stringify(st));
-                localStorage.setItem('tgo_state_v2', JSON.stringify(st));
             } catch (err) { }
 
             alertEl.className = 'alert alert-success py-2 small';
@@ -1552,9 +1546,6 @@
                 phone: newCustomer.phone
             };
             localStorage.setItem('cravelo_session', JSON.stringify(sessionData));
-            localStorage.setItem('kuryo_session', JSON.stringify(sessionData));
-            localStorage.setItem('gustogo_session', JSON.stringify(sessionData));
-            localStorage.setItem('tgo_session', JSON.stringify(sessionData));
 
             try {
                 const rawState = localStorage.getItem('cravelo_state_v2') || localStorage.getItem('kuryo_state_v2') || localStorage.getItem('gustogo_state_v2') || localStorage.getItem('tgo_state_v2');
@@ -1567,9 +1558,6 @@
                 };
                 st.currentRole = 'customer';
                 localStorage.setItem('cravelo_state_v2', JSON.stringify(st));
-                localStorage.setItem('kuryo_state_v2', JSON.stringify(st));
-                localStorage.setItem('gustogo_state_v2', JSON.stringify(st));
-                localStorage.setItem('tgo_state_v2', JSON.stringify(st));
             } catch (err) { }
 
             alertEl.className = 'alert alert-success py-2 small';

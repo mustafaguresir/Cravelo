@@ -303,7 +303,7 @@
         </div>
 
         <div class="landing-nav-actions" id="landing-nav-actions">
-            <button type="button" class="action-icon-btn" id="landing-theme-toggle" title="Açık / Koyu Tema" aria-label="Açık veya Koyu Tema Değiştir" onclick="if(typeof toggleTheme==='function'){toggleTheme();}else{var h=document.documentElement;var n=h.getAttribute('data-theme')==='light'?'dark':'light';h.setAttribute('data-theme',n);try{localStorage.setItem('gustogo-theme',n);}catch(e){}var ic=document.getElementById('landing-theme-ico');if(ic)ic.className=n==='light'?'fa-solid fa-moon':'fa-solid fa-sun';}">
+            <button type="button" class="action-icon-btn" id="landing-theme-toggle" title="Açık / Koyu Tema" aria-label="Açık veya Koyu Tema Değiştir" onclick="if(typeof toggleTheme==='function'){toggleTheme();}else{var h=document.documentElement;var n=h.getAttribute('data-theme')==='light'?'dark':'light';h.setAttribute('data-theme',n);try{localStorage.setItem('cravelo-theme',n);}catch(e){}var ic=document.getElementById('landing-theme-ico');if(ic)ic.className=n==='light'?'fa-solid fa-moon':'fa-solid fa-sun';}">
                 <i class="fa-solid fa-sun" id="landing-theme-ico"></i>
             </button>
             <a href="<?= $request->url('/login') ?>" class="nav-auth-btn nav-auth-login" id="landing-btn-login-nav">

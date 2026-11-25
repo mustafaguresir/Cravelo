@@ -66,7 +66,7 @@ final class ApiController extends Controller
             $action = (string)($data['action'] ?? '');
         }
 
-        $postOnlyActions = ['login', 'register', 'logout', 'create_order', 'change_status', 'cancel_order'];
+        $postOnlyActions = ['login', 'register', 'logout', 'create_order', 'change_status', 'cancel_order', 'toggle_menu_item'];
         if (in_array($action, $postOnlyActions, true) && $request->getMethod() !== 'POST') {
             Response::json([
                 'status' => 'error',
@@ -82,6 +82,19 @@ final class ApiController extends Controller
                 'message' => 'Yetkisiz erişim! Lütfen oturum açınız.'
             ], 401);
             return;
+        }
+
+        $csrfProtectedActions = ['create_order', 'change_status', 'cancel_order', 'logout', 'toggle_menu_item'];
+        if (Session::has('user') && in_array($action, $csrfProtectedActions, true)) {
+            $bodyForCsrf = $request->all();
+            $csrfToken = (string)($request->header('X-CSRF-Token', '') ?: ($bodyForCsrf['_csrf_token'] ?? ''));
+            if (!Session::validateCsrfToken($csrfToken)) {
+                Response::json([
+                    'status' => 'error',
+                    'message' => 'Güvenlik doğrulaması (CSRF) başarısız oldu. Lütfen sayfayı yenileyip tekrar deneyin.'
+                ], 403);
+                return;
+            }
         }
 
         $user = Session::has('user') ? (array)Session::get('user') : [];
@@ -128,7 +141,8 @@ final class ApiController extends Controller
                 Response::json([
                     'status' => 'success',
                     'message' => 'Giriş başarılı!',
-                    'user' => Session::get('user')
+                    'user' => Session::get('user'),
+                    'csrf_token' => Session::getCsrfToken()
                 ]);
                 return;
 
@@ -199,6 +213,10 @@ final class ApiController extends Controller
                 $this->createOrder($request, $user);
                 return;
 
+            case 'toggle_menu_item':
+                $this->toggleMenuItem($request, $user);
+                return;
+
             case 'fleet_scores':
                 $this->getFleetScores($request, $user);
                 return;
@@ -206,7 +224,12 @@ final class ApiController extends Controller
             case 'daily_report':
                 $body = $request->all();
                 $restId = (int)($body['restaurant_id'] ?? 1);
-                $date = (string)($body['date'] ?? date('Y-m-d'));
+                $rawDate = trim((string)($body['date'] ?? ''));
+                $date = $rawDate !== '' ? $rawDate : date('Y-m-d');
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                    Response::json(['status' => 'error', 'message' => 'Geçersiz tarih formatı! Beklenen format: YYYY-MM-DD.'], 400);
+                    return;
+                }
                 try {
                     Response::json([
                         'status' => 'success',
@@ -349,11 +372,22 @@ final class ApiController extends Controller
         }
 
         $body = $request->all();
-        $restaurantId = (int)($body['restaurant_id'] ?? 1);
+        $restaurantId = (int)($body['restaurant_id'] ?? 0);
+        if ($restaurantId <= 0) {
+            Response::json(['status' => 'error', 'message' => 'Geçerli bir restoran (restaurant_id) seçilmelidir.'], 400);
+            return;
+        }
         $totalAmount = (float)($body['total_amount'] ?? 0.0);
         $delX = (int)($body['del_x'] ?? 18);
         $delY = (int)($body['del_y'] ?? 14);
-        $items = (array)($body['items'] ?? []);
+        $items = $body['items'] ?? [];
+        if (!is_array($items) || count($items) === 0) {
+            Response::json(['status' => 'error', 'message' => 'Sipariş en az bir ürün (items) içermelidir.'], 400);
+            return;
+        }
+        $couponCode = isset($body['coupon_code']) && is_string($body['coupon_code']) ? trim($body['coupon_code']) : null;
+        $deliveryFee = (float)($body['delivery_fee'] ?? 0.0);
+        $tip = (float)($body['tip'] ?? 0.0);
 
         try {
             $deliveryMode = (string)($body['delivery_mode'] ?? 'courier');
@@ -367,7 +401,10 @@ final class ApiController extends Controller
                 $items,
                 (float)($body['delivery_latitude'] ?? 40.9850),
                 (float)($body['delivery_longitude'] ?? 29.0280),
-                $deliveryMode
+                $deliveryMode,
+                $couponCode !== '' ? $couponCode : null,
+                $deliveryFee,
+                $tip
             );
             $res['message'] = 'Siparişiniz başarıyla alındı!';
             Response::json($res, 201);
@@ -378,6 +415,31 @@ final class ApiController extends Controller
         } catch (\Throwable $e) {
             error_log('[ApiController::createOrder] ' . $e->getMessage());
             Response::json(['status' => 'error', 'message' => 'Sipariş oluşturulurken hata oluştu.'], 500);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     */
+    private function toggleMenuItem(Request $request, array $user): void
+    {
+        $body = $request->all();
+        $menuItemId = (int)($body['menu_item_id'] ?? $body['item_id'] ?? $body['id'] ?? 0);
+        if ($menuItemId <= 0) {
+            Response::json(['status' => 'error', 'message' => 'Geçerli bir ürün kimliği (menu_item_id) belirtilmelidir.'], 400);
+            return;
+        }
+        $desiredAvailable = array_key_exists('is_available', $body) ? (bool)$body['is_available'] : null;
+
+        try {
+            $res = $this->orderService->toggleMenuItemAvailability($menuItemId, $user, $desiredAvailable);
+            Response::json($res);
+        } catch (RuntimeException $e) {
+            $code = in_array($e->getCode(), [401, 403, 404], true) ? $e->getCode() : 400;
+            Response::json(['status' => 'error', 'message' => $e->getMessage()], $code);
+        } catch (\Throwable $e) {
+            error_log('[ApiController::toggleMenuItem] ' . $e->getMessage());
+            Response::json(['status' => 'error', 'message' => 'Ürün stok durumu güncellenirken hata oluştu.'], 500);
         }
     }
 

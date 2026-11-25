@@ -79,6 +79,7 @@ final class InMemoryOrderRepository implements OrderRepositoryInterface
             'estimated_delivery_time' => $order->estimatedDeliveryTime,
             'created_at' => $order->createdAt,
             'customer_name' => 'Test Müşteri',
+            'customer_phone' => '05550000000',
             'restaurant_name' => 'Test Restoran',
             'courier_name' => $order->courierId !== null ? 'Test Kurye' : null,
             'items' => array_map(fn(OrderItem $i) => $i->toArray(), $order->items)
@@ -134,6 +135,7 @@ final class InMemoryOrderRepository implements OrderRepositoryInterface
 
     public function getDailyReport(int $restaurantId, string $date): array
     {
+        $effectiveDate = trim($date) !== '' ? trim($date) : date('Y-m-d');
         $count = 0;
         $totalRevenue = 0.0;
         foreach ($this->orders as $order) {
@@ -142,7 +144,7 @@ final class InMemoryOrderRepository implements OrderRepositoryInterface
                     continue;
                 }
                 $createdAt = (string)($order->createdAt ?? '');
-                if ($createdAt !== '' && !str_starts_with($createdAt, $date)) {
+                if ($createdAt !== '' && !str_starts_with($createdAt, $effectiveDate)) {
                     continue;
                 }
                 $count++;
@@ -150,7 +152,7 @@ final class InMemoryOrderRepository implements OrderRepositoryInterface
             }
         }
         return [
-            'date' => $date,
+            'date' => $effectiveDate,
             'total_orders' => $count,
             'total_revenue' => $totalRevenue
         ];

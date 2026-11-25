@@ -104,8 +104,8 @@ Rapor kapsamında **4 farklı marka arketipinde toplam 14 özgün marka önerisi
 - **Görsel Kimlik**: Sıcak Nar Rengi (`#BE123C`) ve Altın Sarısı (`#D97706`). Yuvarlak sofra ve servis tabağı amblemi.
 
 #### 8. GurmeGo (GurmeGo.com / GurmeGo.net)
-- **Etimoloji ve Çağrışım**: Mevcut prototip ismi `GustoGo`'nun Türkçeleştirilmiş ve güçlendirilmiş versiyonu. "Gurme" (seçkin lezzet) + "Go" (hareket, hız).
-- **Markalama Gerekçesi**: Mevcut kod yapısındaki `GustoGo` mirasını korurken Türk tüketicisine daha tanıdık gelen "Gurme" kelimesiyle premium konuma yerleşir.
+- **Etimoloji ve Çağrışım**: "Gurme" (seçkin lezzet) + "Go" (hareket, hız) birleşiminin Türkçeleştirilmiş premium varyantı.
+- **Markalama Gerekçesi**: Seçkin mutfak algısını hızlı teslimat vurgusuyla birleştirerek Türk tüketicisine tanıdık, yüksek kaliteli bir marka konumu sunar.
 - **Hedef Kitle**: Seçkin burger, sushi, İtalyan ve şef restoranlarından sipariş veren premium kullanıcılar.
 - **Slogan / Tagline**:
   - *TR*: "Gurme Lezzetler Hızla Kapında!"
@@ -153,15 +153,15 @@ Rapor kapsamında **4 farklı marka arketipinde toplam 14 özgün marka önerisi
 ### Kategori 4: Local & Community (Mahalle Esnafı, Güven ve Dayanışma)
 *Bu kategori; referans alınan `tgoyemek.com` ekosistemiyle doğrudan sinerji kuran, yerel esnafı koruyan ve mahalle sıcaklığını yaşatan isimleri kapsar.*
 
-#### 12. TGO Express / TgoFood (TgoExpress.com / TgoFood.com.tr)
-- **Etimoloji ve Çağrışım**: Kullanıcının şartnamede referans gösterdiği `tgoyemek.com` markasının kurumsal ve lojistik uzantısı. "TGO" (The Go Organization / Taşır, Getirir, Ulaştırır).
-- **Markalama Gerekçesi**: Mevcut web sitesi (`https://tgoyemek.com/`) ile yüzde yüz marka bütünlüğü sağlar. Kullanıcıların aşina olduğu tasarımı ve güveni doğrudan kurye operasyonuna bağlar.
-- **Hedef Kitle**: `tgoyemek.com` kullanıcıları, yerel restoranlar ve kurumsal sadakat arayan kitle.
+#### 12. Cravelo (Cravelo.app / Cravelo.com.tr) — **[SEÇİLEN NİHAİ MARKA]**
+- **Etimoloji ve Çağrışım**: "Crave" (iştah, canı çekmek, arzulamak) + "-lo" (akıcı, dinamik ve global start-up bitişi).
+- **Markalama Gerekçesi**: Modern, iki heceli, global ölçekte akılda kalıcı ve sıcak yemek arzusunu jet hızında teslimat vaadiyle birleştiren özgün marka kimliği.
+- **Hedef Kitle**: Modern FoodTech kullanıcıları, yerel restoran ortakları ve akıllı kurye filosu.
 - **Slogan / Tagline**:
-  - *TR*: "TGO Güvencesiyle, Şehrin Tüm Lezzetleri Express Hızında!"
-  - *EN*: "TGO Express: Seamless Food Logistics."
-- **Domain Stratejisi**: `tgoexpress.com`, `tgofood.com.tr`, `tgokurye.com`.
-- **Görsel Kimlik**: TGO Kurumsal Turuncu/Kırmızısı (`#F27A1A` / `#E11D48`) ve Beyaz (`#FFFFFF`). `tgoyemek.com` tipografisi ve kurye kanadı.
+  - *TR*: "Kapında Sıcak Lezzetler, Akıllı Kurye Rotasıyla!"
+  - *EN*: "Cravelo: Crave It, Track It, Enjoy It."
+- **Domain Stratejisi**: `cravelo.app`, `cravelo.com.tr`, `cravelo.onrender.com`.
+- **Görsel Kimlik**: Cravelo Canlı Turuncu (`#FF6B35` / `#FA4A0C`) ve Zümrüt Yeşili (`#10B981`). Minimalist katmanlı burger amblemi.
 
 #### 13. Mahallem (Mahallem.app / MahallemYemek.com)
 - **Etimoloji ve Çağrışım**: "Mahallem". İnsanın kendini en güvende hissettiği, tanıdık esnafın ve komşuların bulunduğu yaşam alanı.
@@ -196,11 +196,11 @@ Rapor kapsamında **4 farklı marka arketipinde toplam 14 özgün marka önerisi
 | 5 | **LezzetRota** | Warm & Gourmet | 5/5 | 5/5 | Yüksek (.com boşta/uygun) | Gastronomi + GPS canlı takip sentezi | `lezzetrota.com` |
 | 6 | **Tadında** | Warm & Gourmet | 5/5 | 4/5 | Orta | Rafine gastronomi ve tam zamanında teslim | `tadinda.app` |
 | 7 | **Sofram** | Warm & Gourmet | 4/5 | 4/5 | Orta | Ev sıcaklığı, bereket, aile sofrası | `sofram.app` |
-| 8 | **GurmeGo** | Warm & Gourmet | 4/5 | 5/5 | Yüksek (.com.tr / .net) | GustoGo mirasının güçlendirilmiş hali | `gurmego.com.tr` |
+| 8 | **GurmeGo** | Warm & Gourmet | 4/5 | 5/5 | Yüksek (.com.tr / .net) | Seçkin gastronomi + hızlı teslimat vurgusu | `gurmego.com.tr` |
 | 9 | **AlgoFood** | Tech & Modern | 4/5 | 4/5 | Yüksek (.app / .tech) | Kurye atama algoritmasının doğrudan adı | `algofood.app` |
 | 10 | **KuryeX** | Tech & Modern | 5/5 | 5/5 | Yüksek (.app / .com.tr) | Yeni nesil teknolojik lojistik platformu | `kuryex.com.tr` |
 | 11 | **RotaYemek** | Tech & Modern | 4/5 | 4/5 | Yüksek (.com / .com.tr) | SEO uyumu yüksek, harita takibi vurgusu | `rotayemek.com` |
-| 12 | **TGO Express**| Local/Community| 5/5 | 5/5 | Mükemmel | `tgoyemek.com` ile %100 kurumsal sinerji | `tgoexpress.com` |
+| 12 | **Cravelo** | Modern FoodTech | 5/5 | 5/5 | Mükemmel | Seçilen nihai proje kimliği — sıcak lezzet + akıllı lojistik | `cravelo.app` |
 | 13 | **Mahallem** | Local/Community| 5/5 | 4/5 | Orta | Esnaf dayanışması ve yerel aidiyet | `mahallem.app` |
 | 14 | **KomşuKurye** | Local/Community| 4/5 | 4/5 | Yüksek (.com / .com.tr) | Sıfır güvenlik endişesi, tanıdık sima | `komsukurye.com` |
 
@@ -210,8 +210,8 @@ Rapor kapsamında **4 farklı marka arketipinde toplam 14 özgün marka önerisi
 
 Projenin teknik özellikleri (Haversine kurye algoritması, canlı harita HUD, Safe PRG 303 akışı) ve Mustafa Güreşir yönetimindeki vizyon göz önüne alındığında, **3 farklı stratejik senaryo için şu 3 finalist önerilmektedir**:
 
-1. **Strateji A (Kurumsal Entegrasyon & Referans Uyumu)**: **TGO Express**
-   - *Gerekçe*: Kullanıcının şartnamedeki referansı `tgoyemek.com` ile tam entegredir. Marka bilinirliği sıfırdan başlamaz, doğrudan hazır kitleye ve güven algısına hitap eder.
+1. **Seçilen Nihai Marka**: **Cravelo**
+   - *Gerekçe*: Modern, kısa, uluslararası standartta telaffuzu kolay ve hem yemek iştahını hem de akıllı kurye teknolojisini güçlü biçimde temsil eder. Tüm kod tabanı, görünümler, testler ve sunum materyalleri %100 **Cravelo** kimliğiyle hizalanmıştır.
 2. **Strateji B (Sektörel Liderlik & Modern Mobil Start-Up)**: **Kuryo** (Kuryo.app)
    - *Gerekçe*: İki heceli, modern, dinamik ve Getir/Yemeksepeti liginde bağımsız bir mobil marka kimliği oluşturmak için kusursuzdur.
 3. **Strateji C (Ürün Fonksiyonu & Algoritmik Doğruluk)**: **LezzetRota**

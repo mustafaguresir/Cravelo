@@ -13,7 +13,7 @@
     <script>
         (function () {
             try {
-                var savedTheme = localStorage.getItem('gustogo-theme') || 'dark';
+                var savedTheme = localStorage.getItem('cravelo-theme') || localStorage.getItem('gustogo-theme') || 'dark';
                 document.documentElement.setAttribute('data-theme', savedTheme);
             } catch (e) {}
         })();

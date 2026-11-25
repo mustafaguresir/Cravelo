@@ -114,7 +114,7 @@ final class JsonStorageHelper
                 $nextData = $mutation['data'];
                 $jsonString = json_encode($nextData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 
-                $tempFilePath = tempnam($dir, 'gst_');
+                $tempFilePath = tempnam($dir, 'crv_');
                 if ($tempFilePath === false) {
                     throw new RuntimeException("Geçici dosya oluşturulamadı: {$dir}");
                 }
@@ -129,20 +129,77 @@ final class JsonStorageHelper
                 fflush($tempFp);
                 fclose($tempFp);
 
-                if (DIRECTORY_SEPARATOR === '\\' && file_exists($filePath)) {
-                    @unlink($filePath);
-                }
-
-                if (!rename($tempFilePath, $filePath)) {
-                    @unlink($tempFilePath);
-                    throw new RuntimeException("Atomik dosya değiştirme (rename) başarısız oldu: {$filePath}");
-                }
+                self::atomicReplace($tempFilePath, $filePath);
             }
 
             return $mutation['result'] ?? true;
         } finally {
             flock($fp, LOCK_UN);
             fclose($fp);
+        }
+    }
+
+    /**
+     * Çoklu JSON dosyasını ilgilendiren kritik bölgelerde (örn. sipariş + kurye atama)
+     * ortak bir LOCK_EX dosya kilidi altında işlem yürütür.
+     *
+     * @template T
+     * @param callable(): T $callback
+     * @return T
+     */
+    public static function withLock(string $lockFilePath, callable $callback): mixed
+    {
+        $dir = dirname($lockFilePath);
+        if (!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
+            throw new RuntimeException("Kilit klasörü oluşturulamadı: {$dir}");
+        }
+
+        $fp = fopen($lockFilePath, 'c+');
+        if ($fp === false) {
+            throw new RuntimeException("Kilit dosyası açılamadı: {$lockFilePath}");
+        }
+
+        if (!flock($fp, LOCK_EX)) {
+            fclose($fp);
+            throw new RuntimeException("Dosya kilidi (flock LOCK_EX) alınamadı: {$lockFilePath}");
+        }
+
+        try {
+            return $callback();
+        } finally {
+            flock($fp, LOCK_UN);
+            fclose($fp);
+        }
+    }
+
+    /**
+     * Geçici dosyayı asıl dosya ile atomik olarak değiştirir.
+     * Windows üzerinde mevcut dosya .bak yedeği alınarak güvenli takas yapılır; rename başarısız olursa .bak geri yüklenir.
+     */
+    private static function atomicReplace(string $tempFilePath, string $filePath): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\' && file_exists($filePath)) {
+            $backupPath = $filePath . '.bak';
+            $hasBackup = @copy($filePath, $backupPath);
+            @unlink($filePath);
+
+            if (!@rename($tempFilePath, $filePath)) {
+                @unlink($tempFilePath);
+                if ($hasBackup && file_exists($backupPath)) {
+                    @rename($backupPath, $filePath);
+                }
+                throw new RuntimeException("Atomik dosya değiştirme (rename) başarısız oldu: {$filePath}");
+            }
+
+            if ($hasBackup && file_exists($backupPath)) {
+                @unlink($backupPath);
+            }
+            return;
+        }
+
+        if (!rename($tempFilePath, $filePath)) {
+            @unlink($tempFilePath);
+            throw new RuntimeException("Atomik dosya değiştirme (rename) başarısız oldu: {$filePath}");
         }
     }
 
@@ -181,7 +238,7 @@ final class JsonStorageHelper
             $jsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 
             // 2. Geçici dosyaya yaz (tempnam)
-            $tempFilePath = tempnam($dir, 'gst_');
+            $tempFilePath = tempnam($dir, 'crv_');
             if ($tempFilePath === false) {
                 throw new RuntimeException("Geçici dosya oluşturulamadı: {$dir}");
             }
@@ -197,16 +254,8 @@ final class JsonStorageHelper
             fflush($tempFp);
             fclose($tempFp);
 
-            // 4. Atomik yeniden adlandırma (Atomic Rename)
-            // Windows üzerinde hedef dosya mevcutsa rename öncesi unlink yapılır (özel kilit altındayken)
-            if (DIRECTORY_SEPARATOR === '\\' && file_exists($filePath)) {
-                @unlink($filePath);
-            }
-
-            if (!rename($tempFilePath, $filePath)) {
-                @unlink($tempFilePath);
-                throw new RuntimeException("Atomik dosya değiştirme (rename) başarısız oldu: {$filePath}");
-            }
+            // 4. Atomik yeniden adlandırma (Atomic Rename + Windows .bak koruması)
+            self::atomicReplace($tempFilePath, $filePath);
 
             return true;
         } finally {

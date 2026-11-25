@@ -63,7 +63,7 @@ final class AuthController extends Controller
 
     public function login(Request $request): void
     {
-        if (Session::has('__csrf_token') && !Session::validateCsrfToken((string)$request->post('_csrf_token', ''))) {
+        if (!Session::validateCsrfToken((string)$request->post('_csrf_token', ''))) {
             Session::setFlash('danger', 'Güvenlik doğrulaması (CSRF) başarısız oldu. Lütfen formu yenileyip tekrar deneyin.');
             Response::redirect($request->url('/login'), 303);
             return;
@@ -122,7 +122,7 @@ final class AuthController extends Controller
 
     public function register(Request $request): void
     {
-        if (Session::has('__csrf_token') && !Session::validateCsrfToken((string)$request->post('_csrf_token', ''))) {
+        if (!Session::validateCsrfToken((string)$request->post('_csrf_token', ''))) {
             Session::setFlash('danger', 'Güvenlik doğrulaması (CSRF) başarısız oldu. Lütfen formu yenileyip tekrar deneyin.');
             Response::redirect($request->url('/register'), 303);
             return;
@@ -254,6 +254,13 @@ final class AuthController extends Controller
 
     public function logout(Request $request): void
     {
+        $token = (string)($request->post('_csrf_token', '') ?: ($request->header('X-CSRF-Token', '') ?? ''));
+        if (!Session::validateCsrfToken($token)) {
+            Session::setFlash('danger', 'Güvenlik doğrulaması (CSRF) başarısız oldu. Çıkış işlemi engellendi.');
+            Response::redirect($request->url('/'), 303);
+            return;
+        }
+
         Session::destroy();
         Session::start();
         Session::regenerate();

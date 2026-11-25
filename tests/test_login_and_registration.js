@@ -110,7 +110,7 @@ navigatedTo = null;
 sandbox.handleStaticLogin({ preventDefault: () => {} });
 
 assert(navigatedTo && navigatedTo.startsWith('index.html'), 'Seed user with correct password navigates to index.html');
-const session1 = JSON.parse(sandbox.localStorage.getItem('gustogo_session'));
+const session1 = JSON.parse(sandbox.localStorage.getItem('cravelo_session'));
 assert(session1 && session1.role === 'admin' && session1.fullName === 'Mustafa Güreşir (Yönetici)', 'Correct admin session established');
 
 // Test 4: Registration with short username (< 3 chars) MUST BE REJECTED (FR-16)
@@ -166,9 +166,9 @@ navigatedTo = null;
 sandbox.handleRegister({ preventDefault: () => {} });
 
 assert(navigatedTo && navigatedTo.startsWith('index.html'), 'Valid registration navigates to index.html');
-const regList = JSON.parse(sandbox.localStorage.getItem('gustogo_registered_users'));
+const regList = JSON.parse(sandbox.localStorage.getItem('cravelo_registered_users'));
 assert(regList && regList.length === 1 && regList[0].username === 'zeynep_demir' && regList[0].role === 'customer', 'New user saved in localStorage with role customer (FR-15)');
-const sessionReg = JSON.parse(sandbox.localStorage.getItem('gustogo_session'));
+const sessionReg = JSON.parse(sandbox.localStorage.getItem('cravelo_session'));
 assert(sessionReg && sessionReg.username === 'zeynep_demir' && sessionReg.role === 'customer', 'New customer session established');
 
 // Test 9: Logging in with the newly registered user's credentials MUST SUCCEED
@@ -178,7 +178,7 @@ navigatedTo = null;
 sandbox.handleStaticLogin({ preventDefault: () => {} });
 
 assert(navigatedTo && navigatedTo.startsWith('index.html'), 'Registered customer can log in with chosen password');
-const sessionLogin = JSON.parse(sandbox.localStorage.getItem('gustogo_session'));
+const sessionLogin = JSON.parse(sandbox.localStorage.getItem('cravelo_session'));
 assert(sessionLogin && sessionLogin.username === 'zeynep_demir' && sessionLogin.role === 'customer', 'Customer session created on subsequent login');
 
 // Test 10: Logging in with registered user but WRONG password MUST BE REJECTED
@@ -197,7 +197,7 @@ navigatedTo = null;
 sandbox.handleStaticLogin({ preventDefault: () => {} });
 
 assert(navigatedTo && navigatedTo.startsWith('index.html'), 'Mustafa Güreşir login navigates to index.html');
-const sessionMustafa = JSON.parse(sandbox.localStorage.getItem('gustogo_session'));
+const sessionMustafa = JSON.parse(sandbox.localStorage.getItem('cravelo_session'));
 assert(sessionMustafa && sessionMustafa.role === 'admin' && sessionMustafa.fullName === 'Mustafa Güreşir (Yönetici)', 'Mustafa Güreşir session fullName is correct');
 assert(sessionMustafa && sessionMustafa.username === 'mustafaguresir@gmail.com', 'Mustafa Güreşir session username is correct');
 

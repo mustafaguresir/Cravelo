@@ -172,10 +172,20 @@ document.addEventListener('DOMContentLoaded', () => {
         activeRole = GustoState.get().currentRole || null;
     }
 
+    // Canlı HTTP sunucu modunda simülasyon varsayılan olarak kapalıdır (gerçek KDS/Kurye akışı otoritedir)
+    if (isCraveloHttpServer() && typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) {
+        GustoState.get().isSimulationEnabled = false;
+    }
+
     // Çıkış yapıp yeniden giriş yapan veya başka cihazdan bağlanan kullanıcının siparişlerini geri yükle
     if (activeRole && typeof hydrateOrdersForActiveUser === 'function') {
         const serverOrders = (typeof window !== 'undefined' && Array.isArray(window.SERVER_ORDERS)) ? window.SERVER_ORDERS : null;
         hydrateOrdersForActiveUser(serverOrders, activeRole);
+        // Hidrasyon sonrası kullanıcıya ait adres, sepet ve takip arayüzlerini tazele
+        renderSavedAddressesList();
+        updateAddressLabel();
+        updateCartUI();
+        updateOrderTrackerUI();
     }
 
     applyRoleIsolation(activeRole);
@@ -220,7 +230,6 @@ function updateThemeIcon(theme) {
 function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', current);
-    localStorage.setItem('gustogo-theme', current);
     localStorage.setItem('cravelo-theme', current);
     updateThemeIcon(current);
     GustoAudio.play('add');
@@ -236,12 +245,12 @@ function toggleSound() {
 function populateDropdowns() {
     const rSel = document.getElementById('res-selector');
     if (rSel) {
-        rSel.innerHTML = GustoState.get().restaurants.map(r => `<option value="${r.id}">${r.emoji} ${r.name}</option>`).join('');
+        rSel.innerHTML = GustoState.get().restaurants.map(r => `<option value="${r.id}">${escapeHtml(r.emoji)} ${escapeHtml(r.name)}</option>`).join('');
         rSel.value = GustoState.get().selectedVendorRestId;
     }
     const cSel = document.getElementById('courier-selector');
     if (cSel) {
-        cSel.innerHTML = GustoState.get().couriers.map(c => `<option value="${c.id}">${c.name} (${c.vehicle})</option>`).join('');
+        cSel.innerHTML = GustoState.get().couriers.map(c => `<option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.vehicle)})</option>`).join('');
         cSel.value = GustoState.get().selectedCourierId;
     }
 }
@@ -322,7 +331,7 @@ function getCartRestaurantId(state) {
 function getEffectiveItemPrice(item) {
     if (!item) return 0;
     if (typeof FLASH_DEALS !== 'undefined' && Array.isArray(FLASH_DEALS)) {
-        const deal = FLASH_DEALS.find(d => d.id === item.id);
+        const deal = FLASH_DEALS.find(d => d.id === item.id && (!d.rId || !item.rId || d.rId === item.rId));
         if (deal && typeof deal.newPrice === 'number') {
             return deal.newPrice;
         }
@@ -1293,10 +1302,40 @@ function logoutUser(e) {
         ));
 
         if (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) {
-            window.location.href = base + '/logout';
+            const csrf = getCraveloCsrfToken();
+            if (typeof document !== 'undefined' && typeof document.createElement === 'function' && document.body && typeof document.body.appendChild === 'function') {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = base + '/logout';
+                form.style.display = 'none';
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = '_csrf_token';
+                inp.value = csrf;
+                form.appendChild(inp);
+                document.body.appendChild(form);
+                form.submit();
+                return;
+            }
+            if (typeof fetch === 'function') {
+                fetch(base + '/api?action=logout', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: csrf ? { 'X-CSRF-Token': csrf } : {}
+                }).finally(() => {
+                    window.location.href = base + '/login';
+                });
+                return;
+            }
+            window.location.href = base + '/login';
         } else {
             if (typeof fetch === 'function') {
-                fetch(base + '/api?action=logout', { method: 'POST' }).catch(() => {});
+                const csrf = getCraveloCsrfToken();
+                fetch(base + '/api?action=logout', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: csrf ? { 'X-CSRF-Token': csrf } : {}
+                }).catch(() => {});
             }
             if (isStaticHtml) {
                 window.location.href = 'login.html';
@@ -1456,7 +1495,10 @@ function finalTotalText(val) {
     return `${Number(val || 0).toFixed(2)} ₺`;
 }
 
-function confirmCheckoutAndPlaceOrder() {
+let craveloSubmittingOrder = false;
+
+async function confirmCheckoutAndPlaceOrder() {
+    if (craveloSubmittingOrder) return;
     const state = GustoState.get();
     if (!state.cart || !state.cart.length) {
         closeCheckoutModal();
@@ -1473,18 +1515,70 @@ function confirmCheckoutAndPlaceOrder() {
         return;
     }
 
-    closeCheckoutModal();
-    state.orderCounter++;
-
     const cartRestId = getCartRestaurantId(state) || 1;
-    state.selectedRestId = cartRestId;
     const r = state.restaurants.find(x => x.id === cartRestId) || state.restaurants[0];
     const { sub, discount, del, walletDiscount, finalTot, isTakeaway } = calcCheckoutTotal();
+    const customNote = document.getElementById('delivery-custom-note')?.value.trim() || '';
+    const appliedCouponCode = state.activeCoupon || null;
+    const grossTotal = Math.max(0, sub - discount + del + (isTakeaway ? 0 : selectedTip));
 
-    // AKILLI HAVERSINE + İŞ YÜKÜ KURYE ATAMASI (Gel-Al değilse)
+    // Canlı HTTP sunucusunda siparişi ÖNCE sunucuda doğrula ve kaydet (reddedilirse sepet ve puan korunur)
+    let serverResponse = null;
+    const isLiveAuthServer = isCraveloHttpServer() && typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.id;
+    if (isLiveAuthServer) {
+        craveloSubmittingOrder = true;
+        try {
+            const payloadItems = state.cart.map(c => ({
+                menu_item_id: c.itemId || null,
+                name: c.name || 'Menü Lezzeti',
+                quantity: c.qty || 1,
+                price: c.price || 100
+            }));
+            const serverAmount = finalTot > 0 ? finalTot : Math.max(1, grossTotal || sub || 1);
+            serverResponse = await craveloApiFetch('/api?action=create_order', {
+                method: 'POST',
+                silentError: false,
+                body: JSON.stringify({
+                    restaurant_id: cartRestId,
+                    total_amount: serverAmount,
+                    del_x: state.customerLocation?.x ?? 18,
+                    del_y: state.customerLocation?.y ?? 14,
+                    delivery_latitude: state.customerLocation?.lat ?? 40.9850,
+                    delivery_longitude: state.customerLocation?.lon ?? 29.0280,
+                    delivery_mode: state.deliveryMode || 'courier',
+                    coupon_code: appliedCouponCode,
+                    delivery_fee: isTakeaway ? 0 : del,
+                    tip: isTakeaway ? 0 : selectedTip,
+                    items: payloadItems
+                })
+            });
+            if (!serverResponse || !serverResponse.ok) {
+                return;
+            }
+        } finally {
+            craveloSubmittingOrder = false;
+        }
+    }
+
+    closeCheckoutModal();
+    state.orderCounter++;
+    state.selectedRestId = cartRestId;
+
+    // AKILLI HAVERSINE + İŞ YÜKÜ KURYE ATAMASI (Sunucu yanıtı varsa yetkili kuryeyi kullan)
     let bestCourier = { id: 0, name: "Restorandan Gel-Al (Müşteri)", score: 0, distKm: 0 };
     if (!isTakeaway) {
-        bestCourier = GustoState.findBestCourier(r.x, r.y, r.lat, r.lon);
+        const srvC = serverResponse?.data?.assigned_courier || null;
+        if (srvC && srvC.id) {
+            const matchedC = state.couriers.find(c => c.id === Number(srvC.id));
+            bestCourier = {
+                id: Number(srvC.id),
+                name: matchedC ? matchedC.name : (srvC.name || 'Kurye'),
+                score: typeof srvC.score === 'number' ? srvC.score : 0,
+                distKm: typeof srvC.distance_km === 'number' ? srvC.distance_km : 0
+            };
+        } else {
+            bestCourier = GustoState.findBestCourier(r.x, r.y, r.lat, r.lon);
+        }
         const cObj = state.couriers.find(c => c.id === bestCourier.id);
         if (cObj) {
             cObj.active++;
@@ -1519,15 +1613,17 @@ function confirmCheckoutAndPlaceOrder() {
         }
     }
 
-    const customNote = document.getElementById('delivery-custom-note')?.value.trim() || '';
-
     const restObj = r || state.restaurants[0] || { id: 1, name: 'Lezzet Kebap Salonu' };
     const restName = (restObj && restObj.name) ? restObj.name : 'Lezzet Kebap Salonu';
     const courierTitle = (bestCourier && bestCourier.name) ? bestCourier.name : 'Veli Demir';
-    const grossTotal = Math.max(0, sub - discount + del + (isTakeaway ? 0 : selectedTip));
+    const authoritativeServerId = serverResponse?.data?.order_id ? Number(serverResponse.data.order_id) : undefined;
+    const resolvedTotal = (serverResponse?.data && typeof serverResponse.data.total_amount === 'number' && selectedPayMethod !== 'wallet')
+        ? Number(serverResponse.data.total_amount)
+        : finalTot;
 
     state.activeOrder = {
-        id: state.orderCounter,
+        id: authoritativeServerId || state.orderCounter,
+        serverOrderId: authoritativeServerId,
         restaurant: restName,
         customerName: state.currentUser?.fullName || 'Ahmet Yılmaz',
         rId: restObj.id || 1,
@@ -1535,20 +1631,25 @@ function confirmCheckoutAndPlaceOrder() {
         courierId: isTakeaway ? null : (bestCourier.id || 1),
         courierScore: bestCourier.score || 0,
         courierDistKm: bestCourier.distKm || 0,
-        items: state.cart.map(c => ({ name: c.name || 'Menü Lezzeti', qty: c.qty || 1, price: c.price || 150, options: c.options || '' })),
+        items: state.cart.map(c => ({ itemId: c.itemId || null, name: c.name || 'Menü Lezzeti', qty: c.qty || 1, price: c.price || 150, options: c.options || '' })),
         subtotal: sub,
         discount,
+        couponCode: appliedCouponCode,
         walletDiscount,
         walletPointsUsed,
         grossTotal,
         delFee: del,
-        total: finalTot,
+        total: resolvedTotal,
         tip: isTakeaway ? 0 : selectedTip,
         payMethod: selectedPayMethod,
         deliveryMode: state.deliveryMode,
+        deliveryLat: state.customerLocation?.lat ?? 40.9850,
+        deliveryLon: state.customerLocation?.lon ?? 29.0280,
+        deliveryX: state.customerLocation?.x ?? 18,
+        deliveryY: state.customerLocation?.y ?? 14,
         instruction: isTakeaway ? 'Restorandan Gel-Al Teslimat 🚶' : (state.selectedInstruction || 'Zile Basma Bebek Uyuyor 👶'),
         customNote,
-        scheduledTime: state.scheduledTime || 'Hemen Gelsin (~25 dk)',
+        scheduledTime: state.scheduledTime === 'now' ? 'Hemen Gelsin (~25 dk)' : (state.scheduledTime || 'Hemen Gelsin (~25 dk)'),
         isEco: state.isEcoFriendly,
         status: 'alindi',
         createdAt: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
@@ -1557,7 +1658,7 @@ function confirmCheckoutAndPlaceOrder() {
     };
 
     GustoState.logAudit(
-        state.orderCounter,
+        state.activeOrder.id,
         null,
         'alindi',
         `${state.currentUser?.fullName || 'Müşteri'} (Müşteri)`,
@@ -1566,6 +1667,8 @@ function confirmCheckoutAndPlaceOrder() {
 
     state.cart = [];
     state.activeCoupon = null;
+    state.selectedInstruction = 'Zile Basma Bebek Uyuyor 👶';
+    state.scheduledTime = 'now';
     selectedTip = 0;
     selectedPayMethod = 'cc';
     [0, 10, 20, 50].forEach(a => {
@@ -1575,6 +1678,14 @@ function confirmCheckoutAndPlaceOrder() {
     ['cc', 'cod', 'wallet'].forEach(id => {
         const el = document.getElementById('pay-card-' + id);
         if (el) el.className = 'pay-card ' + (id === 'cc' ? 'active' : '');
+    });
+    const instChips = (typeof document.querySelectorAll === 'function') ? document.querySelectorAll('#instruction-chips .inst-chip') : [];
+    instChips.forEach((c, idx) => {
+        if (c && c.classList) c.classList.toggle('active', idx === 0);
+    });
+    const schedPills = (typeof document.querySelectorAll === 'function') ? document.querySelectorAll('#sched-pills .sched-pill') : [];
+    schedPills.forEach((p, idx) => {
+        if (p && p.classList) p.classList.toggle('active', idx === 0);
     });
     const ccForm = document.getElementById('cc-form-area');
     if (ccForm) ccForm.style.display = 'block';
@@ -1590,7 +1701,7 @@ function confirmCheckoutAndPlaceOrder() {
     }
 
     GustoAudio.play('order');
-    showToast('🎉', `Sipariş #ORD-${state.orderCounter} alındı! ${isTakeaway ? 'Restorandan Gel-Al Hazırlanıyor' : 'Atanan Kurye: ' + bestCourier.name}`, 'success');
+    showToast('🎉', `Sipariş #ORD-${state.activeOrder.id} alındı! ${isTakeaway ? 'Restorandan Gel-Al Hazırlanıyor' : 'Atanan Kurye: ' + bestCourier.name}`, 'success');
 
     closeCheckoutModal();
     openOrdersTab();
@@ -1599,8 +1710,8 @@ function confirmCheckoutAndPlaceOrder() {
         GustoState.startSimulation(handleSimulationStep);
     }
 
-    // Aşama 2 Madde 5: HTTP sunucu ortamında siparişi gerçek JSON Repository'ye (flock) kaydet
-    if (typeof craveloSyncCreateOrder === 'function') {
+    // Oturumsuz/fallback HTTP durumunda mevcut sync köprüsünü koru
+    if (!isLiveAuthServer && typeof craveloSyncCreateOrder === 'function') {
         craveloSyncCreateOrder(state.activeOrder, state.customerLocation);
     }
 }
@@ -1655,11 +1766,20 @@ function toggleSimMode() {
     }
 }
 
-function cancelOrder() {
+async function cancelOrder() {
     const active = GustoState.get().activeOrder;
-    if (active && active.serverOrderId && typeof craveloSyncCancelOrder === 'function') {
-        craveloSyncCancelOrder(active.serverOrderId);
+    if (!active) return;
+
+    if (active.serverOrderId && isCraveloHttpServer() && typeof craveloSyncCancelOrder === 'function') {
+        const syncRes = await craveloSyncCancelOrder(active.serverOrderId);
+        if (!syncRes || !syncRes.ok) {
+            if (typeof craveloRefreshMyOrders === 'function') {
+                await craveloRefreshMyOrders();
+            }
+            return;
+        }
     }
+
     const res = GustoState.cancelActiveOrder();
     if (!res.success) {
         GustoAudio.play('cancel');
@@ -2198,10 +2318,22 @@ function openReceiptModal(orderId) {
             </table>
 
             <div style="border-top:1px dashed var(--border-2, var(--border));padding-top:12px;font-size:12.5px;color:var(--text-2);">
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Ara Toplam:</span><span>${(order.subtotal || Math.max(0, totalVal - 25)).toFixed(2)} ₺</span></div>
-                ${order.discount ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--success);"><span>İndirim:</span><span>-${order.discount.toFixed(2)} ₺</span></div>` : ''}
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Teslimat Ücreti:</span><span>${(order.delFee ?? 25).toFixed(2)} ₺</span></div>
-                ${order.tip ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--success);"><span>Kurye Bahşişi:</span><span>+${order.tip.toFixed(2)} ₺</span></div>` : ''}
+                ${(() => {
+                    const isTk = order.deliveryMode === 'takeaway';
+                    const delFeeVal = isTk ? 0 : (typeof order.delFee === 'number' ? order.delFee : 25);
+                    const itemsSum = (order.items && order.items.length)
+                        ? order.items.reduce((s, it) => s + Number(it.price || 0) * Number(it.qty || 1), 0)
+                        : totalVal;
+                    const subtotalVal = (typeof order.subtotal === 'number' && order.subtotal > 0)
+                        ? order.subtotal
+                        : (itemsSum > 0 ? itemsSum : Math.max(0, totalVal - delFeeVal));
+                    return `
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Ara Toplam:</span><span>${subtotalVal.toFixed(2)} ₺</span></div>
+                ${order.discount ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--success);"><span>İndirim:</span><span>-${Number(order.discount).toFixed(2)} ₺</span></div>` : ''}
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Teslimat Ücreti${isTk ? ' (Gel-Al)' : ''}:</span><span>${delFeeVal.toFixed(2)} ₺</span></div>
+                    `;
+                })()}
+                ${order.tip ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--success);"><span>Kurye Bahşişi:</span><span>+${Number(order.tip).toFixed(2)} ₺</span></div>` : ''}
                 ${order.walletDiscount ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--success);"><span>Cravelo Cüzdan Kullanımı:</span><span>-${Number(order.walletDiscount).toFixed(2)} ₺</span></div>` : ''}
                 <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>KDV Dahil (%10):</span><span>${kdv} ₺</span></div>
             </div>
@@ -2745,18 +2877,22 @@ function reorderItems(orderId) {
     const skippedSoldOut = [];
 
     (order.items || []).forEach((it, idx) => {
-        const fullItem = state.menuItems.find(m => m.name === it.name && m.rId === targetRestId)
+        const matchedCatalogItem = (it.itemId ? state.menuItems.find(m => m.id === it.itemId && m.rId === targetRestId) : null)
+            || state.menuItems.find(m => m.name === it.name && m.rId === targetRestId)
             || state.menuItems.find(m => m.name === it.name)
-            || { id: idx + 1, rId: targetRestId, name: it.name, price: it.price || 150, available: true };
-        if (fullItem.available === false) {
-            skippedSoldOut.push(fullItem.name);
+            || null;
+        if (matchedCatalogItem && matchedCatalogItem.available === false) {
+            skippedSoldOut.push(matchedCatalogItem.name);
             return;
         }
-        const priceVal = fullItem.rId === targetRestId ? getEffectiveItemPrice(fullItem) : Number(it.price || fullItem.price || 150);
+        const resolvedCatalogId = matchedCatalogItem ? matchedCatalogItem.id : null;
+        const priceVal = (matchedCatalogItem && matchedCatalogItem.rId === targetRestId)
+            ? getEffectiveItemPrice(matchedCatalogItem)
+            : Number(it.price || (matchedCatalogItem ? matchedCatalogItem.price : 150));
         availableToAdd.push({
-            ...fullItem,
-            id: `${fullItem.id}_${baseTs}_${idx}`,
-            itemId: fullItem.id,
+            ...(matchedCatalogItem || { name: it.name || 'Menü Lezzeti', available: true }),
+            id: `${resolvedCatalogId || ('custom_' + idx)}_${baseTs}_${idx}`,
+            itemId: resolvedCatalogId,
             rId: targetRestId,
             price: priceVal,
             qty: Number(it.qty || 1),
@@ -2803,12 +2939,12 @@ function renderAccountFavs() {
         return `
             <div class="pop-card" style="margin-bottom:10px;" onclick="closeAccountModal();quickAddFlash(${item.id})">
                 <div class="pop-img-wrap">
-                    <img class="pop-img" src="${item.img}" alt="${item.name}" loading="lazy">
+                    <img class="pop-img" src="${item.img}" alt="${escapeHtml(item.name)}" loading="lazy">
                     <div class="pop-tag"><i class="fa-solid fa-heart"></i> Favorim</div>
                 </div>
                 <div class="pop-info">
-                    <div class="pop-name">${item.name}</div>
-                    <div class="pop-rest">${rest ? rest.emoji + ' ' + rest.name : ''}</div>
+                    <div class="pop-name">${escapeHtml(item.name)}</div>
+                    <div class="pop-rest">${rest ? escapeHtml(rest.emoji) + ' ' + escapeHtml(rest.name) : ''}</div>
                     <div class="pop-bottom">
                         <span class="pop-price">${item.price.toFixed(2)} ₺</span>
                         <button type="button" class="pop-add-btn" onclick="event.stopPropagation();closeAccountModal();quickAddFlash(${item.id})">
@@ -3052,8 +3188,9 @@ function applyRoleIsolation(role) {
         currentFullName = window.ACTIVE_SESSION?.fullName || state.currentUser?.fullName || 'Kullanıcı';
     }
 
+    const ptsVal = (typeof state.userPoints === 'number' && !isNaN(state.userPoints)) ? state.userPoints : 145;
     const roleBadges = {
-        customer: `<i class="fa-solid fa-coins"></i> ${state.userPoints || 145} Puan`,
+        customer: `<i class="fa-solid fa-coins"></i> ${ptsVal} Puan`,
         restaurant: 'RESTORAN / KDS',
         courier: 'KURYE 🛵',
         admin: 'SİSTEM YÖNETİCİSİ'
@@ -3089,18 +3226,22 @@ function applyRoleIsolation(role) {
     const sessionRole = (sess && sess.role) || '';
     const rSel = document.getElementById('res-selector');
     if (rSel) {
-        if (sessionRole === 'restaurant' && state.selectedVendorRestId) {
-            const ownRest = state.restaurants.find(r => r.id === state.selectedVendorRestId);
-            if (ownRest) {
-                rSel.innerHTML = `<option value="${ownRest.id}">${escapeHtml(ownRest.emoji)} ${escapeHtml(ownRest.name)}</option>`;
+        if (sessionRole === 'restaurant') {
+            const ownedIds = getOwnedRestaurantIds(sess, state);
+            const ownedRests = state.restaurants.filter(r => ownedIds.includes(r.id));
+            if (ownedRests.length > 0) {
+                if (!ownedIds.includes(state.selectedVendorRestId)) {
+                    state.selectedVendorRestId = ownedRests[0].id;
+                }
+                rSel.innerHTML = ownedRests.map(r => `<option value="${r.id}">${escapeHtml(r.emoji)} ${escapeHtml(r.name)}</option>`).join('');
             }
             rSel.value = String(state.selectedVendorRestId);
-            rSel.disabled = true;
-            rSel.title = 'Hesabınız yalnızca kendi restoranınıza yetkilidir';
+            rSel.disabled = (ownedRests.length <= 1);
+            rSel.title = ownedRests.length > 1
+                ? 'Hesabınıza bağlı restoran şubeleri arasında geçiş yapabilirsiniz'
+                : 'Hesabınız yalnızca kendi restoranınıza yetkilidir';
         } else {
-            if (rSel.disabled) {
-                rSel.innerHTML = state.restaurants.map(r => `<option value="${r.id}">${escapeHtml(r.emoji)} ${escapeHtml(r.name)}</option>`).join('');
-            }
+            rSel.innerHTML = state.restaurants.map(r => `<option value="${r.id}">${escapeHtml(r.emoji)} ${escapeHtml(r.name)}</option>`).join('');
             rSel.disabled = false;
             rSel.title = '';
             if (state.selectedVendorRestId) rSel.value = state.selectedVendorRestId;
@@ -3191,6 +3332,22 @@ function handleUpdateProfile(e) {
     showToast('✅', 'Profil bilgileriniz güncellendi.', 'success');
 }
 
+function getOwnedRestaurantIds(sess, stateRef = null) {
+    const st = stateRef || GustoState.get();
+    if (sess && Array.isArray(sess.ownedRestaurantIds) && sess.ownedRestaurantIds.length > 0) {
+        return sess.ownedRestaurantIds.map(id => Number(id)).filter(n => !isNaN(n) && n > 0);
+    }
+    if (typeof window !== 'undefined' && Array.isArray(window.OWNED_RESTAURANT_IDS) && window.OWNED_RESTAURANT_IDS.length > 0) {
+        return window.OWNED_RESTAURANT_IDS.map(id => Number(id)).filter(n => !isNaN(n) && n > 0);
+    }
+    const uname = String((sess && sess.username) || (st.currentUser && st.currentUser.username) || '').toLowerCase();
+    const uemail = String((sess && sess.email) || (st.currentUser && st.currentUser.email) || '').toLowerCase();
+    if (uname === 'restoran_lezzet' || uemail === 'lezzet@ornek.com') return [1, 4, 7];
+    if (uname === 'restoran_burger' || uemail === 'burger@ornek.com') return [2, 5];
+    if (uname === 'restoran_pizza' || uemail === 'pizza@ornek.com') return [3, 6];
+    return [Number(st.selectedVendorRestId || 1)];
+}
+
 // ==========================================
 // RESTORAN / MUTFAK KDS PANELİ
 // ==========================================
@@ -3198,13 +3355,19 @@ function changeVendorRestaurant() {
     const sess = getEffectiveSession();
     const sessionRole = (sess && sess.role) || '';
     const rSel = document.getElementById('res-selector');
+    const requestedId = parseInt(rSel?.value, 10);
     if (sessionRole === 'restaurant') {
-        if (rSel && GustoState.get().selectedVendorRestId) {
-            rSel.value = String(GustoState.get().selectedVendorRestId);
+        const ownedIds = getOwnedRestaurantIds(sess);
+        if (!ownedIds.includes(requestedId)) {
+            if (rSel && GustoState.get().selectedVendorRestId) {
+                rSel.value = String(GustoState.get().selectedVendorRestId);
+            }
+            return;
         }
-        return;
     }
-    GustoState.get().selectedVendorRestId = parseInt(rSel?.value, 10);
+    if (!isNaN(requestedId) && requestedId > 0) {
+        GustoState.get().selectedVendorRestId = requestedId;
+    }
     const r = GustoState.get().restaurants.find(x => x.id === GustoState.get().selectedVendorRestId);
     if (GustoState.get().currentRole === 'restaurant' && r) {
         const navName = document.getElementById('nav-name');
@@ -3213,9 +3376,21 @@ function changeVendorRestaurant() {
     renderResPanel();
 }
 
-function toggleMenuItemStock(itemId) {
+async function toggleMenuItemStock(itemId) {
     const it = GustoState.get().menuItems.find(m => m.id === itemId);
     if (!it) return;
+    const desiredAvailable = (it.available === false);
+
+    if (isCraveloHttpServer() && typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.id) {
+        const res = await craveloApiFetch('/api?action=toggle_menu_item', {
+            method: 'POST',
+            body: JSON.stringify({ menu_item_id: itemId, is_available: desiredAvailable })
+        });
+        if (!res || !res.ok) {
+            return;
+        }
+    }
+
     const isOutOfStock = GustoState.toggleStock(itemId);
     it.available = !isOutOfStock;
     renderResPanel();
@@ -3274,7 +3449,7 @@ function renderResPanel() {
                                     <i class="fa-solid fa-kitchen-set"></i>
                                 </div>
                                 <strong style="font-size:15px;color:var(--text);">Mutfak Sırası Temiz — Yeni Sipariş Bekleniyor</strong>
-                                <span style="font-size:12.5px;color:var(--text-3);">${currentRest.emoji} ${currentRest.name} • Canlı KDS hattı bağlı</span>
+                                <span style="font-size:12.5px;color:var(--text-3);">${escapeHtml(currentRest.emoji)} ${escapeHtml(currentRest.name)} • Canlı KDS hattı bağlı</span>
                             </div>
                         </td>
                     </tr>
@@ -3286,7 +3461,7 @@ function renderResPanel() {
                             <i class="fa-solid fa-kitchen-set"></i>
                         </div>
                         <div style="font-size:16px;font-weight:800;color:var(--text);">Mutfak Sırası Temiz — Yeni Sipariş Bekleniyor</div>
-                        <div style="font-size:13px;color:var(--text-3);">${currentRest.emoji} ${currentRest.name} (${currentRest.neighborhood || 'Kadıköy'}) • Yeni siparişler anlık olarak buraya düşer.</div>
+                        <div style="font-size:13px;color:var(--text-3);">${escapeHtml(currentRest.emoji)} ${escapeHtml(currentRest.name)} (${escapeHtml(currentRest.neighborhood || 'Kadıköy')}) • Yeni siparişler anlık olarak buraya düşer.</div>
                     </div>
                 `;
             }
@@ -3413,14 +3588,14 @@ function renderResPanel() {
                     <tr>
                         <td>
                             <div style="display:flex;align-items:center;gap:12px;">
-                                <img src="${item.img}" alt="${item.name}" style="width:44px;height:44px;border-radius:12px;object-fit:cover;flex-shrink:0;${!isAvail ? 'filter:grayscale(0.8);opacity:0.6;' : ''}">
+                                <img src="${item.img}" alt="${escapeHtml(item.name)}" style="width:44px;height:44px;border-radius:12px;object-fit:cover;flex-shrink:0;${!isAvail ? 'filter:grayscale(0.8);opacity:0.6;' : ''}">
                                 <div>
-                                    <strong style="color:var(--text);font-size:13.5px;">${item.name}</strong>
-                                    <div style="font-size:11px;color:var(--text-3);">${item.tag}</div>
+                                    <strong style="color:var(--text);font-size:13.5px;">${escapeHtml(item.name)}</strong>
+                                    <div style="font-size:11px;color:var(--text-3);">${escapeHtml(item.tag)}</div>
                                 </div>
                             </div>
                         </td>
-                        <td style="color:var(--text-2);font-size:12.5px;max-width:280px;">${item.desc}</td>
+                        <td style="color:var(--text-2);font-size:12.5px;max-width:280px;">${escapeHtml(item.desc)}</td>
                         <td><strong style="color:var(--primary);font-size:14.5px;font-weight:900;">${item.price.toFixed(2)} ₺</strong></td>
                         <td><span class="badge ${isAvail ? 'badge-musait' : 'badge-iptal'}">${isAvail ? 'SATIŞTA' : 'TÜKENDİ'}</span></td>
                         <td>
@@ -3437,13 +3612,13 @@ function renderResPanel() {
                 return `
                     <div class="menu-toggle-card" style="${!isAvail ? 'opacity:0.75;' : ''}">
                         <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
-                            <img src="${item.img}" alt="${item.name}" style="width:56px;height:56px;border-radius:14px;object-fit:cover;flex-shrink:0;${!isAvail ? 'filter:grayscale(0.85);' : ''}">
+                            <img src="${item.img}" alt="${escapeHtml(item.name)}" style="width:56px;height:56px;border-radius:14px;object-fit:cover;flex-shrink:0;${!isAvail ? 'filter:grayscale(0.85);' : ''}">
                             <div style="flex:1;min-width:0;">
                                 <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-                                    <strong style="font-size:14.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</strong>
+                                    <strong style="font-size:14.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.name)}</strong>
                                     <span class="badge ${isAvail ? 'badge-musait' : 'badge-iptal'}" style="font-size:10px;flex-shrink:0;">${isAvail ? 'SATIŞTA' : 'TÜKENDİ'}</span>
                                 </div>
-                                <div style="font-size:12px;color:var(--text-3);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${item.desc}</div>
+                                <div style="font-size:12px;color:var(--text-3);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(item.desc)}</div>
                             </div>
                         </div>
                         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);">
@@ -3459,7 +3634,7 @@ function renderResPanel() {
     }
 }
 
-function vendorChangeStatus(targetStatus, orderId = null) {
+async function vendorChangeStatus(targetStatus, orderId = null) {
     const state = GustoState.get();
     let targetOrder = null;
     if (orderId !== null && orderId !== undefined) {
@@ -3475,8 +3650,21 @@ function vendorChangeStatus(targetStatus, orderId = null) {
 
     const targetOrderId = targetOrder.id;
     const targetServerId = targetOrder.serverOrderId;
-    if (targetServerId && typeof craveloSyncOrderTransition === 'function') {
-        craveloSyncOrderTransition(targetServerId, targetStatus);
+    if (targetServerId && isCraveloHttpServer() && typeof craveloSyncOrderTransition === 'function') {
+        const syncRes = await craveloSyncOrderTransition(targetServerId, targetStatus);
+        if (!syncRes || !syncRes.ok) {
+            if (typeof craveloRefreshMyOrders === 'function') {
+                await craveloRefreshMyOrders();
+            }
+            renderResPanel();
+            return;
+        }
+        if (syncRes.data && syncRes.data.courier_id && targetOrder.deliveryMode !== 'takeaway') {
+            const newCid = Number(syncRes.data.courier_id);
+            const matchedC = state.couriers.find(c => c.id === newCid);
+            targetOrder.courierId = newCid;
+            if (matchedC) targetOrder.courier = matchedC.name;
+        }
     }
     const r = state.restaurants.find(x => x.id === targetOrder.rId);
     const ok = (typeof GustoState.transitionOrderById === 'function')
@@ -3582,6 +3770,24 @@ function setCourierLandmark(x, y, lat, lon, neighborhood) {
     showToast('📍', `${c.name} yeni konumu: ${neighborhood}`, 'success');
 }
 
+function getOrderDeliveryLocation(order, fallbackLoc) {
+    const base = fallbackLoc || { x: 18, y: 14, lat: 40.9840, lon: 29.0270, name: 'Teslimat Adresi', desc: 'Moda, Kadıköy' };
+    if (order && (
+        (typeof order.deliveryLat === 'number' && typeof order.deliveryLon === 'number' && order.deliveryLat !== 0 && order.deliveryLon !== 0)
+        || (typeof order.deliveryX === 'number' && typeof order.deliveryY === 'number')
+    )) {
+        return {
+            x: typeof order.deliveryX === 'number' ? order.deliveryX : base.x,
+            y: typeof order.deliveryY === 'number' ? order.deliveryY : base.y,
+            lat: (typeof order.deliveryLat === 'number' && order.deliveryLat !== 0) ? order.deliveryLat : base.lat,
+            lon: (typeof order.deliveryLon === 'number' && order.deliveryLon !== 0) ? order.deliveryLon : base.lon,
+            name: order.customerName || base.name || 'Teslimat Noktası',
+            desc: order.deliveryAddress || ''
+        };
+    }
+    return base;
+}
+
 function renderCourierPanel() {
     const state = GustoState.get();
     const curCourier = state.couriers.find(c => c.id === state.selectedCourierId) || state.couriers[0];
@@ -3590,6 +3796,20 @@ function renderCourierPanel() {
 
     const courierStreet = getRealStreetLabel(curCourier, curCourier.neighborhood || 'Rıhtım Caddesi, Kadıköy');
 
+    // Çoklu aktif görev desteği: Hem activeOrder hem orderHistory içindeki atanmış görevleri topla
+    const seenTaskKeys = new Set();
+    const assignedTasks = [];
+    const pushTaskIfAssigned = (o) => {
+        if (!o || o.deliveryMode === 'takeaway') return;
+        if (o.courierId !== curCourier.id || !['hazir', 'yolda'].includes(o.status)) return;
+        const key = o.serverOrderId ? `srv_${o.serverOrderId}` : `loc_${o.id}`;
+        if (seenTaskKeys.has(key)) return;
+        seenTaskKeys.add(key);
+        assignedTasks.push(o);
+    };
+    if (state.activeOrder) pushTaskIfAssigned(state.activeOrder);
+    (state.orderHistory || []).forEach(pushTaskIfAssigned);
+
     const kpiLoc = document.getElementById('courier-kpi-loc');
     const kpiEarnings = document.getElementById('courier-kpi-earnings');
     const kpiActive = document.getElementById('courier-kpi-active');
@@ -3597,12 +3817,10 @@ function renderCourierPanel() {
 
     if (kpiLoc) kpiLoc.innerText = curCourier.neighborhood || 'Kadıköy Moda';
     if (kpiEarnings) kpiEarnings.innerText = `${curCourier.earnings.toFixed(2)} ₺`;
-    if (kpiActive) kpiActive.innerText = `${curCourier.active} Görev`;
+    if (kpiActive) kpiActive.innerText = `${Math.max(curCourier.active, assignedTasks.length)} Görev`;
     if (kpiTips) kpiTips.innerText = `${curCourier.tips.toFixed(2)} ₺`;
 
-    const isAssigned = (state.activeOrder && state.activeOrder.courierId === curCourier.id && ['hazir', 'yolda'].includes(state.activeOrder.status));
-
-    if (!isAssigned) {
+    if (assignedTasks.length === 0) {
         if (badge) {
             badge.className = 'badge badge-musait';
             badge.innerText = 'MÜSAİT';
@@ -3618,10 +3836,10 @@ function renderCourierPanel() {
                     </div>
                     <div style="font-weight:900;font-size:17px;color:var(--text);letter-spacing:-0.3px;">Görev Bekleniyor — Kadıköy Radarında Aktifsiniz</div>
                     <div style="font-size:13px;color:var(--text-2);margin-top:6px;">
-                        <i class="fa-solid fa-location-dot" style="color:var(--primary);margin-right:4px;"></i>${courierStreet}
+                        <i class="fa-solid fa-location-dot" style="color:var(--primary);margin-right:4px;"></i>${escapeHtml(courierStreet)}
                     </div>
                     <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px;">
-                        <span class="score-pill"><i class="fa-solid fa-motorcycle" style="color:var(--blue);"></i> ${curCourier.vehicle}</span>
+                        <span class="score-pill"><i class="fa-solid fa-motorcycle" style="color:var(--blue);"></i> ${escapeHtml(curCourier.vehicle)}</span>
                         <span class="score-pill"><i class="fa-solid fa-gauge-high" style="color:var(--success);"></i> Atama Skoru: <strong>${smartScore.toFixed(2)}</strong> (${distKm.toFixed(2)} km + 2×${curCourier.active})</span>
                         <span class="score-pill"><i class="fa-solid fa-coins" style="color:#F59E0B;"></i> Bahşiş: <strong>${curCourier.tips} ₺</strong></span>
                     </div>
@@ -3633,108 +3851,131 @@ function renderCourierPanel() {
 
     if (badge) {
         badge.className = 'badge badge-hazirlaniyor';
-        badge.innerText = 'GÖREVDE';
-    }
-
-    const o = state.activeOrder;
-    const r = state.restaurants.find(x => x.id === o.rId) || state.restaurants[0];
-    const st = getStatusMeta(o.status);
-    const restStreet = getRealStreetLabel(r, r ? r.neighborhood : 'Moda Caddesi, Kadıköy');
-    const custStreet = getRealStreetLabel(state.customerLocation, state.customerLocation?.desc || 'Moda, Kadıköy');
-    const pickupDistKm = getRealDistanceKm(curCourier, r);
-    const dropDistKm = getRealDistanceKm(r, state.customerLocation);
-    const smartScore = GustoState.calculateCourierScore(pickupDistKm, curCourier.active);
-    const deliveryInst = o.instruction || (o.deliveryPref === 'leave' ? 'Kapıya Bırak (Temassız)' : (o.deliveryPref === 'quiet' ? 'Zili Çalma' : 'Kapıya Teslim'));
-
-    let actionBtn = '';
-    if (o.status === 'hazir') {
-        actionBtn = `
-            <button type="button" class="btn btn-primary" style="width:100%;margin-top:16px;padding:15px;font-size:15px;border-radius:14px;background:linear-gradient(135deg,#38BDF8,#2563EB);box-shadow:0 8px 24px rgba(37,99,235,0.35);" onclick="courierChangeStatus('yolda')">
-                <i class="fa-solid fa-motorcycle"></i> Paketi Restorandan Aldım — Müşteriye Yola Çık
-            </button>
-        `;
-    } else {
-        actionBtn = `
-            <button type="button" class="btn btn-success" style="width:100%;margin-top:16px;padding:15px;font-size:15px;border-radius:14px;box-shadow:0 8px 24px rgba(16,185,129,0.35);" onclick="courierChangeStatus('teslim_edildi')">
-                <i class="fa-solid fa-circle-check"></i> Siparişi Müşteriye Teslim Ettim (Görevi Tamamla)
-            </button>
-        `;
+        badge.innerText = assignedTasks.length > 1 ? `GÖREVDE (${assignedTasks.length})` : 'GÖREVDE';
     }
 
     if (area) {
-        area.innerHTML = `
-            <div class="mission-card">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span class="live-pulse-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FF6B35;box-shadow:0 0 10px #FF6B35;"></span>
-                        <div>
-                            <div style="font-size:18px;font-weight:900;color:var(--text);letter-spacing:-0.3px;">Aktif Teslimat Görevi #ORD-${o.id}</div>
-                            <div style="font-size:12px;color:var(--text-3);margin-top:2px;">Toplam Rota: ${(pickupDistKm + dropDistKm).toFixed(2)} km • ${o.createdAt || 'Canlı'}</div>
+        area.innerHTML = assignedTasks.map((o, idx) => {
+            const r = state.restaurants.find(x => x.id === o.rId) || state.restaurants[0];
+            const st = getStatusMeta(o.status);
+            const deliveryLoc = getOrderDeliveryLocation(o, state.customerLocation);
+            const restStreet = getRealStreetLabel(r, r ? r.neighborhood : 'Moda Caddesi, Kadıköy');
+            const custStreet = getRealStreetLabel(deliveryLoc, deliveryLoc.desc || 'Moda, Kadıköy');
+            const pickupDistKm = getRealDistanceKm(curCourier, r);
+            const dropDistKm = getRealDistanceKm(r, deliveryLoc);
+            const smartScore = GustoState.calculateCourierScore(pickupDistKm, curCourier.active);
+            const deliveryInst = o.instruction || (o.deliveryPref === 'leave' ? 'Kapıya Bırak (Temassız)' : (o.deliveryPref === 'quiet' ? 'Zili Çalma' : 'Kapıya Teslim'));
+
+            let actionBtn = '';
+            if (o.status === 'hazir') {
+                actionBtn = `
+                    <button type="button" class="btn btn-primary" style="width:100%;margin-top:16px;padding:15px;font-size:15px;border-radius:14px;background:linear-gradient(135deg,#38BDF8,#2563EB);box-shadow:0 8px 24px rgba(37,99,235,0.35);" onclick="courierChangeStatus('yolda', ${o.id})">
+                        <i class="fa-solid fa-motorcycle"></i> Paketi Restorandan Aldım — Müşteriye Yola Çık
+                    </button>
+                `;
+            } else {
+                actionBtn = `
+                    <button type="button" class="btn btn-success" style="width:100%;margin-top:16px;padding:15px;font-size:15px;border-radius:14px;box-shadow:0 8px 24px rgba(16,185,129,0.35);" onclick="courierChangeStatus('teslim_edildi', ${o.id})">
+                        <i class="fa-solid fa-circle-check"></i> Siparişi Müşteriye Teslim Ettim (Görevi Tamamla)
+                    </button>
+                `;
+            }
+
+            return `
+                <div class="mission-card" style="${idx > 0 ? 'margin-top:16px;' : ''}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span class="live-pulse-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FF6B35;box-shadow:0 0 10px #FF6B35;"></span>
+                            <div>
+                                <div style="font-size:18px;font-weight:900;color:var(--text);letter-spacing:-0.3px;">Aktif Teslimat Görevi #ORD-${o.id}${assignedTasks.length > 1 ? ` (${idx + 1}/${assignedTasks.length})` : ''}</div>
+                                <div style="font-size:12px;color:var(--text-3);margin-top:2px;">Toplam Rota: ${(pickupDistKm + dropDistKm).toFixed(2)} km • ${escapeHtml(o.createdAt || 'Canlı')}</div>
+                            </div>
+                        </div>
+                        <span class="badge ${st.badge}"><i class="fa-solid ${st.icon}" style="margin-right:4px;"></i>${st.label}</span>
+                    </div>
+
+                    <!-- Skor Kırılımı Şeridi -->
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                        <span class="score-pill"><i class="fa-solid fa-route" style="color:var(--primary);"></i> Restorana: <strong>${pickupDistKm.toFixed(2)} km</strong></span>
+                        <span class="score-pill"><i class="fa-solid fa-flag-checkered" style="color:var(--success);"></i> Müşteriye: <strong>${dropDistKm.toFixed(2)} km</strong></span>
+                        <span class="score-pill"><i class="fa-solid fa-bolt" style="color:#F59E0B;"></i> Skor: <strong>${smartScore.toFixed(2)}</strong> (${pickupDistKm.toFixed(2)} + 2×${curCourier.active})</span>
+                        <span class="score-pill"><i class="fa-solid fa-hand-holding-dollar" style="color:var(--success);"></i> Bahşiş: <strong>+${o.tip || 0} ₺</strong></span>
+                    </div>
+
+                    <!-- 2 Duraklı Rota Kartları -->
+                    <div class="mission-route">
+                        <div class="mission-stop">
+                            <div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">
+                                <i class="fa-solid fa-store" style="margin-right:4px;"></i> 1. Alım Noktası (Restoran)
+                            </div>
+                            <div style="font-weight:800;font-size:14.5px;color:var(--text);">${r ? `${escapeHtml(r.emoji)} ${escapeHtml(r.name)}` : 'Restoran'}</div>
+                            <div style="font-size:12px;color:var(--text-2);margin-top:4px;"><i class="fa-solid fa-location-dot" style="color:var(--primary);margin-right:4px;"></i>${escapeHtml(restStreet)}</div>
+                        </div>
+                        <div class="mission-stop">
+                            <div style="font-size:11px;font-weight:800;color:var(--success);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">
+                                <i class="fa-solid fa-house" style="margin-right:4px;"></i> 2. Teslimat Noktası (Müşteri)
+                            </div>
+                            <div style="font-weight:800;font-size:14.5px;color:var(--text);">${escapeHtml(o.customerName || 'Müşteri')} • ${escapeHtml(deliveryLoc.name || 'Teslimat Adresi')}</div>
+                            <div style="font-size:12px;color:var(--text-2);margin-top:4px;"><i class="fa-solid fa-map-pin" style="color:var(--success);margin-right:4px;"></i>${escapeHtml(custStreet)}</div>
                         </div>
                     </div>
-                    <span class="badge ${st.badge}"><i class="fa-solid ${st.icon}" style="margin-right:4px;"></i>${st.label}</span>
-                </div>
 
-                <!-- Skor Kırılımı Şeridi -->
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-                    <span class="score-pill"><i class="fa-solid fa-route" style="color:var(--primary);"></i> Restorana: <strong>${pickupDistKm.toFixed(2)} km</strong></span>
-                    <span class="score-pill"><i class="fa-solid fa-flag-checkered" style="color:var(--success);"></i> Müşteriye: <strong>${dropDistKm.toFixed(2)} km</strong></span>
-                    <span class="score-pill"><i class="fa-solid fa-bolt" style="color:#F59E0B;"></i> Skor: <strong>${smartScore.toFixed(2)}</strong> (${pickupDistKm.toFixed(2)} + 2×${curCourier.active})</span>
-                    <span class="score-pill"><i class="fa-solid fa-hand-holding-dollar" style="color:var(--success);"></i> Bahşiş: <strong>+${o.tip || 0} ₺</strong></span>
-                </div>
-
-                <!-- 2 Duraklı Rota Kartları -->
-                <div class="mission-route">
-                    <div class="mission-stop">
-                        <div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">
-                            <i class="fa-solid fa-store" style="margin-right:4px;"></i> 1. Alım Noktası (Restoran)
+                    <!-- Paket & Teslimat Talimatı -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));gap:12px;margin-top:12px;">
+                        <div style="background:var(--surface);padding:12px 15px;border-radius:14px;border:1px solid var(--border);font-size:13px;">
+                            <div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;margin-bottom:4px;"><i class="fa-solid fa-box" style="color:#F59E0B;margin-right:4px;"></i> Paket İçeriği</div>
+                            <div style="font-weight:700;color:var(--text);">${(o.items || []).map(i => `${escapeHtml(i.name)} ×${i.qty}`).join(', ')}</div>
                         </div>
-                        <div style="font-weight:800;font-size:14.5px;color:var(--text);">${r ? `${r.emoji} ${r.name}` : 'Restoran'}</div>
-                        <div style="font-size:12px;color:var(--text-2);margin-top:4px;"><i class="fa-solid fa-location-dot" style="color:var(--primary);margin-right:4px;"></i>${restStreet}</div>
-                    </div>
-                    <div class="mission-stop">
-                        <div style="font-size:11px;font-weight:800;color:var(--success);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">
-                            <i class="fa-solid fa-house" style="margin-right:4px;"></i> 2. Teslimat Noktası (Müşteri)
+                        <div style="background:var(--surface);padding:12px 15px;border-radius:14px;border:1px solid var(--border);font-size:13px;">
+                            <div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;margin-bottom:4px;"><i class="fa-solid fa-bell-concierge" style="color:var(--purple);margin-right:4px;"></i> Teslimat Talimatı</div>
+                            <div style="font-weight:700;color:var(--text);">${escapeHtml(deliveryInst)}${o.customNote ? ` • "${escapeHtml(o.customNote)}"` : ''}</div>
                         </div>
-                        <div style="font-weight:800;font-size:14.5px;color:var(--text);">${escapeHtml(o.customerName || state.currentUser?.fullName || 'Ahmet Yılmaz')} • ${escapeHtml(state.customerLocation?.name || 'Evim')}</div>
-                        <div style="font-size:12px;color:var(--text-2);margin-top:4px;"><i class="fa-solid fa-map-pin" style="color:var(--success);margin-right:4px;"></i>${escapeHtml(custStreet)}</div>
                     </div>
-                </div>
 
-                <!-- Paket & Teslimat Talimatı -->
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));gap:12px;margin-top:12px;">
-                    <div style="background:var(--surface);padding:12px 15px;border-radius:14px;border:1px solid var(--border);font-size:13px;">
-                        <div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;margin-bottom:4px;"><i class="fa-solid fa-box" style="color:#F59E0B;margin-right:4px;"></i> Paket İçeriği</div>
-                        <div style="font-weight:700;color:var(--text);">${o.items.map(i => `${escapeHtml(i.name)} ×${i.qty}`).join(', ')}</div>
-                    </div>
-                    <div style="background:var(--surface);padding:12px 15px;border-radius:14px;border:1px solid var(--border);font-size:13px;">
-                        <div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;margin-bottom:4px;"><i class="fa-solid fa-bell-concierge" style="color:var(--purple);margin-right:4px;"></i> Teslimat Talimatı</div>
-                        <div style="font-weight:700;color:var(--text);">${escapeHtml(deliveryInst)}${o.customNote ? ` • "${escapeHtml(o.customNote)}"` : ''}</div>
-                    </div>
+                    ${actionBtn}
                 </div>
-
-                ${actionBtn}
-            </div>
-        `;
+            `;
+        }).join('');
     }
 }
 
-function courierChangeStatus(targetStatus) {
+async function courierChangeStatus(targetStatus, orderId = null) {
     const state = GustoState.get();
-    if (!state.activeOrder) return;
-    const targetOrderId = state.activeOrder.id;
-    const targetServerId = state.activeOrder.serverOrderId;
-    if (targetServerId && typeof craveloSyncOrderTransition === 'function') {
-        craveloSyncOrderTransition(targetServerId, targetStatus);
+    let targetOrder = null;
+    if (orderId !== null && orderId !== undefined) {
+        if (state.activeOrder && (state.activeOrder.id === orderId || state.activeOrder.serverOrderId === orderId)) {
+            targetOrder = state.activeOrder;
+        } else {
+            targetOrder = (state.orderHistory || []).find(o => o && (o.id === orderId || o.serverOrderId === orderId)) || null;
+        }
+    } else {
+        targetOrder = state.activeOrder;
     }
+    if (!targetOrder) return;
+
+    const targetOrderId = targetOrder.id;
+    const targetServerId = targetOrder.serverOrderId;
+    if (targetServerId && isCraveloHttpServer() && typeof craveloSyncOrderTransition === 'function') {
+        const syncRes = await craveloSyncOrderTransition(targetServerId, targetStatus);
+        if (!syncRes || !syncRes.ok) {
+            if (typeof craveloRefreshMyOrders === 'function') {
+                await craveloRefreshMyOrders();
+            }
+            renderCourierPanel();
+            return;
+        }
+    }
+
     const curCourier = state.couriers.find(c => c.id === state.selectedCourierId) || state.couriers[0];
-    const ok = GustoState.transitionOrderStatus(targetStatus, `${curCourier.name} (Kurye)`, `Kurye teslimat aşamasını ${targetStatus} olarak kaydetti.`);
+    const ok = (typeof GustoState.transitionOrderById === 'function')
+        ? GustoState.transitionOrderById(targetOrderId, targetStatus, `${curCourier.name} (Kurye)`, `Kurye teslimat aşamasını ${targetStatus} olarak kaydetti.`)
+        : GustoState.transitionOrderStatus(targetStatus, `${curCourier.name} (Kurye)`, `Kurye teslimat aşamasını ${targetStatus} olarak kaydetti.`);
     if (ok) {
         GustoAudio.play(targetStatus === 'teslim_edildi' ? 'deliver' : 'status');
         showToast('🛵', `Sipariş #ORD-${targetOrderId} → ${getStatusMeta(targetStatus).label}`, 'success');
 
-        // Manuel teslimatta siparişi geçmişe taşı ve aktif görevden çıkar
-        if (targetStatus === 'teslim_edildi' && state.activeOrder) {
+        // Manuel teslimatta siparişi geçmişe taşı ve varsa sıradaki aktif görevi öne al
+        if (targetStatus === 'teslim_edildi' && state.activeOrder && state.activeOrder.id === targetOrderId) {
             GustoState.stopSimulation();
             if (typeof GustoMap !== 'undefined' && GustoMap.stopCourierAnimation) {
                 GustoMap.stopCourierAnimation();
@@ -3744,7 +3985,12 @@ function courierChangeStatus(targetStatus) {
             if (!alreadyInHist) {
                 state.orderHistory.unshift(finished);
             }
-            state.activeOrder = null;
+            const nextTaskIdx = state.orderHistory.findIndex(o => o && o.courierId === curCourier.id && ['hazir', 'yolda'].includes(o.status));
+            if (nextTaskIdx >= 0) {
+                state.activeOrder = state.orderHistory.splice(nextTaskIdx, 1)[0];
+            } else {
+                state.activeOrder = null;
+            }
             GustoState.persist();
         }
     }
@@ -3800,17 +4046,17 @@ function renderAdminCouriers() {
                         </div>
                         <div>
                             <div style="display:flex;align-items:center;gap:6px;">
-                                <strong style="color:var(--text);">${c.name}</strong>
+                                <strong style="color:var(--text);">${escapeHtml(c.name)}</strong>
                                 ${isBest ? '<span style="font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px;background:rgba(16,185,129,0.16);color:#10B981;">★ EN UYGUN</span>' : ''}
                             </div>
-                            <div style="font-size:11px;color:var(--text-3);">${c.phone || '0532 111 22 33'}</div>
+                            <div style="font-size:11px;color:var(--text-3);">${escapeHtml(c.phone || '0532 111 22 33')}</div>
                         </div>
                     </div>
                 </td>
-                <td><span style="background:var(--surface-2);border:1px solid var(--border);padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;">${c.vehicle}</span></td>
+                <td><span style="background:var(--surface-2);border:1px solid var(--border);padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;">${escapeHtml(c.vehicle)}</span></td>
                 <td>
                     <span class="street-badge">
-                        <i class="fa-solid fa-location-dot" style="color:var(--primary);margin-right:5px;"></i>${streetLabel}
+                        <i class="fa-solid fa-location-dot" style="color:var(--primary);margin-right:5px;"></i>${escapeHtml(streetLabel)}
                     </span>
                 </td>
                 <td style="min-width:140px;">
@@ -3912,16 +4158,16 @@ function renderFlashDeals() {
         return `
             <div class="flash-card" onclick="openCustomizer(${item.id})">
                 <div class="flash-img-wrap">
-                    <img class="flash-img" src="${item.img}" alt="${item.name}" loading="lazy">
-                    <div class="flash-badge"><i class="fa-solid fa-bolt"></i> ${d.discount}</div>
-                    <div class="flash-rest-tag">${rest ? `${rest.emoji} ${rest.name}` : 'Cravelo Şef'}</div>
+                    <img class="flash-img" src="${item.img}" alt="${escapeHtml(item.name)}" loading="lazy">
+                    <div class="flash-badge"><i class="fa-solid fa-bolt"></i> ${escapeHtml(d.discount)}</div>
+                    <div class="flash-rest-tag">${rest ? `${escapeHtml(rest.emoji)} ${escapeHtml(rest.name)}` : 'Cravelo Şef'}</div>
                     <button type="button" class="flash-quick-btn" onclick="event.stopPropagation();quickAddFlash(${item.id})" title="Hızlı Ekle">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 </div>
                 <div class="flash-body">
-                    <div class="flash-name">${item.name}</div>
-                    <div style="font-size:12px;color:var(--text-3);margin-top:-6px;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.desc}</div>
+                    <div class="flash-name">${escapeHtml(item.name)}</div>
+                    <div style="font-size:12px;color:var(--text-3);margin-top:-6px;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.desc)}</div>
                     <div class="flash-footer">
                         <div class="flash-prices">
                             <span class="flash-new">${d.newPrice.toFixed(2)} ₺</span>
@@ -3947,14 +4193,14 @@ function renderPopularShowcase() {
         return `
             <div class="pop-card" onclick="openCustomizer(${item.id})">
                 <div class="pop-img-wrap">
-                    <img class="pop-img" src="${item.img}" alt="${item.name}" loading="lazy">
-                    <div class="pop-tag"><i class="fa-solid fa-fire"></i> ${item.tag}</div>
+                    <img class="pop-img" src="${item.img}" alt="${escapeHtml(item.name)}" loading="lazy">
+                    <div class="pop-tag"><i class="fa-solid fa-fire"></i> ${escapeHtml(item.tag)}</div>
                 </div>
                 <div class="pop-info">
-                    <div class="pop-name">${item.name}</div>
+                    <div class="pop-name">${escapeHtml(item.name)}</div>
                     <div class="pop-rest">
-                        ${rest ? `${rest.emoji} ${rest.name}` : ''}
-                        ${rest ? `<span style="margin-left:6px;color:#F59E0B;font-weight:800;">★ ${rest.rating}</span>` : ''}
+                        ${rest ? `${escapeHtml(rest.emoji)} ${escapeHtml(rest.name)}` : ''}
+                        ${rest ? `<span style="margin-left:6px;color:#F59E0B;font-weight:800;">★ ${escapeHtml(rest.rating)}</span>` : ''}
                     </div>
                     <div class="pop-bottom">
                         <span class="pop-price">${item.price.toFixed(2)} ₺</span>
@@ -4096,15 +4342,31 @@ function isCraveloHttpServer() {
         /^https?:$/i.test(window.location.protocol || '');
 }
 
+function getCraveloCsrfToken() {
+    if (typeof window !== 'undefined' && typeof window.CSRF_TOKEN === 'string' && window.CSRF_TOKEN) {
+        return window.CSRF_TOKEN;
+    }
+    if (typeof document !== 'undefined' && typeof document.querySelector === 'function') {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta && typeof meta.getAttribute === 'function') {
+            return meta.getAttribute('content') || '';
+        }
+    }
+    return '';
+}
+
 async function craveloApiFetch(endpoint, options = {}) {
     if (!isCraveloHttpServer()) return null;
     const base = (typeof window !== 'undefined' && window.BASE_PATH) ? window.BASE_PATH : '';
     const url = base + endpoint;
+    const method = String(options.method || 'GET').toUpperCase();
+    const csrf = (method !== 'GET' && method !== 'HEAD') ? getCraveloCsrfToken() : '';
     const fetchOpts = {
         credentials: 'same-origin',
         headers: {
             'Accept': 'application/json',
             ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+            ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
             ...(options.headers || {})
         },
         ...options
@@ -4157,11 +4419,18 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
     const normUser = String(rawUsername).trim().toLowerCase();
     const role = activeRole || state.currentRole || (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || 'customer';
 
-    // Farklı bir kullanıcıya geçildiyse önceki kullanıcının yerel siparişlerini temizle (hesap izolasyonu)
+    // Farklı bir kullanıcıya geçildiyse önceki kullanıcının tüm kişisel yerel durumunu temizle (tam hesap izolasyonu)
     if (normUser && state.ownerUsername && state.ownerUsername !== normUser) {
         state.activeOrder = null;
         state.orderHistory = [];
         state.cart = [];
+        state.userPoints = 145;
+        state.savedAddresses = typeof INITIAL_ADDRESSES !== 'undefined' ? [...INITIAL_ADDRESSES] : [];
+        state.customerLocation = { x: 18, y: 14, lat: 40.9840, lon: 29.0270, name: 'Evim (Moda)' };
+        state.userFavorites = [1, 6, 10];
+        state.favoriteRestaurants = [1, 2];
+        state.activeCoupon = null;
+        state.auditLogs = [];
     }
     if (normUser) {
         state.ownerUsername = normUser;
@@ -4186,7 +4455,6 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
 
     // Sunucu JSON deposundan (storage/orders.json) gelen gerçek siparişleri (Müşteri, Restoran KDS, Kurye, Yönetici) birleştir
     if (['customer', 'restaurant', 'courier', 'admin'].includes(role) && Array.isArray(serverOrdersList) && serverOrdersList.length > 0) {
-        const statusRank = { alindi: 1, hazirlaniyor: 2, hazir: 3, yolda: 4, teslim_edildi: 5, iptal: 6 };
         const existingLocal = [];
         if (state.activeOrder) existingLocal.push(state.activeOrder);
         if (Array.isArray(state.orderHistory)) {
@@ -4216,18 +4484,12 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
             const frontCour = (state.couriers || []).find(c => c.id === cId);
 
             const localMatch = localByServerId.get(sid);
-            const serverStatus = String(so.status || 'alindi');
-            let finalStatus = serverStatus;
-            if (localMatch && localMatch.status) {
-                if (serverStatus === 'iptal') {
-                    finalStatus = 'iptal';
-                } else if ((statusRank[localMatch.status] || 0) > (statusRank[serverStatus] || 0)) {
-                    finalStatus = localMatch.status;
-                }
-            }
+            // Sunucu kaydı (serverOrderId) taşıyan siparişlerde sunucu durumu tek yetkili kaynaktır
+            const finalStatus = String(so.status || 'alindi');
 
             const mappedItems = (Array.isArray(so.items) && so.items.length > 0)
                 ? so.items.map(it => ({
+                    itemId: it.menu_item_id ? Number(it.menu_item_id) : null,
                     name: it.name || 'Menü Lezzeti',
                     qty: Number(it.qty || it.quantity || 1),
                     price: Number(it.price || it.unit_price || 0),
@@ -4245,6 +4507,19 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
                 ? 'takeaway'
                 : ((localMatch && localMatch.deliveryMode === 'takeaway') ? 'takeaway' : 'courier');
 
+            const deliveryLat = (typeof so.delivery_latitude === 'number' && so.delivery_latitude !== 0)
+                ? so.delivery_latitude
+                : (localMatch && typeof localMatch.deliveryLat === 'number' ? localMatch.deliveryLat : undefined);
+            const deliveryLon = (typeof so.delivery_longitude === 'number' && so.delivery_longitude !== 0)
+                ? so.delivery_longitude
+                : (localMatch && typeof localMatch.deliveryLon === 'number' ? localMatch.deliveryLon : undefined);
+            const deliveryX = (typeof so.delivery_x === 'number')
+                ? so.delivery_x
+                : (localMatch && typeof localMatch.deliveryX === 'number' ? localMatch.deliveryX : undefined);
+            const deliveryY = (typeof so.delivery_y === 'number')
+                ? so.delivery_y
+                : (localMatch && typeof localMatch.deliveryY === 'number' ? localMatch.deliveryY : undefined);
+
             const merged = {
                 ...(localMatch || {}),
                 id: localMatch ? localMatch.id : sid,
@@ -4259,6 +4534,10 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
                 status: finalStatus,
                 total: Number(so.total || so.total_amount || (localMatch && localMatch.total) || 0),
                 items: mappedItems,
+                deliveryLat,
+                deliveryLon,
+                deliveryX,
+                deliveryY,
                 createdAt: (localMatch && localMatch.createdAt) || so.createdAt || 'Bugün',
                 dateStr: (localMatch && localMatch.dateStr) || so.dateStr || '',
                 deliveryMode: resolvedDeliveryMode
@@ -4367,7 +4646,10 @@ async function craveloSyncCreateOrder(orderObj, customerLoc) {
             delivery_latitude: customerLoc?.lat ?? 40.9850,
             delivery_longitude: customerLoc?.lon ?? 29.0280,
             delivery_mode: orderObj.deliveryMode || 'courier',
-            items: (orderObj.items || []).map(i => ({ name: i.name, quantity: i.qty || 1, price: i.price || 100 }))
+            coupon_code: orderObj.couponCode || null,
+            delivery_fee: orderObj.deliveryMode === 'takeaway' ? 0 : Number(orderObj.delFee || 0),
+            tip: orderObj.deliveryMode === 'takeaway' ? 0 : Number(orderObj.tip || 0),
+            items: (orderObj.items || []).map(i => ({ menu_item_id: i.itemId || null, name: i.name, quantity: i.qty || 1, price: i.price || 100 }))
         })
     }).then(result => {
         if (result && result.ok && result.data && result.data.order_id) {
@@ -4471,16 +4753,14 @@ async function craveloPollServerPartialRefresh() {
             silentError: true
         });
         if (res && res.ok && res.data && res.data.order_status && state.activeOrder) {
-            const statusRank = { alindi: 1, hazirlaniyor: 2, hazir: 3, yolda: 4, teslim_edildi: 5, iptal: 6 };
             const serverStatus = String(res.data.order_status);
             const localStatus = String(state.activeOrder.status || 'alindi');
-            const isForwardOrCancel = (serverStatus === 'iptal' && localStatus !== 'iptal')
-                || ((statusRank[serverStatus] || 0) > (statusRank[localStatus] || 0));
 
-            if (isForwardOrCancel) {
+            if (serverStatus !== localStatus) {
                 state.activeOrder.status = serverStatus;
                 if (state.activeOrder.deliveryMode !== 'takeaway' && res.data.courier && res.data.courier.name) {
                     state.activeOrder.courier = res.data.courier.name;
+                    if (res.data.courier.id) state.activeOrder.courierId = Number(res.data.courier.id);
                 }
                 if (serverStatus === 'iptal' || serverStatus === 'teslim_edildi') {
                     GustoState.stopSimulation();
@@ -4499,9 +4779,34 @@ async function craveloPollServerPartialRefresh() {
     } else if (role === 'restaurant') {
         await craveloApiFetch('/api/kds-orders', { method: 'GET', silentError: true });
         await craveloRefreshMyOrders();
+        renderResPanel();
     } else if (role === 'courier') {
         await craveloApiFetch('/api/courier-tasks', { method: 'GET', silentError: true });
         await craveloRefreshMyOrders();
+        renderCourierPanel();
+        GustoMap.drawMap('courier-map-canvas');
+    } else if (role === 'admin') {
+        const auditRes = await craveloApiFetch('/api/audit-logs', { method: 'GET', silentError: true });
+        if (auditRes && auditRes.ok && auditRes.data && Array.isArray(auditRes.data.audit_logs)) {
+            state.auditLogs = auditRes.data.audit_logs.map((row, idx) => {
+                const detailStr = String(row.detail || '');
+                const orderIdMatch = detailStr.match(/#(\d+)/);
+                const actionStr = String(row.action || '');
+                const statusMatch = actionStr.match(/->\s*(\w+)/);
+                return {
+                    time: row.time || '',
+                    orderId: orderIdMatch ? Number(orderIdMatch[1]) : (idx + 1),
+                    prevStatus: '—',
+                    newStatus: statusMatch ? statusMatch[1] : (actionStr.includes('İptal') ? 'iptal' : (actionStr.includes('Teslim') ? 'teslim_edildi' : 'alindi')),
+                    actor: row.user || 'Sistem',
+                    comment: actionStr + (detailStr ? ' • ' + detailStr : '')
+                };
+            });
+        }
+        await craveloRefreshMyOrders();
+        renderAdminCouriers();
+        renderAdminAudit();
+        GustoMap.drawMap('admin-map-canvas');
     }
 }
 

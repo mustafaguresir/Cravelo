@@ -3,13 +3,13 @@
  */
 
 const GustoState = (function () {
-    const STORAGE_KEY = 'gustogo_state_v2';
+    const STORAGE_KEY = 'cravelo_state_v2';
 
     // İlk Durum
     let state = {
         currentRole: null,
         currentUser: null,
-        customerLocation: { x: 18, y: 14, name: "Evim (Moda)" },
+        customerLocation: { x: 18, y: 14, lat: 40.9840, lon: 29.0270, name: "Evim (Moda)" },
         savedAddresses: [...INITIAL_ADDRESSES],
         userFavorites: [1, 6, 10],
         favoriteRestaurants: [1, 2],
@@ -36,7 +36,7 @@ const GustoState = (function () {
 
         // Modern Delivery & Order Features
         deliveryMode: 'courier', // 'courier' or 'takeaway' (Gel-Al %20 indirim)
-        selectedInstruction: 'baby', // id from DELIVERY_INSTRUCTIONS
+        selectedInstruction: 'Zile Basma Bebek Uyuyor 👶',
         deliveryNote: '',
         isEcoFriendly: true, // Plastik çatal/bıçak istemiyorum (HTML varsayılanıyla uyumlu)
         scheduledTime: 'now', // 'now' or '19:30' etc.
@@ -117,18 +117,24 @@ const GustoState = (function () {
     function loadPersistedState() {
         try {
             let loadedSharedStock = false;
-            try {
-                const sharedOutRaw = localStorage.getItem('cravelo_out_of_stock');
-                if (sharedOutRaw !== null) {
-                    const parsedOut = JSON.parse(sharedOutRaw);
-                    if (Array.isArray(parsedOut)) {
-                        state.outOfStockItemIds = parsedOut.map(id => Number(id)).filter(n => !isNaN(n));
-                        loadedSharedStock = true;
+            const hasServerOutOfStock = (typeof window !== 'undefined' && Array.isArray(window.SERVER_OUT_OF_STOCK) && window.location && /^https?:$/i.test(window.location.protocol || ''));
+            if (hasServerOutOfStock) {
+                state.outOfStockItemIds = window.SERVER_OUT_OF_STOCK.map(id => Number(id)).filter(n => !isNaN(n));
+                loadedSharedStock = true;
+            } else {
+                try {
+                    const sharedOutRaw = localStorage.getItem('cravelo_out_of_stock');
+                    if (sharedOutRaw !== null) {
+                        const parsedOut = JSON.parse(sharedOutRaw);
+                        if (Array.isArray(parsedOut)) {
+                            state.outOfStockItemIds = parsedOut.map(id => Number(id)).filter(n => !isNaN(n));
+                            loadedSharedStock = true;
+                        }
                     }
-                }
-            } catch (stockErr) {}
+                } catch (stockErr) {}
+            }
 
-            const raw = localStorage.getItem('cravelo_state_v2') || localStorage.getItem('kuryo_state_v2') || localStorage.getItem(STORAGE_KEY) || localStorage.getItem('tgo_state_v2');
+            const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('kuryo_state_v2') || localStorage.getItem('gustogo_state_v2') || localStorage.getItem('tgo_state_v2');
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (parsed.savedAddresses) state.savedAddresses = parsed.savedAddresses;
@@ -254,9 +260,6 @@ const GustoState = (function () {
                 currentRole: state.currentRole
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-            localStorage.setItem('cravelo_state_v2', JSON.stringify(dataToSave));
-            localStorage.setItem('kuryo_state_v2', JSON.stringify(dataToSave));
-            localStorage.setItem('tgo_state_v2', JSON.stringify(dataToSave));
             localStorage.setItem('cravelo_out_of_stock', JSON.stringify(state.outOfStockItemIds));
             if (state.ownerUsername) {
                 saveUserVault(state.ownerUsername);
@@ -560,7 +563,7 @@ const GustoState = (function () {
     }
 
     function applyRoadsideAddon(addon) {
-        if (!state.activeOrder) return false;
+        if (!state.activeOrder || state.activeOrder.addon) return false;
         state.activeAddon = addon;
         state.activeOrder.addon = addon;
         state.activeOrder.items.push({
@@ -570,6 +573,9 @@ const GustoState = (function () {
             options: 'Yol Üstü Lezzeti • 0 ₺ Kurye'
         });
         state.activeOrder.total += addon.price;
+        if (typeof state.activeOrder.grossTotal === 'number') {
+            state.activeOrder.grossTotal += addon.price;
+        }
         logAudit(state.activeOrder.id, state.activeOrder.status, state.activeOrder.status, 'Müşteri', `Yol üstü lezzeti eklendi: ${addon.name} (+${addon.price} ₺)`);
         persist();
         return true;

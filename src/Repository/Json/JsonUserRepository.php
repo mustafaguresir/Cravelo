@@ -54,6 +54,9 @@ final class JsonUserRepository implements UserRepositoryInterface
                 if ($user->id > 0 && $id === $user->id) {
                     $foundIndex = $index;
                 }
+                if ($user->id <= 0 && strcasecmp((string)($row['username'] ?? ''), $user->username) === 0) {
+                    throw new \InvalidArgumentException('Bu kullanıcı adı zaten kullanımda.');
+                }
             }
 
             if ($user->id <= 0) {

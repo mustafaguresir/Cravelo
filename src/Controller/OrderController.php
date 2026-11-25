@@ -104,7 +104,7 @@ final class OrderController extends Controller
             return;
         }
 
-        if (Session::has('__csrf_token') && !Session::validateCsrfToken((string)$request->post('_csrf_token', ''))) {
+        if (!Session::validateCsrfToken((string)$request->post('_csrf_token', ''))) {
             Session::setFlash('danger', 'Güvenlik doğrulaması (CSRF) başarısız oldu. Lütfen sayfayı yenileyip tekrar deneyin.');
             Response::redirect($request->url('/'), 303);
             return;
@@ -116,18 +116,51 @@ final class OrderController extends Controller
             Response::redirect($request->url('/'), 303);
             return;
         }
-        $restaurantId = (int)$request->post('restaurant_id', 1);
+
+        $restaurantId = (int)$request->post('restaurant_id', 0);
+        if ($restaurantId <= 0) {
+            Session::setFlash('danger', 'Geçerli bir restoran seçilmedi.');
+            Response::redirect($request->url('/'), 303);
+            return;
+        }
+
         $totalAmount = (float)$request->post('total_amount', 0.0);
         $delX = (int)$request->post('del_x', 18);
         $delY = (int)$request->post('del_y', 14);
+        $deliveryLat = (float)$request->post('delivery_latitude', 40.9850);
+        $deliveryLon = (float)$request->post('delivery_longitude', 29.0280);
+        $deliveryMode = (string)$request->post('delivery_mode', 'courier');
+        $rawItems = $request->post('items', []);
+        if (is_string($rawItems)) {
+            $decodedItems = json_decode($rawItems, true);
+            $items = is_array($decodedItems) ? $decodedItems : [];
+        } else {
+            $items = is_array($rawItems) ? $rawItems : [];
+        }
+        $couponCode = trim((string)$request->post('coupon_code', ''));
+        $deliveryFee = (float)$request->post('delivery_fee', 0.0);
+        $tip = (float)$request->post('tip', 0.0);
 
         try {
-            $result = $this->orderService->createOrder((int)$user['id'], $restaurantId, $totalAmount, $delX, $delY);
+            $result = $this->orderService->createOrder(
+                (int)$user['id'],
+                $restaurantId,
+                $totalAmount,
+                $delX,
+                $delY,
+                $items,
+                $deliveryLat,
+                $deliveryLon,
+                $deliveryMode,
+                $couponCode !== '' ? $couponCode : null,
+                $deliveryFee,
+                $tip
+            );
             $orderId = (int)$result['order_id'];
             Session::setFlash('success', "Siparişiniz #{$orderId} başarıyla alındı! Kuryeniz hazırlanıyor.");
             Response::redirect($request->url('/'), 303);
         } catch (InvalidArgumentException $e) {
-            Session::setFlash('danger', 'Sepetiniz boş olduğu için sipariş oluşturulamadı.');
+            Session::setFlash('danger', $e->getMessage());
             Response::redirect($request->url('/'), 303);
         } catch (\Throwable $e) {
             error_log('[OrderController::create] ' . $e->getMessage());
@@ -199,10 +232,14 @@ final class OrderController extends Controller
     {
         $isHttp = ($orderId instanceof Request);
         if ($isHttp) {
+            if (!Session::has('user')) {
+                Response::json(['status' => 'error', 'message' => 'Yetkisiz erişim! Lütfen oturum açınız.'], 401);
+                return null;
+            }
             $request = $orderId;
             $body = $request->all();
             $actualOrderId = (int)($body['order_id'] ?? $body['id'] ?? 0);
-            $sessionUser = Session::has('user') ? (array)Session::get('user') : null;
+            $sessionUser = (array)Session::get('user');
         } else {
             $actualOrderId = (int)$orderId;
             $sessionUser = null;

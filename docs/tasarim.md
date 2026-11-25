@@ -3,7 +3,7 @@
 **Ders:** PHP Programlama – Tasarım ve Mimari (Hafta 3 / 4 — Aşama 1 Tasarım & Aşama 2 Senkronizasyon)  
 **Proje Adı:** Cravelo — Yemek Sipariş ve Akıllı Kurye Takip Sistemi (Food Delivery & Smart Courier Dispatch)  
 **Proje Sahibi ve Geliştirici (Bireysel Proje):**
-- **Proje Yöneticisi, Yazılım Mimarı, Veri/Test & Arayüz Sorumlusu:** **Mustafa Güreşir (`@mustafaguresir`)** — Proje vizyonu, katmanlı mimari, State/Strategy/Repository desenleri, JSON/3NF veri tasarımı, 31 PHPUnit + 281 otomatik test, arayüz ve tüm dokümantasyon tek geliştirici tarafından üstlenilmiştir.
+- **Proje Yöneticisi, Yazılım Mimarı, Veri/Test & Arayüz Sorumlusu:** **Mustafa Güreşir (`@mustafaguresir`)** — Proje vizyonu, katmanlı mimari, State/Strategy/Repository desenleri, JSON/3NF veri tasarımı, 44 PHPUnit + 291 otomatik test, arayüz ve tüm dokümantasyon tek geliştirici tarafından üstlenilmiştir.
 
 > **Aşama 2 Senkronizasyon Notu:** Bu tasarım belgesi **Cravelo** projesinin Aşama 1 mimari planını ve **Aşama 2 (Veritabanısız Çalışan Prototip)** güncellemelerini birleştirir:
 > 1. SQLite / PDO depolaması şartname gereği çıkarılmış; aynı Repository arayüzlerinin arkasında `storage/*.json` dosyalarını `flock(LOCK_EX)` ve `.tmp` atomik `rename()` ile yöneten `Json*Repository` sınıfları uygulanmıştır (Aşama 3'te `MySql*Repository` olarak geçirilecektir).

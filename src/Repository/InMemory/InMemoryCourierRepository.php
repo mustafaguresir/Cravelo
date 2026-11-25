@@ -36,6 +36,9 @@ final class InMemoryCourierRepository implements CourierRepositoryInterface
 
     public function findByUserId(int $userId): ?Courier
     {
+        if ($userId <= 0) {
+            return null;
+        }
         foreach ($this->couriers as $courier) {
             if ($courier->userId === $userId) {
                 return $courier;

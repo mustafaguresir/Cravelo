@@ -1,13 +1,13 @@
 /**
  * Test Suite: Address Coordinates Sync, Address Deletion, Modal Close Buttons, 
- * 12 Users Matrix (Slide 3) & Restaurant KDS View
+ * 10 Users Matrix (Slide 3) & Restaurant KDS View
  */
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-console.log('--- TEST SUITE: ADDRESS SYNC, ADDRESS DELETION, 12 USERS & RESTAURANT KDS ---');
+console.log('--- TEST SUITE: ADDRESS SYNC, ADDRESS DELETION, 10 USERS & RESTAURANT KDS ---');
 
 let passCount = 0;
 function test(desc, fn) {

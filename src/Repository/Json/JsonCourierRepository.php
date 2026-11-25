@@ -56,6 +56,9 @@ final class JsonCourierRepository implements CourierRepositoryInterface
 
     public function findByUserId(int $userId): ?Courier
     {
+        if ($userId <= 0) {
+            return null;
+        }
         $records = JsonStorageHelper::read($this->filePath);
         foreach ($records as $row) {
             if ((int)($row['user_id'] ?? 0) === $userId) {

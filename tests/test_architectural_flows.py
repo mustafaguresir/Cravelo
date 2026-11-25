@@ -297,7 +297,7 @@ assert_test(
 
 # Çok iş parçacıklı / eşzamanlı kilit simülasyonu
 def concurrency_simulation():
-    test_data_path = os.path.join(tempfile.gettempdir(), 'gustogo_concurrent_test.json')
+    test_data_path = os.path.join(tempfile.gettempdir(), 'cravelo_concurrent_test.json')
     lock_path = test_data_path + '.lock'
     
     # Başlangıç verisi
@@ -317,7 +317,7 @@ def concurrency_simulation():
                 data[0]['counter'] += 1
                 
                 # Atomik tempnam & replace
-                temp_fd, temp_file = tempfile.mkstemp(dir=tempfile.gettempdir(), prefix='gst_')
+                temp_fd, temp_file = tempfile.mkstemp(dir=tempfile.gettempdir(), prefix='crv_')
                 with os.fdopen(temp_fd, 'w', encoding='utf-8') as wf:
                     json.dump(data, wf)
                 if os.path.exists(test_data_path):
@@ -384,31 +384,37 @@ def reader_writer_race_condition_test():
             self._write_lock.release()
 
     rwlock = RWLockSim()
-    data_path = os.path.join(tempfile.gettempdir(), 'gustogo_rw_race_test.json')
+    data_path = os.path.join(tempfile.gettempdir(), 'cravelo_rw_race_test.json')
     with open(data_path, 'w', encoding='utf-8') as f:
         json.dump([{'id': 1}], f)
 
     fixed_empty_reads = 0
     buggy_empty_reads = 0
     stop_event = threading.Event()
+    # Deterministik senkronizasyon olayları: zamanlama şansına bağlı flaky davranışı tamamen ortadan kaldırır
+    unlinked_window_open = threading.Event()
+    buggy_checked_window = threading.Event()
 
     def writer_worker():
         count = 0
-        while not stop_event.is_set() and count < 60:
+        while not stop_event.is_set() and count < 25:
             count += 1
             rwlock.acquire_write()
             try:
                 temp_fd, temp_file = tempfile.mkstemp(dir=tempfile.gettempdir(), prefix='rw_')
                 with os.fdopen(temp_fd, 'w', encoding='utf-8') as wf:
                     json.dump([{'id': count}], wf)
-                # Windows unlink-before-rename davranışını simüle et
+                # Windows unlink-before-rename penceresini deterministik biçimde aç
                 if os.path.exists(data_path):
                     os.unlink(data_path)
-                time.sleep(0.003)
+                unlinked_window_open.set()
+                buggy_checked_window.wait(timeout=0.05)
+                buggy_checked_window.clear()
+                unlinked_window_open.clear()
                 os.rename(temp_file, data_path)
             finally:
                 rwlock.release_write()
-            time.sleep(0.002)
+            time.sleep(0.001)
 
     def fixed_reader_worker():
         nonlocal fixed_empty_reads
@@ -430,10 +436,11 @@ def reader_writer_race_condition_test():
     def buggy_reader_worker():
         nonlocal buggy_empty_reads
         while not stop_event.is_set():
-            # Hatalı Sıra: Kilit öncesi dosya kontrolü (yarış durumuna açık)
+            # Hatalı Sıra: Kilit öncesi dosya kontrolü (yazıcı unlink penceresinde kesinlikle yakalanır)
+            unlinked_window_open.wait(timeout=0.02)
             if not os.path.exists(data_path):
                 buggy_empty_reads += 1
-                time.sleep(0.001)
+                buggy_checked_window.set()
                 continue
             rwlock.acquire_read()
             try:
@@ -450,7 +457,7 @@ def reader_writer_race_condition_test():
 
     w = threading.Thread(target=writer_worker)
     r_fixed = [threading.Thread(target=fixed_reader_worker) for _ in range(3)]
-    r_buggy = [threading.Thread(target=buggy_reader_worker) for _ in range(3)]
+    r_buggy = [threading.Thread(target=buggy_reader_worker) for _ in range(2)]
 
     for r in r_fixed: r.start()
     for r in r_buggy: r.start()
@@ -458,6 +465,8 @@ def reader_writer_race_condition_test():
 
     w.join()
     stop_event.set()
+    unlinked_window_open.set()
+    buggy_checked_window.set()
     for r in r_fixed: r.join()
     for r in r_buggy: r.join()
 

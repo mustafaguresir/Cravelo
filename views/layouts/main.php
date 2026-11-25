@@ -6,6 +6,11 @@ $crvAsset = static function (string $relativePath) use ($request): string {
     $url = $request->asset($clean);
     return $ver !== false ? ($url . '?v=' . $ver) : $url;
 };
+$csrfToken = \App\Core\Session::getCsrfToken();
+$sessionPayload = is_array($currentUser ?? null) ? $currentUser : [];
+if (!empty($ownedRestaurantIds) && is_array($ownedRestaurantIds)) {
+    $sessionPayload['ownedRestaurantIds'] = array_values(array_map('intval', $ownedRestaurantIds));
+}
 ?>
 <!DOCTYPE html>
 <html lang="tr" data-theme="dark">
@@ -14,19 +19,23 @@ $crvAsset = static function (string $relativePath) use ($request): string {
     <title><?= htmlspecialchars($pageTitle ?? 'Cravelo – Kapında Sıcak Lezzetler & Hızlı Kurye Takip', ENT_QUOTES, 'UTF-8') ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0B0F19">
+    <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FF6B35'/%3E%3Cstop offset='100%25' stop-color='%23FA4A0C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Cpath d='M16 28c0-8 7.2-13 16-13s16 5 16 13H16zm-2 5h36a3 3 0 0 1 0 6H14a3 3 0 0 1 0-6zm3 9h30v3c0 3.3-2.7 6-6 6H23c-3.3 0-6-2.7-6-6v-3z' fill='%23fff'/%3E%3C/svg%3E">
 
     <!-- Early Theme Hydration (Zero Flash in Light/Dark Mode) -->
     <script>
         (function () {
             try {
-                var savedTheme = localStorage.getItem('gustogo-theme') || 'dark';
+                var savedTheme = localStorage.getItem('cravelo-theme') || localStorage.getItem('gustogo-theme') || 'dark';
                 document.documentElement.setAttribute('data-theme', savedTheme);
             } catch (e) {}
         })();
         window.BASE_PATH = <?= json_encode($request->getBasePath(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-        window.ACTIVE_SESSION = <?= json_encode($currentUser ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        window.CSRF_TOKEN = <?= json_encode($csrfToken, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        window.ACTIVE_SESSION = <?= json_encode($sessionPayload, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
         window.SERVER_ORDERS = <?= json_encode($serializedOrders ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        window.OWNED_RESTAURANT_IDS = <?= json_encode($ownedRestaurantIds ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        window.SERVER_OUT_OF_STOCK = <?= json_encode($outOfStockItemIds ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
     </script>
 
     <!-- Google Fonts & FontAwesome CDN -->

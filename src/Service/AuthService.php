@@ -30,6 +30,11 @@ final class AuthService
             throw new InvalidArgumentException("Kullanıcı adı en az 3 karakter olmalıdır.");
         }
 
+        $cleanFullName = trim($fullName);
+        if ($cleanFullName === '') {
+            throw new InvalidArgumentException("Ad Soyad alanı boş bırakılamaz.");
+        }
+
         if (strlen($plainPassword) < 6) {
             throw new InvalidArgumentException("Parola en az 6 karakter olmalıdır.");
         }
@@ -43,7 +48,7 @@ final class AuthService
             id: 0,
             username: $username,
             passwordHash: $passwordHash,
-            fullName: trim($fullName),
+            fullName: $cleanFullName,
             phone: trim($phone),
             role: $role
         );

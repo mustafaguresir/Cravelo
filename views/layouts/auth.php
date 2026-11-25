@@ -16,7 +16,7 @@ $isSplitAuth = str_contains($content ?? '', 'auth-split');
     <script>
         (function () {
             try {
-                var savedTheme = localStorage.getItem('gustogo-theme') || 'dark';
+                var savedTheme = localStorage.getItem('cravelo-theme') || localStorage.getItem('gustogo-theme') || 'dark';
                 document.documentElement.setAttribute('data-theme', savedTheme);
             } catch (e) {}
         })();
@@ -1064,7 +1064,7 @@ $isSplitAuth = str_contains($content ?? '', 'auth-split');
             var current = document.documentElement.getAttribute('data-theme') || 'dark';
             var next = current === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', next);
-            try { localStorage.setItem('gustogo-theme', next); } catch (e) {}
+            try { localStorage.setItem('cravelo-theme', next); } catch (e) {}
             syncAuthThemeIcon();
         }
         function togglePwdVisibility(inputId, btn) {

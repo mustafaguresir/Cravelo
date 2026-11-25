@@ -35,9 +35,9 @@ Projemizin ayırt edici ve çözümü zor olan iki ana çekirdek problemi bulunm
 | Hafta | Planlanan ve Gerçekleştirilen İş Paketleri | Sorumlu Grup Üyeleri | Somut Çıktılar / Dosyalar |
 | :--- | :--- | :--- | :--- |
 | **5. Hafta** | Aşama 1 gereksinimlerinin incelenmesi; JSON dosya tabanlı mimariye geçiş; `storage/` klasör yapısı ve `JsonStorageHelper` sınıfında `flock(LOCK_EX)` dosya kilit mekanizmasının kurulması. | **Mustafa Güreşir** | `src/Storage/JsonStorageHelper.php`, `composer.json` |
-| **6. Hafta** | Domain varlıkları (Model), Repository arayüzleri ve somut `Json*Repository` sınıflarının kodlanması; `bin/seed.php` başlangıç veri yükleyicisinin hazırlanması (10 kullanıcı, 7 restoran, 24 menü ürünü, 4 kurye, 4 sipariş). | **Mustafa Güreşir** | `src/Model/*`, `src/Repository/Json/*`, `bin/seed.php` |
+| **6. Hafta** | Domain varlıkları (Model), Repository arayüzleri ve somut `Json*Repository` sınıflarının kodlanması; `bin/seed.php` başlangıç veri yükleyicisinin hazırlanması (10 kullanıcı, 7 restoran, 27 menü ürünü, 4 kurye, 4 sipariş). | **Mustafa Güreşir** | `src/Model/*`, `src/Repository/Json/*`, `bin/seed.php` |
 | **7. Hafta** | Tek giriş noktalı Front Controller (`public/index.php`), dinamik Router (`src/Core/Router.php`), `OrderService` iş katmanı, Session, Flash Mesajlar, CSRF (`_csrf_token`), POST-Redirect-GET (PRG), Bcrypt `password_hash` ve IDOR koruması. | **Mustafa Güreşir** | `src/Core/*`, `src/Controller/*`, `src/Service/OrderService.php`, `src/Service/AuthService.php` |
-| **8. Hafta** | **31 adet PHPUnit 11 birim testi** (`tests/Unit/*`), InMemory sahte depolar, **PHPStan Seviye 5 (0 hata)**, mutasyon testi deneyleri ve izlenebilirlik matrisi oluşturulması. | **Mustafa Güreşir** | `tests/Unit/*`, `phpstan.neon`, `src/Repository/InMemory/*`, `docs/izlenebilirlik.md` |
+| **8. Hafta** | **44 adet PHPUnit 11 birim testi** (`tests/Unit/*`), InMemory sahte depolar, **PHPStan Seviye 5 (0 hata)**, mutasyon testi deneyleri ve izlenebilirlik matrisi oluşturulması. | **Mustafa Güreşir** | `tests/Unit/*`, `phpstan.neon`, `src/Repository/InMemory/*`, `docs/izlenebilirlik.md` |
 | **9. Hafta** | XAMPP/WAMP uyumluluğu (`.htaccess`, `Request::detectBasePath()`), tek giriş noktalı gerçek `fetch()` AJAX kısmi yenileme (`craveloApiFetch`), modern Cravelo arayüzü (Açık/Koyu mod), hata ekranları (403/404/500) ve akademik savunma sunumu. | **Mustafa Güreşir** | `.htaccess`, `public/.htaccess`, `public/js/app.js`, `views/*`, `docs/surec-raporu.md` |
 
 ---
@@ -80,12 +80,12 @@ Yapay zekâdan alınan desteklerde Mustafa Güreşir tarafından eleştirel dene
 
 ## 5. Test Sayısı, PHPStan Sonucu, Sınır Durumları ve İzlenebilirlik
 
-* **Toplam Otomatik Test Sayısı (312 Test — %100 Yeşil):**
-  * **PHPUnit 11.5.58 (`vendor/bin/phpunit`):** **31 adet birim/entegrasyon testi (91 assertion)** — 6 test sınıfı (`OrderStateMachineTest`, `CourierAssignmentStrategyTest`, `SecurityAndAuthTest`, `JsonStorageFlockTest`, `OrderControllerTest`, `JsonOrderRepositoryTest`).
+* **Toplam Otomatik Test Sayısı (335 Test — %100 Yeşil):**
+  * **PHPUnit 11.5.58 (`vendor/bin/phpunit`):** **44 adet birim/entegrasyon testi (189 assertion)** — 7 test sınıfı (`OrderStateMachineTest`, `CourierAssignmentStrategyTest`, `SecurityAndAuthTest`, `JsonStorageFlockTest`, `OrderControllerTest`, `JsonOrderRepositoryTest`, `SecurityAndRepositoriesTest`).
   * **Bağımsız PHP Test Koşucuları:** **32 adet** (`tests/run_tests.php`: 20 + `tests/test_architectural_flows.php`: 12).
   * **Python Mimari & Şartname Testleri:** **59 adet** (`test_architectural_flows.py`: 31 + `run_all_cmd_tests.py`: 20 + `verify_system.py`: 8).
-  * **Node.js Arayüz, Scrollytelling & RBAC Testleri:** **190 adet** (5 test dosyası).
-  * *(Şartnamenin "en az 10 test" beklentisi 31 kat aşılmıştır.)*
+  * **Node.js Arayüz, Scrollytelling, RBAC & Derin Denetim Testleri:** **200 adet** (6 test dosyası).
+  * *(Şartnamenin "en az 10 test" beklentisi 33 kat aşılmıştır.)*
 * **PHPStan Statik Analiz Sonucu (`vendor/bin/phpstan analyse`):**  
   `phpstan.neon` yapılandırmasıyla tüm `src/` dizini **PHPStan 2.3.7 — Seviye 5 (Level 5)** üzerinde taranmış ve **`[OK] No errors` (0 hata)** sonucu elde edilmiştir.
 * **Bellek İçi Sahte Repository (InMemory Repositories):**  
@@ -128,7 +128,7 @@ Yapay zekâdan alınan desteklerde Mustafa Güreşir tarafından eleştirel dene
 
 Proje **Mustafa Güreşir** (`https://github.com/mustafaguresir/Cravelo`) tarafından bireysel olarak geliştirilmiş ve savunulmaktadır:
 * **Mimari & Arka Plan:** Tek giriş noktalı Front Controller (`public/index.php`), dinamik Router (`src/Core/*`), PRG + CSRF akışı, Controller sınıfları (`AuthController`, `OrderController`, `HomeController`, `ApiController`), `OrderService` iş katmanı, `InvalidOrderTransitionException` / `NoAvailableCourierException`, `bin/seed.php` tohumlayıcı, `JsonStorageHelper` (`flock` + `.tmp` atomik takas), State Pattern & Haversine/Strategy kurye atama motoru, Repository arayüzleri ve `Json*` / `InMemory*` depoları.
-* **Kalite, Arayüz & Dokümantasyon:** 31 PHPUnit 11 testi (91 assertion), PHPStan Seviye 5 (0 hata), 281 ek Python/Node/PHP otomasyon testi, gerçek `fetch()` AJAX kısmi yenileme (`craveloApiFetch`), modern Cravelo Açık/Koyu arayüzü, `docs/izlenebilirlik.md`, `docs/ai-gunlugu.md`, `docs/surec-raporu.md` ve `Cravelo_Asama2_Sunum.pptx`.
+* **Kalite, Arayüz & Dokümantasyon:** 44 PHPUnit 11 testi (189 assertion), PHPStan Seviye 5 (0 hata), 291 ek Python/Node/PHP otomasyon testi, gerçek `fetch()` AJAX kısmi yenileme (`craveloApiFetch`), modern Cravelo Açık/Koyu arayüzü, `docs/izlenebilirlik.md`, `docs/ai-gunlugu.md`, `docs/surec-raporu.md` ve `Cravelo_Asama2_Sunum.pptx`.
 * **Git İş Akışı:** Geliştirmeler `main` dalı korunarak özellik dalları (`feat/*`, `fix/*`, `docs/*`) ve Pull Request akışıyla yönetilir.
 
 ---

@@ -5,20 +5,23 @@
         "restaurant_id": 1,
         "courier_id": 2,
         "status": "alindi",
-        "total_amount": 390,
+        "total_amount": 380,
         "delivery_latitude": 40.986,
         "delivery_longitude": 29.029,
+        "delivery_x": 18,
+        "delivery_y": 14,
+        "delivery_mode": "courier",
         "estimated_delivery_time": "30 dk",
-        "created_at": "2026-11-25 13:20:01",
+        "created_at": "2026-11-25 17:18:28",
         "items": [
             {
                 "id": 1,
                 "order_id": 1,
                 "menu_item_id": 1,
-                "name": "Adana Kebap Dürüm",
+                "name": "Adana Zırh Dürüm",
                 "quantity": 2,
-                "unit_price": 195,
-                "subtotal": 390
+                "unit_price": 190,
+                "subtotal": 380
             }
         ]
     },
@@ -28,29 +31,32 @@
         "restaurant_id": 2,
         "courier_id": null,
         "status": "hazirlaniyor",
-        "total_amount": 320,
+        "total_amount": 345,
         "delivery_latitude": 40.989,
         "delivery_longitude": 29.027,
+        "delivery_x": 15,
+        "delivery_y": 11,
+        "delivery_mode": "courier",
         "estimated_delivery_time": "25 dk",
-        "created_at": "2026-11-25 13:25:01",
+        "created_at": "2026-11-25 17:23:28",
         "items": [
             {
                 "id": 2,
                 "order_id": 2,
-                "menu_item_id": 5,
-                "name": "Cravelo Smash Burger",
+                "menu_item_id": 6,
+                "name": "Smash Cheeseburger",
                 "quantity": 1,
-                "unit_price": 240,
-                "subtotal": 240
+                "unit_price": 250,
+                "subtotal": 250
             },
             {
                 "id": 3,
                 "order_id": 2,
-                "menu_item_id": 7,
-                "name": "Baharatlı Patates Kızartması",
+                "menu_item_id": 8,
+                "name": "Truffle Parmesan Fries",
                 "quantity": 1,
-                "unit_price": 75,
-                "subtotal": 75
+                "unit_price": 95,
+                "subtotal": 95
             }
         ]
     },
@@ -60,20 +66,23 @@
         "restaurant_id": 3,
         "courier_id": 1,
         "status": "yolda",
-        "total_amount": 295,
+        "total_amount": 280,
         "delivery_latitude": 40.985,
         "delivery_longitude": 29.028,
+        "delivery_x": 18,
+        "delivery_y": 14,
+        "delivery_mode": "courier",
         "estimated_delivery_time": "10 dk",
-        "created_at": "2026-11-25 13:05:01",
+        "created_at": "2026-11-25 17:03:28",
         "items": [
             {
                 "id": 4,
                 "order_id": 3,
-                "menu_item_id": 10,
-                "name": "Quattro Formaggi",
+                "menu_item_id": 11,
+                "name": "Pepperoni Pizza",
                 "quantity": 1,
-                "unit_price": 295,
-                "subtotal": 295
+                "unit_price": 280,
+                "subtotal": 280
             }
         ]
     },
@@ -83,11 +92,14 @@
         "restaurant_id": 1,
         "courier_id": 3,
         "status": "teslim_edildi",
-        "total_amount": 520,
+        "total_amount": 480,
         "delivery_latitude": 40.984,
         "delivery_longitude": 29.03,
+        "delivery_x": 20,
+        "delivery_y": 26,
+        "delivery_mode": "courier",
         "estimated_delivery_time": "Tamamlandı",
-        "created_at": "2026-11-25 11:35:01",
+        "created_at": "2026-11-25 15:33:28",
         "items": [
             {
                 "id": 5,
@@ -95,8 +107,8 @@
                 "menu_item_id": 2,
                 "name": "Urfa Kebap Porsiyon",
                 "quantity": 2,
-                "unit_price": 260,
-                "subtotal": 520
+                "unit_price": 240,
+                "subtotal": 480
             }
         ]
     }

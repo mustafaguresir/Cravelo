@@ -196,13 +196,20 @@
         var query = (searchInput.value || '').trim();
         if (query) {
           var globalSearch = document.getElementById('global-search');
-          if (globalSearch) {
+          var targetSection = document.getElementById('view-customer') || document.querySelector('.landing-features');
+          if (globalSearch && targetSection && targetSection.style && targetSection.style.display !== 'none') {
             globalSearch.value = query;
             globalSearch.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-          var targetSection = document.getElementById('view-customer') || document.querySelector('.landing-features');
-          if (targetSection) {
             targetSection.scrollIntoView({ behavior: 'smooth' });
+            return;
+          }
+          // Oturumsuz karşılama ekranında (landing.php) arama yapıldığında giriş/keşfet akışına yönlendir
+          var loginLink = document.getElementById('landing-btn-login-nav') || document.querySelector('a[href*="login"]');
+          var base = (typeof window !== 'undefined' && window.BASE_PATH) ? window.BASE_PATH : '';
+          if (loginLink && loginLink.getAttribute('href')) {
+            window.location.href = loginLink.getAttribute('href');
+          } else {
+            window.location.href = base + '/login';
           }
         } else {
           searchInput.focus();

@@ -120,11 +120,21 @@ final class Request
         return str_contains($contentType, 'application/json');
     }
 
+    public function header(string $name, ?string $default = null): ?string
+    {
+        $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+        if (isset($_SERVER[$serverKey]) && is_string($_SERVER[$serverKey])) {
+            return $_SERVER[$serverKey];
+        }
+        return $default;
+    }
+
     public function getJson(): array
     {
         if ($this->jsonData === null) {
             $raw = file_get_contents('php://input');
-            $this->jsonData = json_decode($raw ?: '', true) ?? [];
+            $decoded = json_decode($raw ?: '', true);
+            $this->jsonData = is_array($decoded) ? $decoded : [];
         }
         return $this->jsonData;
     }

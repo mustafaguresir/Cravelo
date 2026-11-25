@@ -65,13 +65,26 @@ final class HomeController extends Controller
             $dashboardData['couriers']
         );
 
+        $ownedRestaurantIds = [];
+        if ($role === 'restaurant') {
+            $userId = (int)($user['id'] ?? 0);
+            foreach ($dashboardData['restaurants'] as $rest) {
+                if ($rest->userId === $userId) {
+                    $ownedRestaurantIds[] = $rest->id;
+                }
+            }
+        }
+        $outOfStockItemIds = $this->orderService->getOutOfStockMenuItemIds();
+
         $this->render($targetView, [
             'pageTitle' => 'Cravelo — ' . ucfirst($role) . ' Paneli',
             'user' => $user,
             'restaurants' => $dashboardData['restaurants'],
             'couriers' => $dashboardData['couriers'],
             'orders' => $dashboardData['orders'],
-            'serializedOrders' => $serializedOrders
+            'serializedOrders' => $serializedOrders,
+            'ownedRestaurantIds' => $ownedRestaurantIds,
+            'outOfStockItemIds' => $outOfStockItemIds,
         ], 'layouts/main');
     }
 }

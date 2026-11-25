@@ -531,8 +531,18 @@ const GustoMap = (function () {
 
         const state = GustoState.get();
         const restaurants = state.restaurants || [];
-        const customerLocation = state.customerLocation || { x: 18, y: 14, name: 'Kadıköy Moda' };
+        const fallbackCustomerLoc = state.customerLocation || { x: 18, y: 14, lat: 40.9840, lon: 29.0270, name: 'Kadıköy Moda' };
         const activeOrder = state.activeOrder;
+        const isCourierMap = (canvasId === 'courier-map-canvas');
+        const customerLocation = (isCourierMap && activeOrder && (typeof activeOrder.deliveryX === 'number' || typeof activeOrder.deliveryLat === 'number'))
+            ? {
+                x: typeof activeOrder.deliveryX === 'number' ? activeOrder.deliveryX : fallbackCustomerLoc.x,
+                y: typeof activeOrder.deliveryY === 'number' ? activeOrder.deliveryY : fallbackCustomerLoc.y,
+                lat: typeof activeOrder.deliveryLat === 'number' ? activeOrder.deliveryLat : fallbackCustomerLoc.lat,
+                lon: typeof activeOrder.deliveryLon === 'number' ? activeOrder.deliveryLon : fallbackCustomerLoc.lon,
+                name: activeOrder.customerName || fallbackCustomerLoc.name || 'Teslimat Adresi'
+            }
+            : fallbackCustomerLoc;
         const couriers = state.couriers || [];
         const isCustomerMap = (canvasId === 'customer-map-canvas');
         const pillBg = isDark ? 'rgba(15, 23, 42, 0.86)' : 'rgba(255, 255, 255, 0.92)';
@@ -928,7 +938,20 @@ const GustoMap = (function () {
 
         const state = GustoState.get();
         const activeOrder = state.activeOrder;
-        const custLoc = state.customerLocation || { x: 18, y: 14, name: 'Evim (Moda)' };
+        const fallbackLoc = state.customerLocation || { x: 18, y: 14, lat: 40.9840, lon: 29.0270, name: 'Evim (Moda)' };
+        const hasOrderCoords = activeOrder && (
+            (typeof activeOrder.deliveryLat === 'number' && typeof activeOrder.deliveryLon === 'number' && activeOrder.deliveryLat !== 0 && activeOrder.deliveryLon !== 0)
+            || (typeof activeOrder.deliveryX === 'number' && typeof activeOrder.deliveryY === 'number')
+        );
+        const custLoc = hasOrderCoords
+            ? {
+                x: typeof activeOrder.deliveryX === 'number' ? activeOrder.deliveryX : fallbackLoc.x,
+                y: typeof activeOrder.deliveryY === 'number' ? activeOrder.deliveryY : fallbackLoc.y,
+                lat: typeof activeOrder.deliveryLat === 'number' && activeOrder.deliveryLat !== 0 ? activeOrder.deliveryLat : fallbackLoc.lat,
+                lon: typeof activeOrder.deliveryLon === 'number' && activeOrder.deliveryLon !== 0 ? activeOrder.deliveryLon : fallbackLoc.lon,
+                name: activeOrder.customerName || 'Müşteri Teslimat Noktası'
+            }
+            : fallbackLoc;
         const custPos = (custLoc.lat && custLoc.lon) ? [custLoc.lat, custLoc.lon] : gridToGps(custLoc.x, custLoc.y);
 
         let restObj = (state.restaurants || [])[0] || { name: 'Lezzet Kebap Salonu', lat: 40.9850, lon: 29.0280, x: 12, y: 8, neighborhood: 'Moda, Kadıköy' };

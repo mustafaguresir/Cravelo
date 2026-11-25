@@ -415,7 +415,7 @@ getLoginElementById('inp-username').value = 'kurye_ali';
 getLoginElementById('inp-password').value = 'hash123';
 loginSandbox.handleStaticLogin({ preventDefault: () => {} });
 
-const courierSession = JSON.parse(localStorageMock.getItem('gustogo_session') || '{}');
+const courierSession = JSON.parse(localStorageMock.getItem('cravelo_session') || '{}');
 assertTest(
     'R3: Kurye girişi (kurye_ali) sonrasında oturumda role: "courier" oluşur ve index.html sayfasına yönlenir',
     loginNavigatedTo && loginNavigatedTo.startsWith('index.html') && courierSession.role === 'courier',
@@ -429,7 +429,7 @@ getLoginElementById('inp-username').value = 'restoran_lezzet';
 getLoginElementById('inp-password').value = 'hash123';
 loginSandbox.handleStaticLogin({ preventDefault: () => {} });
 
-const restSession = JSON.parse(localStorageMock.getItem('gustogo_session') || '{}');
+const restSession = JSON.parse(localStorageMock.getItem('cravelo_session') || '{}');
 assertTest(
     'R3: Restoran girişi (restoran_lezzet) sonrasında oturumda role: "restaurant" oluşur ve index.html sayfasına yönlenir',
     loginNavigatedTo && loginNavigatedTo.startsWith('index.html') && restSession.role === 'restaurant',
@@ -448,7 +448,7 @@ getLoginElementById('reg-password').value = 'parola123';
 getLoginElementById('reg-password-confirm').value = 'parola123';
 loginSandbox.handleRegister({ preventDefault: () => {} });
 
-const regSession = JSON.parse(localStorageMock.getItem('gustogo_session') || '{}');
+const regSession = JSON.parse(localStorageMock.getItem('cravelo_session') || '{}');
 assertTest(
     'R3: Yeni kullanıcı kaydında role: "customer" atanır ve index.html sayfasına yönlenir',
     loginNavigatedTo && loginNavigatedTo.startsWith('index.html') && regSession.role === 'customer',
@@ -581,7 +581,7 @@ register_shutdown_function(function() {
     echo "REG_FLASH:" . ($flash['message'] ?? '');
 });
 $_SERVER['REQUEST_METHOD'] = 'POST';
-$_POST = ['full_name' => 'Test', 'username' => 'ab', 'password' => 'secret123', 'password_confirm' => 'secret123'];
+$_POST = ['_csrf_token' => \\App\\Core\\Session::getCsrfToken(), 'full_name' => 'Test', 'username' => 'ab', 'password' => 'secret123', 'password_confirm' => 'secret123'];
 (new \\App\\Controller\\AuthController())->register(new \\App\\Core\\Request());
 `);
         assertTest(
