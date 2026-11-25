@@ -12,6 +12,22 @@
 
 declare(strict_types=1);
 
+// PHP yerleşik geliştirme sunucusu (php -S ... -t public public/index.php) için güvenli statik varlık servisi
+if (PHP_SAPI === 'cli-server') {
+    $uriPath = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+    $publicRoot = realpath(__DIR__);
+    $candidate = $uriPath !== '/' ? realpath(__DIR__ . $uriPath) : false;
+    if (
+        $publicRoot !== false
+        && $candidate !== false
+        && str_starts_with($candidate, $publicRoot . DIRECTORY_SEPARATOR)
+        && is_file($candidate)
+        && !str_ends_with(strtolower($candidate), '.php')
+    ) {
+        return false;
+    }
+}
+
 // Composer Autoloader veya Yedek PSR-4 Yükleyici
 $composerAutoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($composerAutoload)) {

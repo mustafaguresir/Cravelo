@@ -646,7 +646,7 @@ def build_presentation():
     seq_lines = [
         ("1. Tek Giriş Noktası:", "Restoran KDS POST /api?action=change_status gönderir → public/index.php → ApiController oturum rolünü alır."),
         ("2. Servis & Durum Denetimi:", "OrderService::transitionStatus() → OrderStateMachineService::transition() → PreparingState::proceed() doğrular."),
-        ("3. Aday Kurye Sorgusu:", "CourierAssignmentService::assignBestCourier(order) → JsonCourierRepository::findAvailableCouriers() çağırır."),
+        ("3. Aday Kurye Sorgusu:", "CourierAssignmentService::assignBestCourier(order) → JsonCourierRepository::findAvailable() çağırır."),
         ("4. Akıllı Puanlama:", "ScoreBasedAssignmentStrategy her aday için Puan = Haversine(km) + 2 × Aktif hesaplar; en düşük puanlıyı seçer."),
         ("5. Atomik Kayıt & Yanıt:", "updateStatusConditional() + incrementActiveOrders() flock(LOCK_EX) ile diske yazılır → HTTP 200 OK (JSON)."),
     ]
@@ -864,13 +864,13 @@ def build_presentation():
     add_card(s8, MARGIN_X, by8, bw8, bh8, bg_color=C_CARD_ALT, border_color=C_BORDER, accent_color=C_PURPLE, accent_pos="left")
     tb_inv = add_textbox(s8, MARGIN_X + 0.24, by8 + 0.14, bw8 - 0.42, bh8 - 0.24)
     tf = tb_inv.text_frame
-    add_para(tf, "📂  storage/ Altındaki 5 JSON Deposu + Test Depoları", font_size=12, color=C_PURPLE, bold=True, space_after=6, first=True)
+    add_para(tf, "📂  storage/ Altındaki 9 JSON Deposu + Test Depoları", font_size=12, color=C_PURPLE, bold=True, space_after=6, first=True)
     inv_items = [
         ("users.json:", "10 kullanıcı (1 Admin, 3 Müşteri, 3 Restoran, 3 Kurye) & Bcrypt hash."),
-        ("restaurants.json:", "7 restoran, sabit Kadıköy mahalle koordinatları (lat/lon)."),
+        ("restaurants.json:", "7 restoran, sabit Kadıköy mahalle koordinatları & açık/kapalı."),
         ("menu_items.json:", "27 tohumlanmış menü ürünü, fiyat, kategori, KDS CRUD & stok."),
-        ("couriers.json:", "4 kurye konumu, araç türü ve anlık aktif sipariş sayaçları."),
-        ("orders.json & InMemory*:", "Sipariş/kalemler + PHPUnit için 0 disk I/O InMemory depolar."),
+        ("couriers.json:", "4 kurye konumu, vardiya durumu (müsait/meşgul) ve aktif yük."),
+        ("orders + 4 Yardımcı:", "orders, audit_logs, reviews, messages, user_profiles + InMemory*."),
     ]
     for lead, body in inv_items:
         add_rich_bullet(tf, lead, body, lead_color=C_WHITE, body_color=C_TEXT, font_size=9.8, space_after=4)
@@ -1226,9 +1226,9 @@ def build_presentation():
         ("👨‍🍳 Lezzet Kebap", "restoran_lezzet", "Restoran (restaurant)", "Mutfak KDS & Ciro"),
         ("👨‍🍳 Burger Lab", "restoran_burger", "Restoran (restaurant)", "Mutfak KDS & Ciro"),
         ("👨‍🍳 Pizza Roma", "restoran_pizza", "Restoran (restaurant)", "Mutfak KDS & Ciro"),
-        ("🛵 Ali Kaya", "kurye_ali", "Kurye (courier)", "Kokpit (0.71 km, 2 görev)"),
-        ("🛵 Veli Demir", "kurye_veli", "Kurye (courier)", "Kokpit (1.31 km, 0 görev)"),
-        ("🛵 Can Öz", "kurye_can", "Kurye (courier)", "Kokpit (Moda, 1 görev)"),
+        ("🛵 Ali Kaya", "kurye_ali", "Kurye (courier)", "Kokpit (Rıhtım, 1 aktif görev)"),
+        ("🛵 Veli Demir", "kurye_veli", "Kurye (courier)", "Kokpit (Fenerbahçe, 1 aktif görev)"),
+        ("🛵 Can Öz", "kurye_can", "Kurye (courier)", "Kokpit (Bahariye, 0 aktif görev)"),
     ]
     for ri, row in enumerate(users13):
         bg = C_CARD if ri % 2 == 0 else C_CARD_ALT
@@ -1338,19 +1338,19 @@ def build_presentation():
 
     showcase15 = [
         ("RESTORAN KDS", "Restoran Mutfak Ekranı", SCREENSHOTS["restaurant_kds"], C_CORAL, "#view-restaurant", [
-            ("Canlı Mutfak Kartları:", "Alındı ➔ Hazırlanıyor ➔ Hazır akışı tek tıkla ilerler."),
-            ("Otomatik Kurye Tetikleme:", "'Hazır' basıldığında Haversine ataması başlar."),
-            ("KPI & Menü Stok:", "Günlük ciro, aktif sipariş adedi ve stok aç/kapa."),
+            ("Canlı KDS & Otomatik Zil:", "Alındı ➔ Hazırlanıyor ➔ Hazır akışı & yeni sipariş zili."),
+            ("Tam Menü CRUD & Şube:", "+ Yeni Ürün Ekle/Düzenle, anlık stok & şube aç/kapa."),
+            ("Satış Raporu & CSV:", "Tarih filtreli sunucu günlük satış raporu & CSV indirme."),
         ]),
         ("KURYE KOKPİTİ", "Kurye Teslimat & Harita Paneli", SCREENSHOTS["courier_cockpit"], C_CYAN, "#view-courier", [
-            ("Akıllı Görev Kartları:", "Gerçek Kadıköy sokak adları ve skor dökümü rozetleri."),
-            ("Etkileşimli Harita:", "Rota çerçevesi ve canlı HUD durum göstergeleri."),
-            ("Tek Tıkla İlerletme:", "'Restorandan Aldım (Yolda)' ➔ 'Teslim Ettim' akışı."),
+            ("Çoklu Görev & Vardiya:", "Müsait / Mola (Meşgul) vardiya anahtarı & çoklu kart."),
+            ("Saha Bölgesi & Harita:", "Sabit Kadıköy bölgeleri sunucuda kalıcı senkronize olur."),
+            ("Çift Yönlü Canlı Sohbet:", "Müşteriyle anlık mesajlaşma & Yolda/Teslim tek tık akış."),
         ]),
         ("YÖNETİCİ MERKEZİ", "Admin Kontrol & Filo Radar", SCREENSHOTS["admin_center"], C_EMERALD, "#view-admin", [
-            ("Executive KPI Bento:", "Toplam ciro, aktif filo, 4-rol canlı önizleme çubuğu."),
-            ("Şehir Radar Haritası:", "Restoran, Kurye ve Müşteri katman filtreleme."),
-            ("Filo & Audit Log:", "Kurye iş yükü çubukları ve order_status_log tablosu."),
+            ("Platform Ciro Analitiği:", "Restoran bazlı ciro grafiği, tarih filtresi & CSV rapor."),
+            ("Sipariş & Manuel Atama:", "Tüm siparişlerde kurye yeniden atama, ilerletme & iptal."),
+            ("Şube & Filo Denetimi:", "7 şube aç/kapa yönetimi, radar haritası & Audit Log."),
         ]),
     ]
     cw15 = (CONTENT_W - 0.36) / 3.0   # 3.924"
@@ -1381,28 +1381,28 @@ def build_presentation():
   3) Yönetici Merkezi (Mustafa Güreşir): Bento KPI'lar, 4-rol önizleme çubuğu, şehir radar haritası, kurye iş yükü ilerleme çubukları ve denetim günlüğü.""")
 
     # =========================================================================
-    # SLAYT 17: ETKİLEŞİMLİ MODALLAR, AKILLI ÖZELLEŞTİRİCİ & KISMİ AJAX
+    # SLAYT 17: ETKİLEŞİMLİ MODALLAR (11), AKILLI ÖZELLEŞTİRİCİ & KISMİ AJAX
     # =========================================================================
     s16 = prs.slides.add_slide(blank)
     add_chrome(s16, 17, "16. Etkileşim & Reaktif Senkronizasyon",
-               "8 Etkileşimli Modal, Akıllı Özelleştirici ve Kısmi AJAX Yenileme",
+               "11 Etkileşimli Modal, Akıllı Özelleştirici ve Kısmi AJAX Yenileme",
                "Hibrit mimari: Auth/formlarda HTTP 303 PRG güvenliği, canlı sipariş ve KDS akışlarında F5'siz kısmi AJAX hızı.")
 
-    # Left: 8 Modals as 2x4 clean tiles inside a container
+    # Left: Modals overview as 2x4 clean grouped tiles inside a container
     lw16 = 7.45
     add_card(s16, MARGIN_X, CONTENT_TOP, lw16, CONTENT_H, bg_color=C_CARD, border_color=C_BORDER, accent_color=C_CYAN, accent_pos="top")
     add_textbox(s16, MARGIN_X + 0.18, CONTENT_TOP + 0.14, lw16 - 0.36, 0.32,
-                "🪟  8 Etkileşimli Açılır Modal Katmanı (views/dashboard/_modals.php)", font_size=12, color=C_CYAN, bold=True)
+                "🪟  11 Etkileşimli Açılır Modal Katmanı (ESC & Backdrop • _modals.php)", font_size=12, color=C_CYAN, bold=True)
 
     modals = [
-        ("🛒 1. Sepetim", "Dinamik ürün sayacı rozeti, adet kontrolü, z-index: 60 kapatma."),
+        ("🛒 1. Sepetim", "Dinamik ürün sayacı rozeti, adet kontrolü & ESC kapatma."),
         ("🍔 2. Akıllı Özelleştirici", "Kategori duyarlı: tatlıda dondurma/fıstık, burgerde cheddar/sos."),
         ("💳 3. Ödeme & Gel-Al", "Adrese Teslim vs Gel-Al (%20 indirim), kupon & bahşiş."),
-        ("📍 4. Adres & Konum", "Etkileşimli harita pini, kayıtlı Kadıköy adresi ekle/sil."),
-        ("📦 5. 5-Adım Canlı Takip", "Yalnızca atanmış kuryeyi gösteren harita + iptal kilidi."),
-        ("💬 6. Kurye Sohbet", "Müşteri–kurye çift yönlü anlık mesaj ve hızlı şablonlar."),
-        ("🧾 7. Dijital Fiş / Fatura", "Teslim sonrası KDV dökümlü ve barkodlu sipariş özeti."),
-        ("⭐ 8. Puanlama & Grup", "5 yıldızlı lezzet/hız değerlendirmesi ve ortak grup sepeti."),
+        ("📍 4. Adres & Profil", "Sunucu kalıcı Kadıköy adres defteri & profil güncelleme."),
+        ("📦 5. 5-Adım Canlı Takip", "Atanmış kuryeyi gösteren harita, cüzdan & iptal kilidi."),
+        ("💬 6. Çift Yönlü Sohbet", "IDOR korumalı Müşteri ↔ Kurye canlı sunucu mesajlaşması."),
+        ("🧾 7. Dijital Fiş & KDS CRUD", "KDV dökümlü dijital fiş + KDS Ürün Ekle/Düzenle modalı."),
+        ("⭐ 8. Puanlama, Yorum & Grup", "Doğrulanmış restoran yorumları (+25 Puan) & ortak sepet."),
     ]
     mw16 = (lw16 - 0.52) / 2.0
     mh16 = 1.04
@@ -1437,10 +1437,10 @@ def build_presentation():
     add_pill(s16, rx16 + 0.20, CONTENT_TOP + CONTENT_H - 0.56, rw16 - 0.40, 0.40,
              "Hibrit Mimari: PRG (Auth) + AJAX (Canlı Takip)", C_CYAN_BG, C_CYAN, border_color=C_CYAN, font_size=9.2)
 
-    set_notes(s16, """[8 Modal, Akıllı Özelleştirici & Kısmi AJAX]
-• Uygulamada 8 tam işlevsel modal katmanı var: Sepet, Akıllı Özelleştirici, Ödeme/Gel-Al, Adres Seçici, 5-Adım Canlı Takip, Kurye Sohbet, Dijital Fatura ve Puanlama/Grup Siparişi.
+    set_notes(s16, """[11 Modal, Akıllı Özelleştirici & Kısmi AJAX]
+• Uygulamada ESC tuşu ve dış alan tıklamasıyla kapanabilen 11 tam işlevsel modal katmanı var: Sepet, Akıllı Özelleştirici, Ödeme/Gel-Al, Adres Seçici, Hesap/5-Adım Takip, Çift Yönlü Kurye Sohbeti, Dijital Fatura, Puanlama, Ortak Grup Sepeti, KDS Ürün Ekle/Düzenle ve Müşteri Yorumları.
 • Akıllı Özelleştirici kategori farkındalığına sahip: tatlı seçildiğinde ketçap/mayonez değil dondurma ve Antep fıstığı sunar.
-• Kısmi AJAX yenileme ile restoran veya kurye aksiyonları F5 gerekmeden müşteri paneline anında yansır.""")
+• Görünürlük duyarlı (document.hidden) kısmi AJAX yenileme ile restoran veya kurye aksiyonları F5 gerekmeden anında yansır.""")
 
     # =========================================================================
     # SLAYT 18: HOCANIN 3 RESMİ DOĞRULAMA KANITI & MUTASYON TESTİ DENEYİ
@@ -1574,9 +1574,9 @@ def build_presentation():
     sc_pts = [
         "▸ vendor/bin/phpunit: 54 Test (247 Assert)",
         "▸ vendor/bin/phpstan: Level 5 — 0 Hata",
-        "▸ InMemory*Repository (0 Disk I/O)",
+        "▸ GitHub Actions CI: 360/360 ✅ (ci.yml)",
+        "▸ InMemory* + İzole JSON Depolar",
         "▸ 4 ayrık giriş sınır testi (2/3 & 5/6)",
-        "▸ Gerçek LOCK_EX | LOCK_NB & 2 mutasyon",
         "▸ Tek tıkla: TESTLERI_CALISTIR.bat",
     ]
     for sp in sc_pts:
@@ -1680,7 +1680,7 @@ def build_presentation():
         ("src/Service/State/PreparingState.php", "public function canCancel(): bool { return false; }", "Mutfakta pişen yemeğin müşteri tarafından iptalini kilitleyen çekirdek kural."),
         ("src/Service/State/OnWayState.php", "throw new InvalidOrderTransitionException(...);", "Yoldaki paketin geriye mutfağa veya alındı aşamasına dönüşünü engeller."),
         ("src/Service/Courier/ScoreBasedStrategy.php", "$score = round($distKm + (2.0 * $active), 2);", "Haversine mesafesi ile iş yükü cezasını birleştiren adil kurye puanı."),
-        ("src/Service/OrderService.php", "assertSessionUserCanAccessOrder($order, $user)", "Controller→Repo atlamasını önler; URL IDOR erişimini 403 ile engeller."),
+        ("src/Service/OrderService.php", "assertSessionUserCanAccessOrder($sessionUser, $order)", "Controller→Repo atlamasını önler; URL IDOR erişimini 403 ile engeller."),
     ]
     for ri, row in enumerate(code_rows):
         bg = C_CARD if ri % 2 == 0 else C_CARD_ALT
