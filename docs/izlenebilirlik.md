@@ -1,6 +1,6 @@
 # Cravelo — Aşama 2 İzlenebilirlik Matrisi (Traceability Matrix)
 
-Bu belge, **Aşama 1** Yazılım Gereksinim Şartnamesi (`docs/srs.md`) içerisinde tanımlanan Kullanıcı Hikâyeleri (User Stories - US), Fonksiyonel Gereksinimler (FR) ve Fonksiyonel Olmayan Gereksinimler (NFR) ile **Aşama 2** kapsamında yazılan **44 adet PHPUnit 11 birim testi (189 assertion)**, çekirdek kural, sınır ve entegrasyon testlerinin birebir eşleştirmesini ve mutasyon testi laboratuvar kanıtlarını içerir. (**Geliştirici:** Mustafa Güreşir)
+Bu belge, **Aşama 1** Yazılım Gereksinim Şartnamesi (`docs/srs.md`) içerisinde tanımlanan Kullanıcı Hikâyeleri (User Stories - US), Fonksiyonel Gereksinimler (FR) ve Fonksiyonel Olmayan Gereksinimler (NFR) ile **Aşama 2** kapsamında yazılan **54 adet PHPUnit 11 birim testi (247 assertion)**, çekirdek kural, sınır ve entegrasyon testlerinin birebir eşleştirmesini ve mutasyon testi laboratuvar kanıtlarını içerir. (**Geliştirici:** Mustafa Güreşir)
 
 ---
 
@@ -235,10 +235,10 @@ OK (1 test, 2 assertions)
 
 ## 🚀 6. Hızlı Doğrulama Komutları
 
-Sistemdeki **335 otomatik test** ve **PHPStan Seviye 5 statik analizi** tek komutla veya toplu betikle doğrulanabilir:
+Sistemdeki **360 otomatik test** ve **PHPStan Seviye 5 statik analizi** tek komutla veya toplu betikle doğrulanabilir:
 
 ```bash
-# 1. PHPUnit 11 Birim Testleri (44 Test, 189 Assertion — InMemory sahte depolar):
+# 1. PHPUnit 11 Birim Testleri (54 Test, 247 Assertion — InMemory + izole JSON depolar):
 vendor/bin/phpunit --testdox
 
 # 2. PHPStan Statik Analiz (Seviye 5 — 0 Hata):

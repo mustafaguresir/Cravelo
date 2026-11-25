@@ -14,6 +14,14 @@
                 <div class="live-status-pill">
                     <span class="live-pulse-dot"></span> Canlı GPS Aktif
                 </div>
+                <div id="courier-shift-controls" style="display:inline-flex;gap:6px;background:var(--surface-2);border:1px solid var(--border);padding:4px;border-radius:9999px;" role="group" aria-label="Kurye Vardiya Durumu">
+                    <button type="button" class="btn btn-sm btn-success" id="courier-shift-musait" onclick="setCourierShiftStatus('musait')" style="border-radius:9999px;padding:5px 12px;font-size:12px;">
+                        <i class="fa-solid fa-circle-check"></i> Müsait
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline" id="courier-shift-mesgul" onclick="setCourierShiftStatus('mesgul')" style="border-radius:9999px;padding:5px 12px;font-size:12px;">
+                        <i class="fa-solid fa-mug-hot"></i> Mola / Meşgul
+                    </button>
+                </div>
                 <span class="status-pill warning" title="Kurye Teslimat Puanı">
                     <i class="fa-solid fa-trophy"></i> <strong>4.95 ⭐</strong>
                 </span>

@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-title Cravelo Asama 2 - Canli Test Ekrani (335 Test & PHPStan)
+title Cravelo Asama 2 - Canli Test Ekrani (360 Test & PHPStan)
 color 0A
 set "FAILED=0"
 
@@ -9,70 +9,77 @@ echo   CRAVELO ASAMA 2: PHPUNIT, PHPSTAN, MIKRO-MIMARI, GUVENLIK VE ARAYUZ TESTL
 echo ===========================================================================
 echo.
 
-echo [1/9] Python M1 Mimari Akislar, Base Path, PRG ve Flock Testleri (31 Test)...
+echo [1/10] Python M1 Mimari Akislar, Base Path, PRG ve Flock Testleri (31 Test)...
 python tests\test_architectural_flows.py
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [2/9] Python CMD Cekirdek Sartname Testleri (20 Test)...
+echo [2/10] Python CMD Cekirdek Sartname Testleri (20 Test)...
 python tests\run_all_cmd_tests.py
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [3/9] Python Sistem ve Depolama Dogrulama Testleri (8 Test)...
+echo [3/10] Python Sistem ve Depolama Dogrulama Testleri (8 Test)...
 python tests\verify_system.py
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [4/9] Node.js Adres Senkronu, Silme, 10 Kullanici ve KDS (31 Test)...
+echo [4/10] Node.js Adres Senkronu, Silme, 10 Kullanici ve KDS (31 Test)...
 node tests\test_address_and_restaurant.js
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [5/9] Node.js Rol Izolasyonu, Akilli Menu ve Harita HUD (42 Test)...
+echo [5/10] Node.js Rol Izolasyonu, Akilli Menu ve Harita HUD (42 Test)...
 node tests\test_comprehensive_improvements.js
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [6/9] Node.js Sikilastirilmis Giris ve Kayit Dogrulama (24 Test)...
+echo [6/10] Node.js Sikilastirilmis Giris ve Kayit Dogrulama (24 Test)...
 node tests\test_login_and_registration.js
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [7/9] Node.js Karsilama Ekrani, Auth Gate ve Rol Senkronizasyonu (35 Test)...
+echo [7/10] Node.js Karsilama Ekrani, Auth Gate ve Rol Senkronizasyonu (35 Test)...
 node tests\test_landing_and_auth_gate.js
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [8/9] Node.js Burger Hero Scrollytelling, GSAP ve Cift Gorunum (58 Test)...
+echo [8/10] Node.js Burger Hero Scrollytelling, GSAP ve Cift Gorunum (58 Test)...
 node tests\test_burger_hero_scrollytelling.js
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [9/9] Node.js Derin Denetim Regresyon Testleri (10 Test)...
+echo [9/10] Node.js Derin Denetim Regresyon Testleri (10 Test)...
 node tests\test_deep_audit_fixes.js
 if errorlevel 1 set "FAILED=1"
 echo.
 echo ---------------------------------------------------------------------------
 echo.
 
-echo [*] PHPUnit (44 Test / 189 Assertion), PHPStan (Seviye 5) ve Cekirdek PHP Testleri (32 Test)...
+echo [10/10] Node.js Platform Ozellikleri, Moduler UI & SQL Hizalama Testleri (15 Test)...
+node tests\test_platform_features.js
+if errorlevel 1 set "FAILED=1"
+echo.
+echo ---------------------------------------------------------------------------
+echo.
+
+echo [*] PHPUnit (54 Test / 247 Assertion), PHPStan (Seviye 5) ve Cekirdek PHP Testleri (32 Test)...
 set "PHP_BIN="
 if exist "%~dp0php\php.exe" (
     set "PHP_BIN=%~dp0php\php.exe"
@@ -114,7 +121,7 @@ if defined PHP_BIN (
 echo.
 echo ===========================================================================
 if "!FAILED!"=="0" (
-    echo   TUM 335 TEST VE PHPSTAN SEVIYE 5 %100 BASARILI!
+    echo   TUM 360 TEST VE PHPSTAN SEVIYE 5 %100 BASARILI!
 ) else (
     color 0C
     echo   [HATA] BAZI TESTLER BASARISIZ OLDU! Yukaridaki ciktiyi inceleyiniz.

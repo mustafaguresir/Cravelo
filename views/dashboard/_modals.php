@@ -591,5 +591,93 @@ function topUpCraveloWallet(amountTl) {
     </div>
 </div>
 
+<!-- 10. KDS Menü Ürünü Ekle / Düzenle Modalı -->
+<div class="modal-overlay" id="kds-menu-item-overlay" role="dialog" aria-modal="true" aria-labelledby="kds-item-modal-title">
+    <div class="modal-box" style="max-width:520px;">
+        <button type="button" class="modal-close" onclick="closeKdsItemModal()" title="Kapat" aria-label="Ürün Modalını Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="modal-header modal-header-with-close">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:14px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">
+                    <i class="fa-solid fa-utensils"></i>
+                </div>
+                <div>
+                    <h2 id="kds-item-modal-title" style="font-size:20px;font-weight:900;color:var(--text);margin:0;">Yeni Menü Ürünü Ekle</h2>
+                    <p style="font-size:12.5px;color:var(--text-2);margin:3px 0 0 0;">Ürün kaydedildiğinde sunucu menüsü ve müşteri ekranı anında güncellenir.</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body">
+            <form id="kds-menu-item-form" onsubmit="submitKdsMenuItem(event)">
+                <input type="hidden" id="kds-item-id" value="0">
+                <div class="form-group">
+                    <label class="form-label" for="kds-item-name">Ürün Adı</label>
+                    <input type="text" class="form-input" id="kds-item-name" required placeholder="Örn: Trüf Mantarlı Burger">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="kds-item-price">Fiyat (₺)</label>
+                        <input type="number" step="0.50" min="1" max="50000" class="form-input" id="kds-item-price" required placeholder="245.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="kds-item-category">Kategori</label>
+                        <select class="form-input" id="kds-item-category">
+                            <option value="Kebap">Kebap</option>
+                            <option value="Burger">Burger</option>
+                            <option value="Pizza">Pizza</option>
+                            <option value="Sushi">Sushi</option>
+                            <option value="Tatlı">Tatlı</option>
+                            <option value="Tavuk">Tavuk</option>
+                            <option value="Balık">Balık</option>
+                            <option value="Yan Ürün">Yan Ürün</option>
+                            <option value="İçecek">İçecek</option>
+                            <option value="Kahve">Kahve</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="kds-item-desc">Ürün Açıklaması</label>
+                    <input type="text" class="form-input" id="kds-item-desc" placeholder="İçerik, gramaj ve şef notu…">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="kds-item-img">Görsel URL (İsteğe Bağlı)</label>
+                    <input type="url" class="form-input" id="kds-item-img" placeholder="https://images.unsplash.com/...">
+                </div>
+                <label class="checkbox-row" style="margin-bottom:16px;">
+                    <span><i class="fa-solid fa-circle-check" style="color:var(--success);margin-right:6px;"></i> Satışa Açık (Stokta Var)</span>
+                    <input type="checkbox" id="kds-item-available" checked>
+                </label>
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;border-radius:14px;font-size:14.5px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Ürünü Sunucuya Kaydet
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 11. Müşteri Değerlendirmeleri & Yorumlar Modalı -->
+<div class="modal-overlay" id="reviews-overlay" role="dialog" aria-modal="true" aria-labelledby="reviews-modal-title">
+    <div class="modal-box" style="max-width:560px;">
+        <button type="button" class="modal-close" onclick="closeReviewsModal()" title="Kapat" aria-label="Yorumları Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="modal-header modal-header-with-close">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:14px;background:var(--yellow-light);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <div>
+                    <h2 id="reviews-modal-title" style="font-size:20px;font-weight:900;color:var(--text);margin:0;">Restoran Değerlendirmeleri</h2>
+                    <div id="reviews-modal-sub" style="font-size:12.5px;color:var(--text-2);margin-top:2px;">Gerçek Cravelo müşteri yorumları</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div id="reviews-modal-list" style="display:grid;gap:12px;max-height:420px;overflow-y:auto;padding-right:4px;"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Toast Notification Stack -->
 <div class="toast-container" id="toast-container" aria-live="polite"></div>

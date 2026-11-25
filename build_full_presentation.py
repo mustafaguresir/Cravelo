@@ -22,21 +22,21 @@ from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 
 # =============================================================================
-# MERKEZİ METRİK & GÖRSEL YAPILANDIRMA (Doğrulanmış 312/312 Test, PHPStan L5 & Canlı UI)
+# MERKEZİ METRİK & GÖRSEL YAPILANDIRMA (Doğrulanmış 360/360 Test, PHPStan L5 & Canlı UI)
 # =============================================================================
 TEST_STATS = {
-    "total": "312",
-    "phpunit_count": "31",
-    "phpunit_assertions": "91",
+    "total": "360",
+    "phpunit_count": "54",
+    "phpunit_assertions": "247",
     "phpstan_label": "PHPStan L5: 0 Hata",
-    "node_count": "190",
-    "node_files": "5",
+    "node_count": "215",
+    "node_files": "7",
     "php_count": "32",
-    "php_files": "2 Standalone + 6 PHPUnit",
+    "php_files": "2 Standalone + 8 PHPUnit",
     "python_count": "59",
     "python_files": "3",
-    "summary_badge": "312 / 312",
-    "detail_line": "PHPUnit (31) • PHP (32) • Python (59) • Node (190) • PHPStan L5 ✅",
+    "summary_badge": "360 / 360",
+    "detail_line": "PHPUnit (54) • PHP (32) • Python (59) • Node (215) • PHPStan L5 ✅",
 }
 
 SCREENSHOT_DIR = Path("tests/screenshots")
@@ -362,7 +362,7 @@ def build_presentation():
     # Architecture summary highlight banner
     add_card(s1, MARGIN_X, 2.74, CONTENT_W, 0.60, bg_color=C_CYAN_BG, border_color=C_CYAN, radius=0.14)
     add_textbox(s1, MARGIN_X + 0.18, 2.78, CONTENT_W - 0.36, 0.52,
-                "🚀  Cravelo Aşama 2 Mimarisi: Sıfır SQL (storage/*.json + flock)  •  Tek Giriş Noktalı Saf PHP 8.2+ MVC  •  31 PHPUnit + PHPStan L5 (0 Hata)  •  312/312 Test",
+                "🚀  Cravelo Aşama 2 Mimarisi: Sıfır SQL (storage/*.json + flock)  •  Tek Giriş Noktalı Saf PHP 8.2+ MVC  •  54 PHPUnit + PHPStan L5 (0 Hata)  •  360/360 Test",
                 font_size=9.8, color=C_WHITE, bold=False, v_anchor=MSO_ANCHOR.MIDDLE)
 
     # Tech stack pills (6 pills in a clean row)
@@ -387,13 +387,13 @@ def build_presentation():
     add_para(tf, "BİREYSEL PROJE GELİŞTİRİCİSİ & SUNUM SAHİBİ", font_size=9.5, color=C_CORAL, bold=True, space_after=4, first=True)
     add_para(tf, "Mustafa Güreşir", font_size=21, color=C_WHITE, bold=True, space_after=2)
     add_para(tf, "mustafaguresir@gmail.com  •  github.com/mustafaguresir/Cravelo  •  Bireysel Savunma", font_size=10.0, color=C_CYAN, bold=True, space_after=10)
-    add_para(tf, "Kapsam: Tek giriş noktalı saf PHP 8.2 MVC, OrderService + State & Strategy desenleri, Haversine + iş yükü kurye atama, flock(LOCK_EX) atomik JSON depolama, Bcrypt + CSRF + IDOR güvenliği, 31 PHPUnit + PHPStan L5 (0 hata) ve Cravelo 4-rol UI.",
+    add_para(tf, "Kapsam: Tek giriş noktalı saf PHP 8.2 MVC, OrderService + PlatformFeatureService, State & Strategy, Haversine + iş yükü atama, flock(LOCK_EX) JSON depolama, Bcrypt + CSRF + IDOR, 54 PHPUnit + PHPStan L5 (0 hata) ve 4-rol Cravelo UI.",
              font_size=10.2, color=C_TEXT, space_after=0)
 
     kpis = [
         ("0 SQL", "Saf JSON + flock()", "Veritabanı kullanılmadan\natomik dosya kilitleme", C_GOLD),
-        ("7 / 24+", "Restoran & Ürün", "10 Kullanıcı • 4 Kurye\n4 Bağımsız Rol Paneli", C_CYAN),
-        (TEST_STATS["total"], "Otomatik Test", "31 PHPUnit • PHPStan L5\n%100 Yeşil (0 Hata)", C_EMERALD),
+        ("7 / 27", "Restoran & Ürün", "10 Kullanıcı • 4 Kurye\n4 Bağımsız Rol Paneli", C_CYAN),
+        (TEST_STATS["total"], "Otomatik Test", "54 PHPUnit • PHPStan L5\n%100 Yeşil (0 Hata)", C_EMERALD),
     ]
     kx_start = MARGIN_X + 7.38
     kw = (CONTENT_W - 7.38 - 0.28) / 3.0
@@ -441,7 +441,7 @@ def build_presentation():
         ]),
         ("🏪 Asgari Varlık Kotası Aşımı", C_EMERALD, [
             ("Şartname Kotası:", "En az 3 restoran ve toplam 10 ürün zorunluluğu."),
-            ("Cravelo Gerçekleşen:", "7 restoran ve 27+ menü ürünü (JSON seed: 24, SPA: 27)."),
+            ("Cravelo Gerçekleşen:", "7 restoran ve 27 menü ürünü (JSON seed ve SPA 1:1 hizalı)."),
             ("Kurye Filosu:", "4 kurye (Ali, Veli, Can, Mehmet) ile iş yükü senaryosu."),
             ("Kullanıcı Havuzu:", "Bcrypt korumalı 10 tohumlanmış rol hesabı (bin/seed.php)."),
         ]),
@@ -868,7 +868,7 @@ def build_presentation():
     inv_items = [
         ("users.json:", "10 kullanıcı (1 Admin, 3 Müşteri, 3 Restoran, 3 Kurye) & Bcrypt hash."),
         ("restaurants.json:", "7 restoran, sabit Kadıköy mahalle koordinatları (lat/lon)."),
-        ("menu_items.json:", "24+ tohumlanmış menü ürünü, fiyat, kategori ve stok durumu."),
+        ("menu_items.json:", "27 tohumlanmış menü ürünü, fiyat, kategori, KDS CRUD & stok."),
         ("couriers.json:", "4 kurye konumu, araç türü ve anlık aktif sipariş sayaçları."),
         ("orders.json & InMemory*:", "Sipariş/kalemler + PHPUnit için 0 disk I/O InMemory depolar."),
     ]
@@ -1182,11 +1182,11 @@ def build_presentation():
     tf = tb_git.text_frame
     add_para(tf, "🌿  Git İş Akışı & Bireysel Süreç (Mustafa Güreşir)", font_size=12.5, color=C_GOLD, bold=True, space_after=8, first=True)
     git_pts = [
-        ("Tek Geliştirici Sorumluluğu:", "Mimari, backend (PHP 8.2), frontend (Cravelo UI), 312 test ve tüm belgeler Mustafa Güreşir tarafından uçtan uca geliştirildi."),
+        ("Tek Geliştirici Sorumluluğu:", "Mimari, backend (PHP 8.2), frontend (Cravelo UI), 360 test ve tüm belgeler Mustafa Güreşir tarafından uçtan uca geliştirildi."),
         ("GitHub Deposu & Dal Yapısı:", "github.com/mustafaguresir/Cravelo — Korumalı main dalı, feat/* & fix/* geliştirme dalları ve Pull Request inceleme akışı."),
         ("Hafta 5–6 (Veri & Çekirdek):", "storage/*.json + flock() atomik yazım, 4 Repository arayüzü + Json* depoları ve bin/seed.php tohumlama."),
-        ("Hafta 7–8 (Güvenlik & Test):", "Front Controller, OrderService, PRG + CSRF, IDOR 403, 31 PHPUnit testi, InMemory depolar ve PHPStan L5 (0 hata)."),
-        ("Hafta 9 (Arayüz & Savunma):", "XAMPP/WAMP BasePath, gerçek fetch() AJAX kısmi yenileme, Cravelo Açık/Koyu UI ve 21 slaytlık savunma sunumu."),
+        ("Hafta 7–8 (Güvenlik & Test):", "Front Controller, OrderService, PRG + CSRF, IDOR 403, 54 PHPUnit testi, InMemory depolar ve PHPStan L5 (0 hata)."),
+        ("Hafta 9 (Arayüz & Savunma):", "XAMPP/WAMP BasePath, KDS CRUD, kurye vardiya, yönetici analitiği, canlı sohbet/yorumlar ve 21 slaytlık savunma sunumu."),
     ]
     for lead, body in git_pts:
         add_rich_bullet(tf, lead, body, lead_color=C_WHITE, body_color=C_TEXT, font_size=9.8, space_after=6)
@@ -1526,16 +1526,16 @@ def build_presentation():
     tf = tb_ts.text_frame
     add_para(tf, "🧪  4 Katmanlı Test & Statik Analiz Altyapısı (TESTLERI_CALISTIR.bat)", font_size=11.8, color=C_CYAN, bold=True, space_after=5, first=True)
     add_rich_bullet(tf, f"PHPUnit 11.5 (vendor/bin/phpunit — {TEST_STATS['phpunit_count']} Test, {TEST_STATS['phpunit_assertions']} Assertion):",
-                    "6 sınıf (State, Strategy+TieBreaker, Flock, JsonOrderRepo, OrderController, Security/IDOR) — InMemory depolar.",
+                    "8 sınıf (State, Strategy, Flock, JsonRepo, Controller, Security/IDOR, PlatformFeatures) — InMemory & JSON.",
                     lead_color=C_GOLD, body_color=C_TEXT, font_size=9.4, space_after=5)
     add_rich_bullet(tf, "PHPStan 2.3 (vendor/bin/phpstan — Seviye 5: [OK] No errors):",
-                    "src/ dizinindeki tüm 40+ PHP sınıfı tip güvenliği ve ölü kod açısından 0 hata ile doğrulandı.",
+                    "src/ dizinindeki tüm 45+ PHP sınıfı tip güvenliği ve ölü kod açısından 0 hata ile doğrulandı.",
                     lead_color=C_CYAN, body_color=C_TEXT, font_size=9.4, space_after=5)
     add_rich_bullet(tf, f"Bağımsız PHP ({TEST_STATS['php_count']}) & Python ({TEST_STATS['python_count']}):",
                     "run_tests.php (20), architectural PHP (12), Python PRG/BasePath/flock (31), CMD şartname (20), 3 kanıt (8).",
                     lead_color=C_CORAL, body_color=C_TEXT, font_size=9.4, space_after=5)
-    add_rich_bullet(tf, f"Node.js Arayüz, Scrollytelling & RBAC ({TEST_STATS['node_count']}/190 — 5 Dosya):",
-                    "Burger scrollytelling (58), landing/auth (35), login/register (24), adres/KDS (31), rol izolasyonu (42).",
+    add_rich_bullet(tf, f"Node.js Arayüz, Modüler Özellik & RBAC ({TEST_STATS['node_count']}/215 — 7 Dosya):",
+                    "Scrollytelling (58), landing (35), auth (24), adres/KDS (31), RBAC (42), denetim (10), platform UI (15).",
                     lead_color=C_MINT, body_color=C_TEXT, font_size=9.4, space_after=0)
 
     # Bottom-Left: Compact FR-01..FR-16 Traceability Summary Table
@@ -1572,7 +1572,7 @@ def build_presentation():
     add_para(tf, TEST_STATS["detail_line"], font_size=10.0, color=C_CYAN, bold=True, align=PP_ALIGN.CENTER, space_after=14)
 
     sc_pts = [
-        "▸ vendor/bin/phpunit: 31 Test (91 Assert)",
+        "▸ vendor/bin/phpunit: 54 Test (247 Assert)",
         "▸ vendor/bin/phpstan: Level 5 — 0 Hata",
         "▸ InMemory*Repository (0 Disk I/O)",
         "▸ 4 ayrık giriş sınır testi (2/3 & 5/6)",
@@ -1583,9 +1583,9 @@ def build_presentation():
         add_para(tf, sp, font_size=10.0, color=C_TEXT, space_after=5)
 
     set_notes(s18, f"""[Otomatik Test Paketi, PHPUnit 11 & PHPStan L5]
-• Hocamız en az 10 PHPUnit testi istemişti; gerçek vendor/bin/phpunit koşucumuzda 31 birim testi (91 assertion) InMemory sahte depolarla %100 yeşil geçiyor.
+• Hocamız en az 10 PHPUnit testi istemişti; gerçek vendor/bin/phpunit koşucumuzda 54 birim testi (247 assertion) %100 yeşil geçiyor.
 • Ayrıca vendor/bin/phpstan analyse (Seviye 5) çalıştırdık ve tüm src/ dizininde 0 hata aldık.
-• Bağımsız PHP (32), Python (59) ve Node.js (190) testleriyle toplam {TEST_STATS['total']} test %100 yeşil geçmektedir.
+• Bağımsız PHP (32), Python (59) ve Node.js (215) testleriyle toplam {TEST_STATS['total']} test %100 yeşil geçmektedir.
 • docs/izlenebilirlik.md belgemizde Aşama 1'deki FR-01..FR-16 ve NFR-01/02 gereksinimleri test metotlarıyla birebir eşleştirilmiştir.""")
 
     # =========================================================================
@@ -1635,7 +1635,7 @@ def build_presentation():
 
     steps_bot = [
         ("5. Kısmi AJAX (DevTools Network)", "Restoran 'Hazır' / Kurye 'Yolda' yapınca craveloApiFetch() /api/order-status JSON yanıtıyla F5'siz günceller; hata durumunda toast gösterir.", C_GOLD),
-        (f"6. PHPUnit (31) + PHPStan L5 + {TEST_STATS['total']} Test", "vendor/bin/phpunit (2/3 & 5/6 sınır testleri dahil), vendor/bin/phpstan (0 hata) ve TESTLERI_CALISTIR.bat canlı çalıştırılır.", C_MINT),
+        (f"6. PHPUnit (54) + PHPStan L5 + {TEST_STATS['total']} Test", "vendor/bin/phpunit (2/3 & 5/6 sınır testleri dahil), vendor/bin/phpstan (0 hata) ve TESTLERI_CALISTIR.bat canlı çalıştırılır.", C_MINT),
         ("7. Mutasyon Kanıtı & Zorunlu Belgeler", "PreparingState::canCancel() mutasyon deneyi + docs/izlenebilirlik.md, docs/ai-gunlugu.md (SQLite hata vakası) ve docs/surec-raporu.md sunulur.", C_PURPLE),
     ]
     w_bot = (CONTENT_W - 0.18 * 2) / 3.0
@@ -1655,7 +1655,7 @@ def build_presentation():
   3) Mutfak 'Hazırlanıyor' sonrası iptal yasağı (HTTP 400),
   4) IDOR yetkisiz erişim engeli (HTTP 403),
   5) DevTools Network sekmesinde /api/order-status gerçek fetch() kısmi AJAX yenilemesi ve hata bildirimi,
-  6) vendor/bin/phpunit (31 test + sınır testleri), vendor/bin/phpstan (0 hata) ve TESTLERI_CALISTIR.bat (312 test),
+  6) vendor/bin/phpunit (54 test + sınır testleri), vendor/bin/phpstan (0 hata) ve TESTLERI_CALISTIR.bat (360 test),
   7) PreparingState::canCancel() mutasyon kanıtı + docs/izlenebilirlik.md, docs/ai-gunlugu.md ve docs/surec-raporu.md.""")
 
     # =========================================================================

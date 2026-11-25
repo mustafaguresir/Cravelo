@@ -10,6 +10,7 @@ use App\Repository\CourierRepositoryInterface;
 use App\Repository\OrderRepositoryInterface;
 use App\Repository\RestaurantRepositoryInterface;
 use App\Service\OrderService;
+use App\Service\PlatformFeatureService;
 
 /**
  * Ana Sayfa & Rol Bazlı Dashboard Controller'ı.
@@ -18,17 +19,25 @@ use App\Service\OrderService;
 final class HomeController extends Controller
 {
     private OrderService $orderService;
+    private PlatformFeatureService $featureService;
 
     public function __construct(
         ?RestaurantRepositoryInterface $restaurantRepo = null,
         ?OrderRepositoryInterface $orderRepo = null,
         ?CourierRepositoryInterface $courierRepo = null,
-        ?OrderService $orderService = null
+        ?OrderService $orderService = null,
+        ?PlatformFeatureService $featureService = null
     ) {
         $this->orderService = $orderService ?? new OrderService(
             orderRepo: $orderRepo,
             restaurantRepo: $restaurantRepo,
             courierRepo: $courierRepo
+        );
+        $this->featureService = $featureService ?? new PlatformFeatureService(
+            orderRepo: $orderRepo,
+            restaurantRepo: $restaurantRepo,
+            courierRepo: $courierRepo,
+            orderService: $this->orderService
         );
     }
 
@@ -75,6 +84,8 @@ final class HomeController extends Controller
             }
         }
         $outOfStockItemIds = $this->orderService->getOutOfStockMenuItemIds();
+        $serverCatalog = $this->featureService->getServerCatalogPayload();
+        $serverProfile = $this->featureService->getUserProfileData($user);
 
         $this->render($targetView, [
             'pageTitle' => 'Cravelo — ' . ucfirst($role) . ' Paneli',
@@ -85,6 +96,8 @@ final class HomeController extends Controller
             'serializedOrders' => $serializedOrders,
             'ownedRestaurantIds' => $ownedRestaurantIds,
             'outOfStockItemIds' => $outOfStockItemIds,
+            'serverCatalog' => $serverCatalog,
+            'serverProfile' => $serverProfile,
         ], 'layouts/main');
     }
 }

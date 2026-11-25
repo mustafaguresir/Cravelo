@@ -1,0 +1,53 @@
+[
+    {
+        "id": 1,
+        "order_id": 4,
+        "restaurant_id": 1,
+        "user_id": 3,
+        "author": "Mehmet Demir",
+        "taste": 5,
+        "speed": 5,
+        "service": 5,
+        "rating": 5,
+        "tags": [
+            "Sıcacık Geldi",
+            "Süper Hızlı"
+        ],
+        "comment": "Urfa kebap porsiyonu tam kıvamında ve dumanı üstünde geldi, teşekkürler!",
+        "created_at": "2026-11-25 16:34:39"
+    },
+    {
+        "id": 2,
+        "order_id": 0,
+        "restaurant_id": 2,
+        "user_id": 1,
+        "author": "Ahmet Yılmaz",
+        "taste": 5,
+        "speed": 5,
+        "service": 4,
+        "rating": 4.7,
+        "tags": [
+            "Doyurucu Porsiyon",
+            "Özenli Paket"
+        ],
+        "comment": "Smash Cheeseburger ve trüflü patates Kadıköy'de tek geçilir.",
+        "created_at": "2026-11-24 18:09:39"
+    },
+    {
+        "id": 3,
+        "order_id": 0,
+        "restaurant_id": 3,
+        "user_id": 2,
+        "author": "Ayşe Kaya",
+        "taste": 5,
+        "speed": 4,
+        "service": 5,
+        "rating": 4.7,
+        "tags": [
+            "Sıcacık Geldi",
+            "Kurye Çok Kibardı"
+        ],
+        "comment": "İnce çıtır hamur, bol mozzarella. Kurye Ali Bey çok nazikti.",
+        "created_at": "2026-11-23 18:09:39"
+    }
+]

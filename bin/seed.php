@@ -424,6 +424,87 @@ $auditLogs = [
 JsonStorageHelper::write($storageDir . '/audit_logs.json', $auditLogs);
 echo "[OK] 4 Başlangıç Denetim Kaydı 'storage/audit_logs.json' dosyasına kaydedildi.\n";
 
+// 7. MÜŞTERİ DEĞERLENDİRMELERİ (reviews.json)
+$reviews = [
+    [
+        'id' => 1,
+        'order_id' => 4,
+        'restaurant_id' => 1,
+        'user_id' => 3,
+        'author' => 'Mehmet Demir',
+        'taste' => 5,
+        'speed' => 5,
+        'service' => 5,
+        'rating' => 5.0,
+        'tags' => ['Sıcacık Geldi', 'Süper Hızlı'],
+        'comment' => 'Urfa kebap porsiyonu tam kıvamında ve dumanı üstünde geldi, teşekkürler!',
+        'created_at' => date('Y-m-d H:i:s', strtotime('-95 minutes'))
+    ],
+    [
+        'id' => 2,
+        'order_id' => 0,
+        'restaurant_id' => 2,
+        'user_id' => 1,
+        'author' => 'Ahmet Yılmaz',
+        'taste' => 5,
+        'speed' => 5,
+        'service' => 4,
+        'rating' => 4.7,
+        'tags' => ['Doyurucu Porsiyon', 'Özenli Paket'],
+        'comment' => 'Smash Cheeseburger ve trüflü patates Kadıköy\'de tek geçilir.',
+        'created_at' => date('Y-m-d H:i:s', strtotime('-1 day'))
+    ],
+    [
+        'id' => 3,
+        'order_id' => 0,
+        'restaurant_id' => 3,
+        'user_id' => 2,
+        'author' => 'Ayşe Kaya',
+        'taste' => 5,
+        'speed' => 4,
+        'service' => 5,
+        'rating' => 4.7,
+        'tags' => ['Sıcacık Geldi', 'Kurye Çok Kibardı'],
+        'comment' => 'İnce çıtır hamur, bol mozzarella. Kurye Ali Bey çok nazikti.',
+        'created_at' => date('Y-m-d H:i:s', strtotime('-2 days'))
+    ]
+];
+JsonStorageHelper::write($storageDir . '/reviews.json', $reviews);
+echo "[OK] 3 Başlangıç Değerlendirmesi 'storage/reviews.json' dosyasına kaydedildi.\n";
+
+// 8. SİPARİŞ MESAJLAŞMA GEÇMİŞİ (messages.json)
+$messages = [
+    [
+        'id' => 1,
+        'order_id' => 3,
+        'sender_id' => 7,
+        'sender_role' => 'courier',
+        'sender_name' => 'Ali Kaya',
+        'text' => 'Merhaba Ahmet Bey! Pizza Roma siparişinizi aldım, Moda Caddesi üzerinden 5 dakika içinde kapınızdayım.',
+        'time' => date('H:i', strtotime('-8 minutes')),
+        'created_at' => date('Y-m-d H:i:s', strtotime('-8 minutes'))
+    ]
+];
+JsonStorageHelper::write($storageDir . '/messages.json', $messages);
+echo "[OK] 1 Başlangıç Mesajı 'storage/messages.json' dosyasına kaydedildi.\n";
+
+// 9. KULLANICI PROFİL & ADRES KASASI (user_profiles.json)
+$userProfiles = [
+    [
+        'user_id' => 1,
+        'wallet_points' => 145,
+        'addresses' => [
+            ['id' => 1, 'title' => 'Evim (Moda)', 'desc' => 'Moda Cad. No:14/2 Kadıköy', 'x' => 18, 'y' => 14, 'lat' => 40.9840, 'lon' => 29.0270, 'neighborhood' => 'Moda, Kadıköy', 'isDefault' => true],
+            ['id' => 2, 'title' => 'İş Yerim (Bahariye)', 'desc' => 'Bahariye Cad. Süreyya Plaza No:22 K:3', 'x' => 15, 'y' => 11, 'lat' => 40.9885, 'lon' => 29.0315, 'neighborhood' => 'Bahariye, Kadıköy', 'isDefault' => false],
+            ['id' => 3, 'title' => 'Sahil / Kalamış', 'desc' => 'Münir Nurettin Selçuk Cad. No:8/4 Kalamış', 'x' => 20, 'y' => 26, 'lat' => 40.9740, 'lon' => 29.0410, 'neighborhood' => 'Kalamış Marina, Kadıköy', 'isDefault' => false]
+        ],
+        'active_location' => ['x' => 18, 'y' => 14, 'lat' => 40.9840, 'lon' => 29.0270, 'name' => 'Evim (Moda)'],
+        'updated_at' => date('Y-m-d H:i:s')
+    ]
+];
+JsonStorageHelper::write($storageDir . '/user_profiles.json', $userProfiles);
+echo "[OK] Kullanıcı profil/adres başlangıç verisi 'storage/user_profiles.json' dosyasına kaydedildi.\n";
+
 echo "==============================================================\n";
 echo "AŞAMA 2 TOHUMLAMA (SEED) BAŞARIYLA TAMAMLANDI!\n";
 echo "Tüm veriler 'storage/' altındaki JSON dosyalarında hazır.\n";

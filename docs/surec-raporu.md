@@ -80,12 +80,12 @@ Yapay zekâdan alınan desteklerde Mustafa Güreşir tarafından eleştirel dene
 
 ## 5. Test Sayısı, PHPStan Sonucu, Sınır Durumları ve İzlenebilirlik
 
-* **Toplam Otomatik Test Sayısı (335 Test — %100 Yeşil):**
-  * **PHPUnit 11.5.58 (`vendor/bin/phpunit`):** **44 adet birim/entegrasyon testi (189 assertion)** — 7 test sınıfı (`OrderStateMachineTest`, `CourierAssignmentStrategyTest`, `SecurityAndAuthTest`, `JsonStorageFlockTest`, `OrderControllerTest`, `JsonOrderRepositoryTest`, `SecurityAndRepositoriesTest`).
+* **Toplam Otomatik Test Sayısı (360 Test — %100 Yeşil):**
+  * **PHPUnit 11.5.58 (`vendor/bin/phpunit`):** **54 adet birim/entegrasyon testi (247 assertion)** — 8 test sınıfı (`OrderStateMachineTest`, `CourierAssignmentStrategyTest`, `SecurityAndAuthTest`, `JsonStorageFlockTest`, `OrderControllerTest`, `JsonOrderRepositoryTest`, `SecurityAndRepositoriesTest`, `PlatformFeaturesTest`).
   * **Bağımsız PHP Test Koşucuları:** **32 adet** (`tests/run_tests.php`: 20 + `tests/test_architectural_flows.php`: 12).
   * **Python Mimari & Şartname Testleri:** **59 adet** (`test_architectural_flows.py`: 31 + `run_all_cmd_tests.py`: 20 + `verify_system.py`: 8).
-  * **Node.js Arayüz, Scrollytelling, RBAC & Derin Denetim Testleri:** **200 adet** (6 test dosyası).
-  * *(Şartnamenin "en az 10 test" beklentisi 33 kat aşılmıştır.)*
+  * **Node.js Arayüz, Scrollytelling, RBAC, Derin Denetim & Platform UI Testleri:** **215 adet** (7 test dosyası).
+  * *(Şartnamenin "en az 10 test" beklentisi 36 kat aşılmıştır.)*
 * **PHPStan Statik Analiz Sonucu (`vendor/bin/phpstan analyse`):**  
   `phpstan.neon` yapılandırmasıyla tüm `src/` dizini **PHPStan 2.3.7 — Seviye 5 (Level 5)** üzerinde taranmış ve **`[OK] No errors` (0 hata)** sonucu elde edilmiştir.
 * **Bellek İçi Sahte Repository (InMemory Repositories):**  
@@ -128,7 +128,7 @@ Yapay zekâdan alınan desteklerde Mustafa Güreşir tarafından eleştirel dene
 
 Proje **Mustafa Güreşir** (`https://github.com/mustafaguresir/Cravelo`) tarafından bireysel olarak geliştirilmiş ve savunulmaktadır:
 * **Mimari & Arka Plan:** Tek giriş noktalı Front Controller (`public/index.php`), dinamik Router (`src/Core/*`), PRG + CSRF akışı, Controller sınıfları (`AuthController`, `OrderController`, `HomeController`, `ApiController`), `OrderService` iş katmanı, `InvalidOrderTransitionException` / `NoAvailableCourierException`, `bin/seed.php` tohumlayıcı, `JsonStorageHelper` (`flock` + `.tmp` atomik takas), State Pattern & Haversine/Strategy kurye atama motoru, Repository arayüzleri ve `Json*` / `InMemory*` depoları.
-* **Kalite, Arayüz & Dokümantasyon:** 44 PHPUnit 11 testi (189 assertion), PHPStan Seviye 5 (0 hata), 291 ek Python/Node/PHP otomasyon testi, gerçek `fetch()` AJAX kısmi yenileme (`craveloApiFetch`), modern Cravelo Açık/Koyu arayüzü, `docs/izlenebilirlik.md`, `docs/ai-gunlugu.md`, `docs/surec-raporu.md` ve `Cravelo_Asama2_Sunum.pptx`.
+* **Kalite, Arayüz & Dokümantasyon:** 54 PHPUnit 11 testi (247 assertion), PHPStan Seviye 5 (0 hata), 306 ek Python/Node/PHP otomasyon testi (toplam 360/360), gerçek `fetch()` AJAX kısmi yenileme (`craveloApiFetch`), modüler `public/js/features/*.js` özellik katmanı (KDS CRUD, kurye vardiya/GPS, yönetici analitik/kurye atama, çift yönlü sohbet, gerçek yorumlar), `docs/izlenebilirlik.md`, `docs/ai-gunlugu.md`, `docs/surec-raporu.md` ve `Cravelo_Asama2_Sunum.pptx`.
 * **Git İş Akışı:** Geliştirmeler `main` dalı korunarak özellik dalları (`feat/*`, `fix/*`, `docs/*`) ve Pull Request akışıyla yönetilir.
 
 ---

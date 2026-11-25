@@ -20,6 +20,7 @@ use App\Service\CourierAssignmentService;
 use App\Service\HaversineDistanceService;
 use App\Service\OrderService;
 use App\Service\OrderStateMachineService;
+use App\Service\PlatformFeatureService;
 use DomainException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -32,6 +33,7 @@ final class ApiController extends Controller
 {
     private OrderService $orderService;
     private AuthService $authService;
+    private PlatformFeatureService $featureService;
     private HaversineDistanceService $haversine;
 
     public function __construct(
@@ -42,7 +44,8 @@ final class ApiController extends Controller
         ?OrderStateMachineService $stateMachine = null,
         ?CourierAssignmentService $assignmentService = null,
         ?OrderService $orderService = null,
-        ?AuthService $authService = null
+        ?AuthService $authService = null,
+        ?PlatformFeatureService $featureService = null
     ) {
         $resolvedUserRepo = $userRepo ?? new JsonUserRepository();
         $this->authService = $authService ?? new AuthService($resolvedUserRepo);
@@ -55,6 +58,13 @@ final class ApiController extends Controller
             assignmentService: $assignmentService,
             authService: $this->authService
         );
+        $this->featureService = $featureService ?? new PlatformFeatureService(
+            orderRepo: $orderRepo,
+            restaurantRepo: $restaurantRepo,
+            courierRepo: $courierRepo,
+            userRepo: $resolvedUserRepo,
+            orderService: $this->orderService
+        );
         $this->haversine = new HaversineDistanceService();
     }
 
@@ -66,7 +76,24 @@ final class ApiController extends Controller
             $action = (string)($data['action'] ?? '');
         }
 
-        $postOnlyActions = ['login', 'register', 'logout', 'create_order', 'change_status', 'cancel_order', 'toggle_menu_item'];
+        $postOnlyActions = [
+            'login',
+            'register',
+            'logout',
+            'create_order',
+            'change_status',
+            'cancel_order',
+            'toggle_menu_item',
+            'save_menu_item',
+            'toggle_restaurant_active',
+            'update_courier_location',
+            'update_courier_status',
+            'reassign_courier',
+            'update_profile',
+            'save_addresses',
+            'submit_review',
+            'send_message',
+        ];
         if (in_array($action, $postOnlyActions, true) && $request->getMethod() !== 'POST') {
             Response::json([
                 'status' => 'error',
@@ -75,7 +102,7 @@ final class ApiController extends Controller
             return;
         }
 
-        $publicActions = ['health', 'ping', 'calculate_distance', 'login', 'register', 'logout'];
+        $publicActions = ['health', 'ping', 'calculate_distance', 'login', 'register', 'logout', 'get_reviews'];
         if (!in_array($action, $publicActions, true) && !Session::has('user')) {
             Response::json([
                 'status' => 'error',
@@ -84,7 +111,22 @@ final class ApiController extends Controller
             return;
         }
 
-        $csrfProtectedActions = ['create_order', 'change_status', 'cancel_order', 'logout', 'toggle_menu_item'];
+        $csrfProtectedActions = [
+            'create_order',
+            'change_status',
+            'cancel_order',
+            'logout',
+            'toggle_menu_item',
+            'save_menu_item',
+            'toggle_restaurant_active',
+            'update_courier_location',
+            'update_courier_status',
+            'reassign_courier',
+            'update_profile',
+            'save_addresses',
+            'submit_review',
+            'send_message',
+        ];
         if (Session::has('user') && in_array($action, $csrfProtectedActions, true)) {
             $bodyForCsrf = $request->all();
             $csrfToken = (string)($request->header('X-CSRF-Token', '') ?: ($bodyForCsrf['_csrf_token'] ?? ''));
@@ -215,6 +257,108 @@ final class ApiController extends Controller
 
             case 'toggle_menu_item':
                 $this->toggleMenuItem($request, $user);
+                return;
+
+            case 'save_menu_item':
+                $this->handleFeatureCall(fn(): array => $this->featureService->saveMenuItem($user, $request->all()));
+                return;
+
+            case 'toggle_restaurant_active':
+                $body = $request->all();
+                $restId = (int)($body['restaurant_id'] ?? $body['id'] ?? 0);
+                $desired = array_key_exists('is_active', $body) ? (bool)$body['is_active'] : null;
+                $this->handleFeatureCall(fn(): array => $this->featureService->toggleRestaurantActive($user, $restId, $desired));
+                return;
+
+            case 'update_courier_location':
+                $body = $request->all();
+                $this->handleFeatureCall(fn(): array => $this->featureService->updateCourierLocation(
+                    $user,
+                    (int)($body['courier_id'] ?? 0),
+                    (int)($body['x'] ?? 14),
+                    (int)($body['y'] ?? 10),
+                    (float)($body['latitude'] ?? $body['lat'] ?? 40.9850),
+                    (float)($body['longitude'] ?? $body['lon'] ?? 29.0280),
+                    (string)($body['neighborhood'] ?? '')
+                ));
+                return;
+
+            case 'update_courier_status':
+                $body = $request->all();
+                $this->handleFeatureCall(fn(): array => $this->featureService->updateCourierStatus(
+                    $user,
+                    (int)($body['courier_id'] ?? 0),
+                    (string)($body['status'] ?? 'musait')
+                ));
+                return;
+
+            case 'reassign_courier':
+                $body = $request->all();
+                $this->handleFeatureCall(fn(): array => $this->featureService->reassignOrderCourier(
+                    $user,
+                    (int)($body['order_id'] ?? 0),
+                    (int)($body['courier_id'] ?? 0)
+                ));
+                return;
+
+            case 'admin_analytics':
+                $body = $request->all();
+                $dateParam = isset($body['date']) && is_string($body['date']) && trim($body['date']) !== '' ? trim($body['date']) : null;
+                $this->handleFeatureCall(fn(): array => $this->featureService->getAdminAnalytics($user, $dateParam));
+                return;
+
+            case 'catalog':
+                Response::json(['status' => 'success', 'catalog' => $this->featureService->getServerCatalogPayload()]);
+                return;
+
+            case 'get_profile':
+                Response::json(['status' => 'success', 'profile' => $this->featureService->getUserProfileData($user)]);
+                return;
+
+            case 'update_profile':
+                $body = $request->all();
+                $this->handleFeatureCall(function () use ($user, $body): array {
+                    $res = $this->featureService->updateUserProfile(
+                        $user,
+                        (string)($body['full_name'] ?? $body['fullName'] ?? ''),
+                        (string)($body['phone'] ?? ''),
+                        isset($body['email']) ? (string)$body['email'] : null
+                    );
+                    if (isset($res['user']) && is_array($res['user'])) {
+                        Session::set('user', $res['user']);
+                    }
+                    return $res;
+                });
+                return;
+
+            case 'save_addresses':
+                $body = $request->all();
+                $addrs = is_array($body['addresses'] ?? null) ? $body['addresses'] : [];
+                $activeLoc = is_array($body['active_location'] ?? null) ? $body['active_location'] : null;
+                $this->handleFeatureCall(fn(): array => $this->featureService->saveUserAddresses($user, $addrs, $activeLoc));
+                return;
+
+            case 'get_reviews':
+                $body = $request->all();
+                $rId = isset($body['restaurant_id']) ? (int)$body['restaurant_id'] : null;
+                Response::json($this->featureService->getReviews($rId));
+                return;
+
+            case 'submit_review':
+                $this->handleFeatureCall(fn(): array => $this->featureService->submitReview($user, $request->all()), 201);
+                return;
+
+            case 'get_messages':
+                $body = $request->all();
+                $oId = (int)($body['order_id'] ?? $body['id'] ?? 0);
+                $this->handleFeatureCall(fn(): array => $this->featureService->getOrderMessages($user, $oId));
+                return;
+
+            case 'send_message':
+                $body = $request->all();
+                $oId = (int)($body['order_id'] ?? $body['id'] ?? 0);
+                $txt = (string)($body['text'] ?? $body['message'] ?? '');
+                $this->handleFeatureCall(fn(): array => $this->featureService->sendOrderMessage($user, $oId, $txt), 201);
                 return;
 
             case 'fleet_scores':
@@ -440,6 +584,24 @@ final class ApiController extends Controller
         } catch (\Throwable $e) {
             error_log('[ApiController::toggleMenuItem] ' . $e->getMessage());
             Response::json(['status' => 'error', 'message' => 'Ürün stok durumu güncellenirken hata oluştu.'], 500);
+        }
+    }
+
+    /**
+     * @param callable(): array<string, mixed> $fn
+     */
+    private function handleFeatureCall(callable $fn, int $successCode = 200): void
+    {
+        try {
+            Response::json($fn(), $successCode);
+        } catch (InvalidArgumentException $e) {
+            Response::json(['status' => 'error', 'message' => $e->getMessage()], 400);
+        } catch (RuntimeException $e) {
+            $code = in_array($e->getCode(), [401, 403, 404, 409], true) ? $e->getCode() : 400;
+            Response::json(['status' => 'error', 'message' => $e->getMessage()], $code);
+        } catch (\Throwable $e) {
+            error_log('[ApiController::handleFeatureCall] ' . $e->getMessage());
+            Response::json(['status' => 'error', 'message' => 'İşlem sırasında beklenmeyen bir hata oluştu.'], 500);
         }
     }
 

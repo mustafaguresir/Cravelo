@@ -87,4 +87,4 @@ Bu belge, **Cravelo** projesinin Aşama 2 (Veritabanısız Çalışan Prototip) 
 
 1. **AI Kodları Asla Doğrudan Kabul Edilmedi:** Üretilen her PHP sınıfı, arayüz ve JavaScript fonksiyonu PSR-12 standartları, şartname kısıtları ve bellek sızıntısı risklerine karşı satır satır denetlendi ve PHPStan Seviye 5 (0 hata) ile doğrulandı.
 2. **Güvenlik Açıkları Manuel Olarak Kapatıldı:** Yapay zekânın ürettiği kodlarda oturum kontrolü yüzeyselken, IDOR (Insecure Direct Object References), XSS (`htmlspecialchars`), CSRF token doğrulama (`_csrf_token`) ve POST-Redirect-GET (PRG) akışı bizzat mimariye entegre edildi.
-3. **Test Odaklı Doğrulama:** Yapay zekâ tarafından önerilen algoritmalar önce 44 PHPUnit birim testiyle (189 assertion) ve mutasyon testleriyle doğrulandı; kuralları geçemeyen hiçbir kod depoya dahil edilmedi.
+3. **Test Odaklı Doğrulama:** Yapay zekâ tarafından önerilen algoritmalar önce 54 PHPUnit birim testiyle (247 assertion) ve mutasyon testleriyle doğrulandı; kuralları geçemeyen hiçbir kod depoya dahil edilmedi.

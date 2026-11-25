@@ -148,7 +148,9 @@
                     <div style="flex:1;min-width:0;">
                         <div class="menu-header-name" id="mh-name">Restoran Adı</div>
                         <div class="menu-header-sub">
-                            <span class="mh-badge"><i class="fa-solid fa-star" style="color:var(--yellow);"></i> <strong id="mh-rating">4.8</strong></span>
+                            <button type="button" class="mh-badge" id="mh-reviews-btn" onclick="openRestaurantReviews()" style="cursor:pointer;border:1px solid var(--border);background:var(--surface-2);" title="Müşteri Değerlendirmelerini Gör">
+                                <i class="fa-solid fa-star" style="color:var(--yellow);"></i> <strong id="mh-rating">4.8</strong> <span id="mh-review-count" style="font-size:11.5px;color:var(--text-3);margin-left:3px;">(Yorumlar)</span>
+                            </button>
                             <span class="mh-badge"><i class="fa-solid fa-clock" style="color:var(--primary);"></i> <strong id="mh-time">25-35</strong> dk</span>
                             <span class="mh-badge"><i class="fa-solid fa-location-dot" style="color:var(--blue);"></i> <strong id="mh-loc">Moda, Kadıköy</strong></span>
                         </div>
@@ -156,6 +158,23 @@
                 </div>
 
                 <div class="food-grid" id="food-grid"></div>
+
+                <!-- Gerçek Müşteri Değerlendirmeleri Bölümü -->
+                <div id="rest-reviews-section" class="panel-card" style="margin-top:22px;display:none;">
+                    <div class="panel-card-head" style="margin-bottom:12px;">
+                        <div>
+                            <div class="panel-card-title" style="font-size:16px;">
+                                <i class="fa-solid fa-comments" style="color:var(--yellow);"></i>
+                                <span>Müşteri Değerlendirmeleri</span>
+                            </div>
+                            <div style="font-size:12px;color:var(--text-3);margin-top:2px;">Gerçek teslimat sonrası doğrulanmış Cravelo yorumları</div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="openRestaurantReviews()" style="border-radius:9999px;">
+                            <i class="fa-solid fa-star"></i> Tümünü Gör
+                        </button>
+                    </div>
+                    <div id="rest-reviews-inline-list" style="display:grid;gap:10px;"></div>
+                </div>
             </div>
 
             <!-- Sticky Checkout Cart & Live Order Banner Sidebar -->

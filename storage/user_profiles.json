@@ -1,0 +1,49 @@
+[
+    {
+        "user_id": 1,
+        "wallet_points": 145,
+        "addresses": [
+            {
+                "id": 1,
+                "title": "Evim (Moda)",
+                "desc": "Moda Cad. No:14\/2 Kadıköy",
+                "x": 18,
+                "y": 14,
+                "lat": 40.984,
+                "lon": 29.027,
+                "neighborhood": "Moda, Kadıköy",
+                "isDefault": true
+            },
+            {
+                "id": 2,
+                "title": "İş Yerim (Bahariye)",
+                "desc": "Bahariye Cad. Süreyya Plaza No:22 K:3",
+                "x": 15,
+                "y": 11,
+                "lat": 40.9885,
+                "lon": 29.0315,
+                "neighborhood": "Bahariye, Kadıköy",
+                "isDefault": false
+            },
+            {
+                "id": 3,
+                "title": "Sahil \/ Kalamış",
+                "desc": "Münir Nurettin Selçuk Cad. No:8\/4 Kalamış",
+                "x": 20,
+                "y": 26,
+                "lat": 40.974,
+                "lon": 29.041,
+                "neighborhood": "Kalamış Marina, Kadıköy",
+                "isDefault": false
+            }
+        ],
+        "active_location": {
+            "x": 18,
+            "y": 14,
+            "lat": 40.984,
+            "lon": 29.027,
+            "name": "Evim (Moda)"
+        },
+        "updated_at": "2026-11-25 18:09:39"
+    }
+]

@@ -71,6 +71,90 @@
             </div>
         </div>
 
+        <!-- Platform Revenue & Order Analytics Panel -->
+        <section class="panel-card" id="admin-analytics-panel">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-chart-line" style="color:var(--success);"></i>
+                        <span>Platform Ciro, Sipariş & Teslimat Modu Analitiği</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Restoran bazlı canlı ciro grafiği, ortalama sepet tutarı ve teslimat modu kırılımı</div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <input type="date" class="form-input" id="admin-analytics-date" style="width:155px;padding:7px 10px;border-radius:10px;" onchange="refreshAdminCommandCenter()" aria-label="Analitik Tarih Filtresi">
+                    <button type="button" class="btn btn-sm btn-outline" onclick="var d=document.getElementById('admin-analytics-date');if(d)d.value='';refreshAdminCommandCenter();" style="border-radius:9999px;">
+                        <i class="fa-solid fa-infinity"></i> Tüm Zamanlar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="exportAdminOrdersCsv()" style="border-radius:9999px;">
+                        <i class="fa-solid fa-file-csv"></i> Siparişleri CSV İndir
+                    </button>
+                </div>
+            </div>
+            <div id="admin-analytics-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px;"></div>
+            <div id="admin-revenue-chart" style="display:grid;gap:10px;"></div>
+        </section>
+
+        <!-- All Platform Orders Management & Manual Courier Reassignment -->
+        <section class="panel-card" id="admin-orders-panel">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-list-check" style="color:var(--primary);"></i>
+                        <span>Tüm Platform Siparişleri & Manuel Kurye Atama</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Aktif siparişlerde kuryeyi anlık yeniden atayın, durum ilerletin veya yönetici yetkisiyle iptal edin</div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <select class="form-input" id="admin-order-status-filter" style="width:165px;padding:7px 10px;border-radius:10px;" onchange="renderAdminOrdersTable()">
+                        <option value="all">Tüm Durumlar</option>
+                        <option value="alindi">Alındı</option>
+                        <option value="hazirlaniyor">Hazırlanıyor</option>
+                        <option value="hazir">Hazır</option>
+                        <option value="yolda">Yolda</option>
+                        <option value="teslim_edildi">Teslim Edildi</option>
+                        <option value="iptal">İptal</option>
+                    </select>
+                    <select class="form-input" id="admin-order-mode-filter" style="width:150px;padding:7px 10px;border-radius:10px;" onchange="renderAdminOrdersTable()">
+                        <option value="all">Tüm Modlar</option>
+                        <option value="courier">🛵 Kurye Teslimat</option>
+                        <option value="takeaway">🚶 Gel-Al</option>
+                    </select>
+                </div>
+            </div>
+            <div class="tbl-responsive">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>Sipariş</th>
+                            <th>Müşteri & Restoran</th>
+                            <th>Mod</th>
+                            <th>Tutar</th>
+                            <th>Durum</th>
+                            <th>Kurye Ataması</th>
+                            <th>Yönetici İşlemi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-orders-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Partner Restaurant Open / Close Management -->
+        <section class="panel-card" id="admin-restaurants-panel">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-store" style="color:var(--yellow);"></i>
+                        <span>Partner Restoran Şube Yönetimi (Açık / Kapalı)</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Yoğunluk veya bakım durumunda restoranları tek tıkla sipariş alımına kapatıp açın</div>
+                </div>
+                <span class="status-pill info"><i class="fa-solid fa-shield-halved"></i> Kalıcı JSON Senkronizasyonu</span>
+            </div>
+            <div id="admin-restaurants-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;"></div>
+        </section>
+
         <!-- Interactive Kadıköy Google Maps City Radar -->
         <section class="panel-card">
             <div class="panel-card-head">

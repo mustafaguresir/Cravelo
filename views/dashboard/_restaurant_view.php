@@ -17,6 +17,9 @@
                 <span class="status-pill warning" title="Aktif Restoran Değerlendirmesi">
                     <i class="fa-solid fa-star"></i> <strong id="kpi-res-rating">4.9 ⭐</strong>
                 </span>
+                <button type="button" class="btn btn-sm btn-success" id="kds-rest-active-btn" onclick="toggleCurrentRestaurantActive()" style="border-radius:9999px;" title="Restoran Sipariş Alım Durumu">
+                    <i class="fa-solid fa-store"></i> <span>Şube Açık</span>
+                </button>
                 <div class="panel-selector-pill">
                     <label for="res-selector" style="font-size:12.5px;font-weight:800;color:var(--text-2);white-space:nowrap;">Aktif Restoran:</label>
                     <select class="form-input" id="res-selector" style="width:220px;padding:7px 12px;border-radius:10px;" onchange="changeVendorRestaurant()"></select>
@@ -96,8 +99,36 @@
                     </div>
                     <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Tükenen yemekleri anında satışa kapatın veya stok yenilendiğinde tekrar aktif edin</div>
                 </div>
-                <span class="status-pill success"><i class="fa-solid fa-bolt"></i> Anlık Senkronizasyon</span>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <span class="status-pill success"><i class="fa-solid fa-bolt"></i> Anlık Senkronizasyon</span>
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-kds-add-item" onclick="openKdsItemModal()" style="border-radius:9999px;">
+                        <i class="fa-solid fa-plus"></i> Yeni Ürün Ekle
+                    </button>
+                </div>
             </div>
             <div id="res-menu-body" class="menu-toggle-grid"></div>
+        </section>
+
+        <!-- Server-Backed Daily Sales Report & CSV Export -->
+        <section class="panel-card" id="kds-daily-report-section">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-chart-column" style="color:var(--success);"></i>
+                        <span>Günlük Satış Raporu & Finansal Özet</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Seçili tarihe ait sunucu doğrulamalı ciro, tamamlanan/iptal sipariş kırılımı ve CSV dışa aktarım</div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <input type="date" class="form-input" id="kds-report-date" style="width:160px;padding:7px 10px;border-radius:10px;" aria-label="Rapor Tarihi">
+                    <button type="button" class="btn btn-sm btn-outline" onclick="loadKdsDailyReport()" style="border-radius:9999px;">
+                        <i class="fa-solid fa-arrows-rotate"></i> Raporu Getir
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="exportKdsDailyReportCsv()" style="border-radius:9999px;">
+                        <i class="fa-solid fa-file-csv"></i> CSV İndir
+                    </button>
+                </div>
+            </div>
+            <div id="kds-report-output" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;"></div>
         </section>
     </div>

@@ -36,6 +36,8 @@ if (!empty($ownedRestaurantIds) && is_array($ownedRestaurantIds)) {
         window.SERVER_ORDERS = <?= json_encode($serializedOrders ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
         window.OWNED_RESTAURANT_IDS = <?= json_encode($ownedRestaurantIds ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
         window.SERVER_OUT_OF_STOCK = <?= json_encode($outOfStockItemIds ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        window.SERVER_CATALOG = <?= json_encode($serverCatalog ?? null, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        window.SERVER_PROFILE = <?= json_encode($serverProfile ?? null, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
     </script>
 
     <!-- Google Fonts & FontAwesome CDN -->
@@ -175,5 +177,11 @@ if (!empty($ownedRestaurantIds) && is_array($ownedRestaurantIds)) {
     <script src="<?= htmlspecialchars($crvAsset('js/map.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="<?= htmlspecialchars($crvAsset('js/audio.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="<?= htmlspecialchars($crvAsset('js/app.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <!-- Cravelo Modüler Özellik Katmanı (Tek Kaynaklı Katalog, KDS CRUD, Kurye Vardiya, Yönetici Analitiği, Canlı Sohbet & Yorumlar) -->
+    <script src="<?= htmlspecialchars($crvAsset('js/features/catalog-sync.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/features/kds-pro.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/features/courier-pro.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/features/admin-pro.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/features/customer-pro.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>

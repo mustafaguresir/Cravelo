@@ -6,7 +6,7 @@
 [![PSR-12](https://img.shields.io/badge/Style-PSR--12-brightgreen)](https://www.php-fig.org/psr/psr-12/)
 [![Architecture](https://img.shields.io/badge/Architecture-Pure%20MVC-orange)](#-mimari-ve-katman-sorumlulukları)
 [![Server](https://img.shields.io/badge/Server-XAMPP%20%7C%20WAMP%20%7C%20PHP%20CLI-success)](#-kurulum-ve-çalıştırma-seçenekleri)
-[![Tests](https://img.shields.io/badge/Tests-335%20Passing-green)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-360%20Passing-green)](tests/)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%205%20%E2%80%94%200%20Errors-brightgreen)](phpstan.neon)
 
 Modern, akıllı, katmanlı mimariye sahip ve **Aşama 2 (Veritabanısız Çalışan Prototip)** şartnamesine %100 uyumlu PHP web prototipi.
@@ -34,7 +34,7 @@ Bu proje; bir veritabanı sunucusuna (MySQL/SQLite) bağlanmadan çalışmakta, 
 | **Başlangıç Verisi (Seeder)** | `bin/seed.php` CLI başlangıç veri yükleme betiği | `bin/seed.php` (10 kullanıcı, 7 restoran, 27 menü ürünü, 4 kurye, 4 sipariş — ön yüzle 1:1 hizalı) |
 | **Auth & PRG Akışı** | Kayıt, giriş, çıkış (`password_hash`), POST-Redirect-GET (PRG), flash mesajlar, CSRF, IDOR engeli | `AuthService.php`, `AuthController.php`, `Session::setFlash()`, `_csrf_token`, HTTP 303 Redirect |
 | **Çekirdek Problem** | Sipariş durum makinesi (State Pattern) ve Haversine kurye puanlama optimizasyonu | `OrderStateMachineService.php`, `ScoreBasedAssignmentStrategy.php`, `OrderService.php` |
-| **Birim Testler & Statik Analiz** | `vendor/bin/phpunit` (en az 10 test, InMemory depolar, sınır durumları) ve PHPStan | **44 PHPUnit 11 Testi (189 Assertion)** + **PHPStan Seviye 5 (0 Hata)** + 291 Ek Otomatik Test |
+| **Birim Testler & Statik Analiz** | `vendor/bin/phpunit` (en az 10 test, InMemory depolar, sınır durumları) ve PHPStan | **54 PHPUnit 11 Testi (247 Assertion)** + **PHPStan Seviye 5 (0 Hata)** + 306 Ek Otomatik Test |
 | **Kısmi Yenileme (AJAX)** | Sayfa yenilemeden JSON ile arayüz parçasını güncelleme + HTTP hata yönetimi | `craveloApiFetch()` (`/api/order-status`, `/api/kds-orders`, `/api/courier-tasks`) & hata toast bildirimi |
 | **XAMPP / WAMP Uyumu** | Alt klasörde ve Apache `mod_rewrite` ile çalışabilme | Kök ve public `.htaccess`, dinamik `Request::detectBasePath()` |
 | **Zorunlu Dokümanlar** | `docs/izlenebilirlik.md`, `docs/ai-gunlugu.md`, `docs/surec-raporu.md` | `docs/` altında eksiksiz mevcut |
@@ -187,8 +187,8 @@ yemek-kurye-sistemi/
 │   ├── index.html & login.html      # İstemci tarafı zengin SPA arayüzü
 │   ├── css/                         # Stil dosyaları
 │   └── js/                          # Harita motoru, KDS ve AJAX takip betikleri
-└── tests/                           # Test Süitleri (Toplam 335 Test + PHPStan Seviye 5)
-    ├── Unit/                        # 44 Adet PHPUnit 11 Birim Testi (7 Sınıf, 189 Assertion)
+└── tests/                           # Test Süitleri (Toplam 360 Test + PHPStan Seviye 5)
+    ├── Unit/                        # 54 Adet PHPUnit 11 Birim Testi (8 Sınıf, 247 Assertion)
     ├── run_tests.php                # 20 Adet Bağımsız PHP Çekirdek Kural Testi
     ├── test_architectural_flows.php # 12 Adet Bağımsız PHP Mimari Akış Testi
     ├── test_architectural_flows.py  # 31 Adet Python PRG, BasePath ve flock Testi
@@ -206,9 +206,9 @@ yemek-kurye-sistemi/
 
 ## 🧪 Test Süitlerini ve Statik Analizi Çalıştırma
 
-Projede şartnamenin tüm kurallarını, sınır değerlerini, statik tip güvenliğini ve mutasyon deneylerini doğrulayan **335 otomatik test** mevcuttur:
+Projede şartnamenin tüm kurallarını, sınır değerlerini, statik tip güvenliğini ve mutasyon deneylerini doğrulayan **360 otomatik test** mevcuttur:
 
-### 1. PHPUnit 11 Birim Testleri (44 Test, 189 Assertion) & PHPStan (Seviye 5 — 0 Hata)
+### 1. PHPUnit 11 Birim Testleri (54 Test, 247 Assertion) & PHPStan (Seviye 5 — 0 Hata)
 Bellek içi sahte repository sınıflarıyla (`InMemory*Repository`) diske bağımlı olmadan çalışır:
 ```bash
 vendor/bin/phpunit
@@ -229,7 +229,7 @@ python tests/run_all_cmd_tests.py          # 20 Test
 python tests/verify_system.py              # 8 Test
 ```
 
-### 3. Node.js Arayüz, Scrollytelling ve RBAC Testleri (200 Test)
+### 3. Node.js Arayüz, Scrollytelling, RBAC ve Modüler Özellik Testleri (215 Test)
 ```bash
 node tests/test_burger_hero_scrollytelling.js   # 58 Test
 node tests/test_landing_and_auth_gate.js        # 35 Test
@@ -237,6 +237,7 @@ node tests/test_comprehensive_improvements.js   # 42 Test
 node tests/test_address_and_restaurant.js       # 31 Test
 node tests/test_login_and_registration.js       # 24 Test
 node tests/test_deep_audit_fixes.js             # 10 Test
+node tests/test_platform_features.js            # 15 Test
 ```
 
 ### 4. Tüm Testleri Tek Seferde Çalıştırma (Windows)
