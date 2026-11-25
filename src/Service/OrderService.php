@@ -86,19 +86,33 @@ final class OrderService
         int $delY = 14,
         array $items = [],
         float $deliveryLat = 40.9850,
-        float $deliveryLon = 29.0280
+        float $deliveryLon = 29.0280,
+        string $deliveryMode = 'courier'
     ): array {
-        if ($totalAmount <= 0) {
+        if (!is_finite($totalAmount) || $totalAmount <= 0) {
             throw new InvalidArgumentException('Sipariş tutarı sıfırdan büyük olmalıdır.');
         }
+
+        $restaurant = $this->restaurantRepo->findById($restaurantId);
+        if ($restaurant === null || !$restaurant->isActive) {
+            throw new InvalidArgumentException('Seçilen restoran bulunamadı veya şu anda hizmet vermiyor.');
+        }
+
+        $normalizedMode = ($deliveryMode === 'takeaway') ? 'takeaway' : 'courier';
 
         $orderItems = [];
         foreach ($items as $idx => $it) {
             if ($it instanceof OrderItem) {
+                if (!is_finite($it->unitPrice) || $it->unitPrice < 0) {
+                    throw new InvalidArgumentException('Ürün birim fiyatı negatif olamaz.');
+                }
                 $orderItems[] = $it;
             } elseif (is_array($it)) {
                 $qty = max(1, (int)($it['quantity'] ?? 1));
                 $price = (float)($it['price'] ?? $it['unit_price'] ?? 0.0);
+                if (!is_finite($price) || $price < 0) {
+                    throw new InvalidArgumentException('Ürün birim fiyatı negatif olamaz.');
+                }
                 $orderItems[] = new OrderItem(
                     id: $idx + 1,
                     orderId: 0,
@@ -120,31 +134,33 @@ final class OrderService
             totalAmount: $totalAmount,
             deliveryLatitude: $deliveryLat,
             deliveryLongitude: $deliveryLon,
-            estimatedDeliveryTime: '25-35 dk',
+            estimatedDeliveryTime: $normalizedMode === 'takeaway' ? '15 dk (Gel-Al)' : '25-35 dk',
             createdAt: date('Y-m-d H:i:s'),
             items: $orderItems,
             deliveryX: $delX,
-            deliveryY: $delY
+            deliveryY: $delY,
+            deliveryMode: $normalizedMode
         );
 
         $orderId = $this->orderRepo->saveWithTransaction($order, $orderItems);
         $order->id = $orderId;
 
         $assignedCourier = null;
-        $restaurant = $this->restaurantRepo->findById($restaurantId);
-        $available = $this->courierRepo->findAvailable();
-
-        if ($restaurant !== null && !empty($available)) {
-            $assignedCourier = $this->assignmentService->assignBestCourier($order, $restaurant, $available);
-            $this->orderRepo->assignCourier($orderId, $assignedCourier->id);
-            $this->courierRepo->incrementActiveOrders($assignedCourier->id);
-            $order->courierId = $assignedCourier->id;
+        if ($normalizedMode !== 'takeaway') {
+            $available = $this->courierRepo->findAvailable();
+            if (!empty($available)) {
+                $assignedCourier = $this->assignmentService->assignBestCourier($order, $restaurant, $available);
+                $this->orderRepo->assignCourier($orderId, $assignedCourier->id);
+                $this->courierRepo->incrementActiveOrders($assignedCourier->id);
+                $order->courierId = $assignedCourier->id;
+            }
         }
 
         return [
             'status' => 'success',
             'order_id' => $orderId,
             'current_status' => $order->status->value,
+            'delivery_mode' => $normalizedMode,
             'assigned_courier' => $assignedCourier ? [
                 'id' => $assignedCourier->id,
                 'name' => $assignedCourier->name,
@@ -275,9 +291,13 @@ final class OrderService
                 'restaurant' => $restaurantNames[$o->restaurantId] ?? ('Restoran #' . $o->restaurantId),
                 'courierId' => $o->courierId,
                 'courier_id' => $o->courierId,
-                'courier' => ($o->courierId !== null && isset($courierNames[$o->courierId]))
-                    ? $courierNames[$o->courierId]
-                    : 'Kurye Atanıyor',
+                'courier' => $o->deliveryMode === 'takeaway'
+                    ? 'Restorandan Gel-Al (Müşteri)'
+                    : (($o->courierId !== null && isset($courierNames[$o->courierId]))
+                        ? $courierNames[$o->courierId]
+                        : 'Kurye Atanıyor'),
+                'deliveryMode' => $o->deliveryMode,
+                'delivery_mode' => $o->deliveryMode,
                 'status' => $o->status->value,
                 'total' => $o->totalAmount,
                 'total_amount' => $o->totalAmount,
@@ -552,15 +572,28 @@ final class OrderService
     public function getFleetScores(): array
     {
         $couriers = $this->courierRepo->findAll();
+        $restaurants = $this->restaurantRepo->findAll();
+        $refRest = $restaurants[0] ?? null;
+        $refLat = ($refRest !== null && $refRest->latitude != 0.0) ? $refRest->latitude : 40.9850;
+        $refLon = ($refRest !== null && $refRest->longitude != 0.0) ? $refRest->longitude : 29.0280;
+
         $data = [];
         foreach ($couriers as $c) {
+            if ($c->latitude != 0.0 && $c->longitude != 0.0) {
+                $distKm = $this->assignmentService->calculateHaversineDistance($c->latitude, $c->longitude, $refLat, $refLon);
+            } elseif ($refRest !== null) {
+                $distKm = $this->assignmentService->calculateHaversineFromGrid($c->currentX, $c->currentY, $refRest->locationX, $refRest->locationY);
+            } else {
+                $distKm = 1.0;
+            }
             $data[] = [
                 'id' => $c->id,
                 'name' => $c->name,
                 'neighborhood' => $c->neighborhood !== '' ? $c->neighborhood : 'Kadıköy',
                 'status' => $c->status->value,
                 'active_orders' => $c->activeOrdersCount,
-                'score' => round(1.0 + (2.0 * $c->activeOrdersCount), 2)
+                'distance_km' => $distKm,
+                'score' => round($distKm + (2.0 * $c->activeOrdersCount), 2)
             ];
         }
         return $data;

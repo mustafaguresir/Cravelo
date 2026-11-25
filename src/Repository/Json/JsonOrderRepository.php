@@ -40,37 +40,39 @@ final class JsonOrderRepository implements OrderRepositoryInterface
      */
     public function saveWithTransaction(Order $order, array $items = []): int
     {
-        $records = JsonStorageHelper::read($this->filePath);
-        $maxId = 0;
-        $foundIndex = -1;
+        $savedId = (int)JsonStorageHelper::update($this->filePath, static function (array $records) use ($order, $items): array {
+            $maxId = 0;
+            $foundIndex = -1;
 
-        foreach ($records as $index => $row) {
-            $id = (int)$row['id'];
-            if ($id > $maxId) {
-                $maxId = $id;
+            foreach ($records as $index => $row) {
+                $id = (int)$row['id'];
+                if ($id > $maxId) {
+                    $maxId = $id;
+                }
+                if ($order->id > 0 && $id === $order->id) {
+                    $foundIndex = $index;
+                }
             }
-            if ($order->id > 0 && $id === $order->id) {
-                $foundIndex = $index;
+
+            if ($order->id <= 0) {
+                $order->id = $maxId + 1;
             }
-        }
 
-        if ($order->id <= 0) {
-            $order->id = $maxId + 1;
-        }
+            if (!empty($items)) {
+                $order->items = $items;
+            }
 
-        if (!empty($items)) {
-            $order->items = $items;
-        }
+            $data = $order->toArray();
+            if ($foundIndex >= 0) {
+                $records[$foundIndex] = $data;
+            } else {
+                $records[] = $data;
+            }
 
-        $data = $order->toArray();
-        if ($foundIndex >= 0) {
-            $records[$foundIndex] = $data;
-        } else {
-            $records[] = $data;
-        }
+            return ['data' => $records, 'result' => $order->id];
+        });
 
-        JsonStorageHelper::write($this->filePath, $records);
-        return $order->id;
+        return $savedId;
     }
 
     public function findById(int $id): ?Order
@@ -215,36 +217,38 @@ final class JsonOrderRepository implements OrderRepositoryInterface
 
     public function updateStatusConditional(int $id, OrderStatus $currentStatus, OrderStatus $newStatus): bool
     {
-        $records = JsonStorageHelper::read($this->filePath);
-        $updated = false;
+        return (bool)JsonStorageHelper::update($this->filePath, static function (array $records) use ($id, $currentStatus, $newStatus): array {
+            $updated = false;
 
-        foreach ($records as &$row) {
-            if ((int)$row['id'] === $id) {
-                if ($row['status'] === $currentStatus->value) {
-                    $row['status'] = $newStatus->value;
-                    $updated = true;
+            foreach ($records as &$row) {
+                if ((int)$row['id'] === $id) {
+                    if ($row['status'] === $currentStatus->value) {
+                        $row['status'] = $newStatus->value;
+                        $updated = true;
+                    }
+                    break;
                 }
-                break;
             }
-        }
+            unset($row);
 
-        if ($updated) {
-            JsonStorageHelper::write($this->filePath, $records);
-        }
-
-        return $updated;
+            return ['data' => $records, 'result' => $updated, 'write' => $updated];
+        });
     }
 
     public function assignCourier(int $orderId, int $courierId): void
     {
-        $records = JsonStorageHelper::read($this->filePath);
-        foreach ($records as &$row) {
-            if ((int)$row['id'] === $orderId) {
-                $row['courier_id'] = $courierId;
-                break;
+        JsonStorageHelper::update($this->filePath, static function (array $records) use ($orderId, $courierId): array {
+            $updated = false;
+            foreach ($records as &$row) {
+                if ((int)$row['id'] === $orderId) {
+                    $row['courier_id'] = $courierId;
+                    $updated = true;
+                    break;
+                }
             }
-        }
-        JsonStorageHelper::write($this->filePath, $records);
+            unset($row);
+            return ['data' => $records, 'result' => $updated, 'write' => $updated];
+        });
     }
 
     public function getDailyReport(int $restaurantId, string $date): array

@@ -155,10 +155,10 @@ const DEFAULT_MENU_ITEMS = [
 ];
 
 const DEFAULT_COURIERS = [
-    {id: 1, name: "Ali Kaya", vehicle: "Motor 🏍️", x: 14, y: 10, lat: 40.9910, lon: 29.0250, neighborhood: "Rıhtım, Kadıköy", active: 1, earnings: 185, tips: 45, phone: "0532 111 22 33"},
-    {id: 2, name: "Veli Demir", vehicle: "Motor 🏍️", x: 30, y: 28, lat: 40.9750, lon: 29.0350, neighborhood: "Fenerbahçe, Kadıköy", active: 0, earnings: 120, tips: 30, phone: "0533 222 33 44"},
-    {id: 3, name: "Can Yıldız", vehicle: "E-Bisiklet 🚲", x: 8, y: 16, lat: 40.9880, lon: 29.0310, neighborhood: "Bahariye, Kadıköy", active: 0, earnings: 90, tips: 20, phone: "0534 333 44 55"},
-    {id: 4, name: "Mehmet Arslan", vehicle: "Scooter 🛵", x: 10, y: 6, lat: 40.9950, lon: 29.0280, neighborhood: "Yeldeğirmeni, Kadıköy", active: 0, earnings: 140, tips: 35, phone: "0535 444 55 66"}
+    {id: 1, name: "Ali Kaya", vehicle: "Motor 🏍️", x: 14, y: 10, lat: 40.9910, lon: 29.0250, neighborhood: "Rıhtım, Kadıköy", active: 1, status: "musait", earnings: 185, tips: 45, phone: "0532 111 22 33"},
+    {id: 2, name: "Veli Demir", vehicle: "Motor 🏍️", x: 30, y: 28, lat: 40.9750, lon: 29.0350, neighborhood: "Fenerbahçe, Kadıköy", active: 0, status: "musait", earnings: 120, tips: 30, phone: "0533 222 33 44"},
+    {id: 3, name: "Can Yıldız", vehicle: "E-Bisiklet 🚲", x: 8, y: 16, lat: 40.9880, lon: 29.0310, neighborhood: "Bahariye, Kadıköy", active: 0, status: "musait", earnings: 90, tips: 20, phone: "0534 333 44 55"},
+    {id: 4, name: "Mehmet Arslan", vehicle: "Scooter 🛵", x: 10, y: 6, lat: 40.9950, lon: 29.0280, neighborhood: "Yeldeğirmeni, Kadıköy", active: 0, status: "mesgul", earnings: 140, tips: 35, phone: "0535 444 55 66"}
 ];
 
 const CATEGORIES = [

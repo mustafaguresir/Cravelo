@@ -67,58 +67,66 @@ final class JsonCourierRepository implements CourierRepositoryInterface
 
     public function incrementActiveOrders(int $courierId): void
     {
-        $records = JsonStorageHelper::read($this->filePath);
-        foreach ($records as &$row) {
-            if ((int)$row['id'] === $courierId) {
-                $row['active_orders_count'] = (int)($row['active_orders_count'] ?? 0) + 1;
-                break;
+        JsonStorageHelper::update($this->filePath, static function (array $records) use ($courierId): array {
+            $updated = false;
+            foreach ($records as &$row) {
+                if ((int)$row['id'] === $courierId) {
+                    $row['active_orders_count'] = (int)($row['active_orders_count'] ?? 0) + 1;
+                    $updated = true;
+                    break;
+                }
             }
-        }
-        JsonStorageHelper::write($this->filePath, $records);
+            unset($row);
+            return ['data' => $records, 'result' => $updated, 'write' => $updated];
+        });
     }
 
     public function decrementActiveOrders(int $courierId): void
     {
-        $records = JsonStorageHelper::read($this->filePath);
-        foreach ($records as &$row) {
-            if ((int)$row['id'] === $courierId) {
-                $cnt = (int)($row['active_orders_count'] ?? 0);
-                $row['active_orders_count'] = max(0, $cnt - 1);
-                break;
+        JsonStorageHelper::update($this->filePath, static function (array $records) use ($courierId): array {
+            $updated = false;
+            foreach ($records as &$row) {
+                if ((int)$row['id'] === $courierId) {
+                    $cnt = (int)($row['active_orders_count'] ?? 0);
+                    $row['active_orders_count'] = max(0, $cnt - 1);
+                    $updated = true;
+                    break;
+                }
             }
-        }
-        JsonStorageHelper::write($this->filePath, $records);
+            unset($row);
+            return ['data' => $records, 'result' => $updated, 'write' => $updated];
+        });
     }
 
     public function save(Courier $courier): int
     {
-        $records = JsonStorageHelper::read($this->filePath);
-        $maxId = 0;
-        $foundIndex = -1;
+        return (int)JsonStorageHelper::update($this->filePath, static function (array $records) use ($courier): array {
+            $maxId = 0;
+            $foundIndex = -1;
 
-        foreach ($records as $index => $row) {
-            $id = (int)$row['id'];
-            if ($id > $maxId) {
-                $maxId = $id;
+            foreach ($records as $index => $row) {
+                $id = (int)$row['id'];
+                if ($id > $maxId) {
+                    $maxId = $id;
+                }
+                if ($courier->id > 0 && $id === $courier->id) {
+                    $foundIndex = $index;
+                }
             }
-            if ($courier->id > 0 && $id === $courier->id) {
-                $foundIndex = $index;
+
+            if ($courier->id <= 0) {
+                $courier->id = $maxId + 1;
             }
-        }
 
-        if ($courier->id <= 0) {
-            $courier->id = $maxId + 1;
-        }
+            $data = $courier->toArray();
+            if ($foundIndex >= 0) {
+                $records[$foundIndex] = $data;
+            } else {
+                $records[] = $data;
+            }
 
-        $data = $courier->toArray();
-        if ($foundIndex >= 0) {
-            $records[$foundIndex] = $data;
-        } else {
-            $records[] = $data;
-        }
-
-        JsonStorageHelper::write($this->filePath, $records);
-        return $courier->id;
+            return ['data' => $records, 'result' => $courier->id];
+        });
     }
 }
 

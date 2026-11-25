@@ -408,7 +408,27 @@ const GustoState = (function () {
 
         if (state.activeOrder.deliveryMode !== 'takeaway' && state.activeOrder.courierId) {
             const cObj = state.couriers.find(c => c.id === state.activeOrder.courierId);
-            if (cObj && cObj.active > 0) cObj.active--;
+            if (cObj) {
+                if (cObj.active > 0) cObj.active--;
+                const tipAmt = Number(state.activeOrder.tip || 0);
+                const delFee = Number(state.activeOrder.delFee || 0);
+                const addedEarning = (delFee * 0.7) + tipAmt;
+                if (tipAmt > 0) {
+                    cObj.tips = Math.max(0, Number(((cObj.tips || 0) - tipAmt).toFixed(2)));
+                }
+                if (addedEarning > 0) {
+                    cObj.earnings = Math.max(0, Number(((cObj.earnings || 0) - addedEarning).toFixed(2)));
+                }
+            }
+        }
+
+        // Cüzdan puanı harcandıysa iptalde eksiksiz iade et
+        const refundPts = Number(state.activeOrder.walletPointsUsed || 0)
+            || ((state.activeOrder.payMethod === 'wallet' && state.activeOrder.walletDiscount > 0)
+                ? Math.floor(state.activeOrder.walletDiscount * 10)
+                : 0);
+        if (refundPts > 0) {
+            state.userPoints = (state.userPoints || 0) + refundPts;
         }
 
         const prevStatus = state.activeOrder.status;

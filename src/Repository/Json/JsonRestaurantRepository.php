@@ -50,33 +50,33 @@ final class JsonRestaurantRepository implements RestaurantRepositoryInterface
 
     public function save(Restaurant $restaurant): int
     {
-        $records = JsonStorageHelper::read($this->restaurantsFile);
-        $maxId = 0;
-        $foundIndex = -1;
+        return (int)JsonStorageHelper::update($this->restaurantsFile, static function (array $records) use ($restaurant): array {
+            $maxId = 0;
+            $foundIndex = -1;
 
-        foreach ($records as $index => $row) {
-            $id = (int)$row['id'];
-            if ($id > $maxId) {
-                $maxId = $id;
+            foreach ($records as $index => $row) {
+                $id = (int)$row['id'];
+                if ($id > $maxId) {
+                    $maxId = $id;
+                }
+                if ($restaurant->id > 0 && $id === $restaurant->id) {
+                    $foundIndex = $index;
+                }
             }
-            if ($restaurant->id > 0 && $id === $restaurant->id) {
-                $foundIndex = $index;
+
+            if ($restaurant->id <= 0) {
+                $restaurant->id = $maxId + 1;
             }
-        }
 
-        if ($restaurant->id <= 0) {
-            $restaurant->id = $maxId + 1;
-        }
+            $data = $restaurant->toArray();
+            if ($foundIndex >= 0) {
+                $records[$foundIndex] = $data;
+            } else {
+                $records[] = $data;
+            }
 
-        $data = $restaurant->toArray();
-        if ($foundIndex >= 0) {
-            $records[$foundIndex] = $data;
-        } else {
-            $records[] = $data;
-        }
-
-        JsonStorageHelper::write($this->restaurantsFile, $records);
-        return $restaurant->id;
+            return ['data' => $records, 'result' => $restaurant->id];
+        });
     }
 
     public function getMenuItems(int $restaurantId): array
@@ -104,33 +104,33 @@ final class JsonRestaurantRepository implements RestaurantRepositoryInterface
 
     public function saveMenuItem(MenuItem $item): int
     {
-        $records = JsonStorageHelper::read($this->menuItemsFile);
-        $maxId = 0;
-        $foundIndex = -1;
+        return (int)JsonStorageHelper::update($this->menuItemsFile, static function (array $records) use ($item): array {
+            $maxId = 0;
+            $foundIndex = -1;
 
-        foreach ($records as $index => $row) {
-            $id = (int)$row['id'];
-            if ($id > $maxId) {
-                $maxId = $id;
+            foreach ($records as $index => $row) {
+                $id = (int)$row['id'];
+                if ($id > $maxId) {
+                    $maxId = $id;
+                }
+                if ($item->id > 0 && $id === $item->id) {
+                    $foundIndex = $index;
+                }
             }
-            if ($item->id > 0 && $id === $item->id) {
-                $foundIndex = $index;
+
+            if ($item->id <= 0) {
+                $item->id = $maxId + 1;
             }
-        }
 
-        if ($item->id <= 0) {
-            $item->id = $maxId + 1;
-        }
+            $data = $item->toArray();
+            if ($foundIndex >= 0) {
+                $records[$foundIndex] = $data;
+            } else {
+                $records[] = $data;
+            }
 
-        $data = $item->toArray();
-        if ($foundIndex >= 0) {
-            $records[$foundIndex] = $data;
-        } else {
-            $records[] = $data;
-        }
-
-        JsonStorageHelper::write($this->menuItemsFile, $records);
-        return $item->id;
+            return ['data' => $records, 'result' => $item->id];
+        });
     }
 }
 

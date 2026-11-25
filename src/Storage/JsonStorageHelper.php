@@ -63,6 +63,90 @@ final class JsonStorageHelper
     }
 
     /**
+     * Tek bir LOCK_EX kilidi altında atomik oku-değiştir-yaz (read-modify-write) işlemi gerçekleştirir.
+     * Eşzamanlı isteklerde kayıp güncelleme (lost update) ve çakışan ID üretimini engeller.
+     *
+     * @param callable(array<int|string, mixed>): array{data: array<int|string, mixed>, result?: mixed, write?: bool} $mutator
+     */
+    public static function update(string $filePath, callable $mutator): mixed
+    {
+        $dir = dirname($filePath);
+        if (!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
+            throw new RuntimeException("Hedef klasör oluşturulamadı: {$dir}");
+        }
+
+        $lockFilePath = $filePath . '.lock';
+        $fp = fopen($lockFilePath, 'c+');
+        if ($fp === false) {
+            throw new RuntimeException("Kilit dosyası açılamadı: {$lockFilePath}");
+        }
+
+        if (!flock($fp, LOCK_EX)) {
+            fclose($fp);
+            throw new RuntimeException("Dosya kilidi (flock LOCK_EX) alınamadı: {$lockFilePath}");
+        }
+
+        try {
+            $records = [];
+            if (file_exists($filePath)) {
+                $readFp = fopen($filePath, 'rb');
+                if ($readFp === false) {
+                    throw new RuntimeException("Dosya okumak için açılamadı: {$filePath}");
+                }
+                $contents = stream_get_contents($readFp);
+                fclose($readFp);
+
+                if ($contents !== false && trim($contents) !== '') {
+                    $decoded = json_decode($contents, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new RuntimeException("JSON ayrıştırma hatası ({$filePath}): " . json_last_error_msg());
+                    }
+                    if (is_array($decoded)) {
+                        $records = $decoded;
+                    }
+                }
+            }
+
+            $mutation = $mutator($records);
+            $shouldWrite = !array_key_exists('write', $mutation) || (bool)$mutation['write'];
+
+            if ($shouldWrite) {
+                $nextData = $mutation['data'];
+                $jsonString = json_encode($nextData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+                $tempFilePath = tempnam($dir, 'gst_');
+                if ($tempFilePath === false) {
+                    throw new RuntimeException("Geçici dosya oluşturulamadı: {$dir}");
+                }
+
+                $tempFp = fopen($tempFilePath, 'wb');
+                if ($tempFp === false) {
+                    @unlink($tempFilePath);
+                    throw new RuntimeException("Geçici dosya açılamadı: {$tempFilePath}");
+                }
+
+                fwrite($tempFp, $jsonString);
+                fflush($tempFp);
+                fclose($tempFp);
+
+                if (DIRECTORY_SEPARATOR === '\\' && file_exists($filePath)) {
+                    @unlink($filePath);
+                }
+
+                if (!rename($tempFilePath, $filePath)) {
+                    @unlink($tempFilePath);
+                    throw new RuntimeException("Atomik dosya değiştirme (rename) başarısız oldu: {$filePath}");
+                }
+            }
+
+            return $mutation['result'] ?? true;
+        } finally {
+            flock($fp, LOCK_UN);
+            fclose($fp);
+        }
+    }
+
+    /**
      * Şartname Planı Bölüm 3.D:
      * flock(LOCK_EX) + tempnam + rename Atomik Yardımcı Metodu
      */

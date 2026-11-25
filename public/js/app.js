@@ -17,6 +17,13 @@ function getSessionObject() {
     }
 }
 
+function getEffectiveSession() {
+    if (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) {
+        return window.ACTIVE_SESSION;
+    }
+    return getSessionObject();
+}
+
 function escapeHtml(value) {
     if (value === null || typeof value === 'undefined') return '';
     return String(value)
@@ -120,15 +127,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Aktif Oturum ve Rolü doğrula/uygula (RBAC Arayüz İzolasyonu)
-    // Şartname R1 & R2: Oturum açmamış ziyaretçi için varsayılan müşteri veya demo hesaba düşülmez
+    // Sunucu PHP oturumu (window.ACTIVE_SESSION) her zaman eski localStorage oturumundan önceliklidir
     let activeRole = null;
     try {
-        const sess = getSessionObject();
+        const hasServerSess = (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.role);
+        const sess = hasServerSess ? window.ACTIVE_SESSION : getSessionObject();
+
+        if (hasServerSess) {
+            try {
+                const staleLocal = getSessionObject();
+                if (staleLocal && staleLocal.username && window.ACTIVE_SESSION.username && staleLocal.username !== window.ACTIVE_SESSION.username) {
+                    ['cravelo_session', 'kuryo_session', 'tgo_session', 'gustogo_session'].forEach(k => localStorage.removeItem(k));
+                }
+            } catch (syncErr) {}
+        }
+
         if (sess && sess.role) {
             activeRole = sess.role;
             if (!GustoState.get().currentUser) {
                 GustoState.get().currentUser = { role: sess.role };
             }
+            if (sess.id) GustoState.get().currentUser.id = sess.id;
             if (sess.fullName) GustoState.get().currentUser.fullName = sess.fullName;
             if (sess.username) GustoState.get().currentUser.username = sess.username;
             if (sess.email) GustoState.get().currentUser.email = sess.email;
@@ -146,43 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (sess.role === 'courier') {
                 if (sess.selectedCourierId) {
                     GustoState.get().selectedCourierId = sess.selectedCourierId;
-                } else if (sess.username === 'kurye_ali') {
-                    GustoState.get().selectedCourierId = 1;
                 } else if (sess.username === 'kurye_veli') {
                     GustoState.get().selectedCourierId = 2;
                 } else if (sess.username === 'kurye_can') {
-                    GustoState.get().selectedCourierId = 3;
-                }
-            }
-        } else if (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) {
-            activeRole = window.ACTIVE_SESSION.role;
-            if (!GustoState.get().currentUser) {
-                GustoState.get().currentUser = { role: window.ACTIVE_SESSION.role };
-            }
-            if (window.ACTIVE_SESSION.id) {
-                GustoState.get().currentUser.id = window.ACTIVE_SESSION.id;
-            }
-            if (window.ACTIVE_SESSION.fullName) {
-                GustoState.get().currentUser.fullName = window.ACTIVE_SESSION.fullName;
-            }
-            if (window.ACTIVE_SESSION.username) {
-                GustoState.get().currentUser.username = window.ACTIVE_SESSION.username;
-            }
-            if (window.ACTIVE_SESSION.phone) {
-                GustoState.get().currentUser.phone = window.ACTIVE_SESSION.phone;
-            }
-            if (window.ACTIVE_SESSION.role === 'restaurant') {
-                if (window.ACTIVE_SESSION.username === 'restoran_burger') {
-                    GustoState.get().selectedVendorRestId = 2;
-                } else if (window.ACTIVE_SESSION.username === 'restoran_pizza') {
-                    GustoState.get().selectedVendorRestId = 3;
-                } else {
-                    GustoState.get().selectedVendorRestId = 1;
-                }
-            } else if (window.ACTIVE_SESSION.role === 'courier') {
-                if (window.ACTIVE_SESSION.username === 'kurye_veli') {
-                    GustoState.get().selectedCourierId = 2;
-                } else if (window.ACTIVE_SESSION.username === 'kurye_can') {
                     GustoState.get().selectedCourierId = 3;
                 } else {
                     GustoState.get().selectedCourierId = 1;
@@ -1434,8 +1419,10 @@ function confirmCheckoutAndPlaceOrder() {
         }
     }
 
+    let walletPointsUsed = 0;
     if (selectedPayMethod === 'wallet') {
-        state.userPoints = Math.max(0, state.userPoints - Math.floor(walletDiscount * 10));
+        walletPointsUsed = Math.min(state.userPoints || 0, Math.floor(walletDiscount * 10));
+        state.userPoints = Math.max(0, (state.userPoints || 0) - walletPointsUsed);
         const navRole = document.getElementById('nav-role');
         if (navRole && state.currentRole === 'customer') {
             navRole.innerHTML = `<i class="fa-solid fa-coins"></i> ${state.userPoints} Puan`;
@@ -1478,6 +1465,7 @@ function confirmCheckoutAndPlaceOrder() {
         subtotal: sub,
         discount,
         walletDiscount,
+        walletPointsUsed,
         grossTotal,
         delFee: del,
         total: finalTot,
@@ -1540,8 +1528,13 @@ function handleSimulationStep(newStatus) {
 
     if (newStatus === 'teslim_edildi') {
         GustoAudio.play('deliver');
+        const completedOrderId = GustoState.get().activeOrder?.id;
         setTimeout(() => {
-            const finished = { ...GustoState.get().activeOrder };
+            const cur = GustoState.get().activeOrder;
+            if (!cur || cur.id !== completedOrderId || cur.status !== 'teslim_edildi') {
+                return;
+            }
+            const finished = { ...cur };
             GustoState.get().orderHistory.unshift(finished);
             GustoState.get().activeOrder = null;
             GustoState.persist();
@@ -1586,6 +1579,15 @@ function cancelOrder() {
         return;
     }
     GustoAudio.play('cancel');
+    const stAfterCancel = GustoState.get();
+    const navRole = document.getElementById('nav-role');
+    if (navRole && stAfterCancel.currentRole === 'customer') {
+        navRole.innerHTML = `<i class="fa-solid fa-coins"></i> ${stAfterCancel.userPoints || 0} Puan`;
+    }
+    const accPts = document.getElementById('acc-points');
+    if (accPts) accPts.innerText = `${stAfterCancel.userPoints || 0} Cravelo Puan (${((stAfterCancel.userPoints || 0) / 10).toFixed(2)} ₺)`;
+    const walletDisp = document.getElementById('acc-wallet-display');
+    if (walletDisp) walletDisp.innerText = `${stAfterCancel.userPoints || 0} Puan (${((stAfterCancel.userPoints || 0) / 10).toFixed(2)} ₺)`;
     updateOrderTrackerUI();
     GustoMap.drawMap('customer-map-canvas');
     GustoMap.drawMap('admin-map-canvas');
@@ -2851,7 +2853,7 @@ function applyRoleIsolation(role) {
     const navAvatar = document.getElementById('nav-avatar');
 
     let currentFullName = '';
-    const sess = getSessionObject();
+    const sess = getEffectiveSession();
     if (sess && sess.fullName) {
         currentFullName = sess.fullName;
         if (state.currentUser) {
@@ -2899,7 +2901,7 @@ function applyRoleIsolation(role) {
     }
 
     // Seçici dropdownlarını aktif ID ile senkronize et ve yetki bazlı kilitle
-    const sessionRole = (sess && sess.role) || (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || '';
+    const sessionRole = (sess && sess.role) || '';
     const rSel = document.getElementById('res-selector');
     if (rSel) {
         if (sessionRole === 'restaurant' && state.selectedVendorRestId) {
@@ -3008,8 +3010,8 @@ function handleUpdateProfile(e) {
 // RESTORAN / MUTFAK KDS PANELİ
 // ==========================================
 function changeVendorRestaurant() {
-    const sess = getSessionObject();
-    const sessionRole = (sess && sess.role) || (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || '';
+    const sess = getEffectiveSession();
+    const sessionRole = (sess && sess.role) || '';
     const rSel = document.getElementById('res-selector');
     if (sessionRole === 'restaurant') {
         if (rSel && GustoState.get().selectedVendorRestId) {
@@ -3264,8 +3266,8 @@ function vendorChangeStatus(targetStatus) {
 // KURYE KOKPİTİ PANELİ
 // ==========================================
 function changeCourierUser() {
-    const sess = getSessionObject();
-    const sessionRole = (sess && sess.role) || (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || '';
+    const sess = getEffectiveSession();
+    const sessionRole = (sess && sess.role) || '';
     const cSel = document.getElementById('courier-selector');
     if (sessionRole === 'courier') {
         if (cSel && GustoState.get().selectedCourierId) {
@@ -3996,21 +3998,27 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
                     ? ((state.currentUser && state.currentUser.fullName) || (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.fullName) || 'Müşteri')
                     : ('Müşteri #' + (so.customer_id || '')));
 
+            const resolvedDeliveryMode = (so.deliveryMode === 'takeaway' || so.delivery_mode === 'takeaway')
+                ? 'takeaway'
+                : ((localMatch && localMatch.deliveryMode === 'takeaway') ? 'takeaway' : 'courier');
+
             const merged = {
                 ...(localMatch || {}),
                 id: localMatch ? localMatch.id : sid,
                 serverOrderId: sid,
                 rId: rId,
                 restaurant: (frontRest && frontRest.name) ? frontRest.name : (so.restaurant || (localMatch && localMatch.restaurant) || 'Lezzet Kebap Salonu'),
-                courierId: cId || (localMatch && localMatch.courierId) || null,
-                courier: (frontCour && frontCour.name) ? frontCour.name : (so.courier || (localMatch && localMatch.courier) || 'Kurye Atanıyor'),
+                courierId: resolvedDeliveryMode === 'takeaway' ? null : (cId || (localMatch && localMatch.courierId) || null),
+                courier: resolvedDeliveryMode === 'takeaway'
+                    ? 'Restorandan Gel-Al (Müşteri)'
+                    : ((frontCour && frontCour.name) ? frontCour.name : (so.courier || (localMatch && localMatch.courier) || 'Kurye Atanıyor')),
                 customerName: resolvedCustomerName,
                 status: finalStatus,
                 total: Number(so.total || so.total_amount || (localMatch && localMatch.total) || 0),
                 items: mappedItems,
                 createdAt: (localMatch && localMatch.createdAt) || so.createdAt || 'Bugün',
                 dateStr: (localMatch && localMatch.dateStr) || so.dateStr || '',
-                deliveryMode: (localMatch && localMatch.deliveryMode) || 'courier'
+                deliveryMode: resolvedDeliveryMode
             };
 
             const key = 'srv_' + sid;
@@ -4115,22 +4123,70 @@ async function craveloSyncCreateOrder(orderObj, customerLoc) {
             del_y: customerLoc?.y ?? 14,
             delivery_latitude: customerLoc?.lat ?? 40.9850,
             delivery_longitude: customerLoc?.lon ?? 29.0280,
+            delivery_mode: orderObj.deliveryMode || 'courier',
             items: (orderObj.items || []).map(i => ({ name: i.name, quantity: i.qty || 1, price: i.price || 100 }))
         })
     }).then(result => {
         if (result && result.ok && result.data && result.data.order_id) {
             const sid = Number(result.data.order_id);
-            orderObj.serverOrderId = sid;
+            const srvCourier = result.data.assigned_courier || null;
             const st = GustoState.get();
+
+            orderObj.serverOrderId = sid;
+
+            // Sunucunun atadığı yetkili kuryeyi istemci durumuyla senkronize et
+            if (orderObj.deliveryMode !== 'takeaway' && srvCourier && srvCourier.id) {
+                const srvId = Number(srvCourier.id);
+                const prevId = orderObj.courierId ? Number(orderObj.courierId) : null;
+                if (prevId && prevId !== srvId) {
+                    const prevC = (st.couriers || []).find(c => c.id === prevId);
+                    const nextC = (st.couriers || []).find(c => c.id === srvId);
+                    const tipAmt = Number(orderObj.tip || 0);
+                    const delFee = Number(orderObj.delFee || 0);
+                    const earnAmt = (delFee * 0.7) + tipAmt;
+                    if (prevC) {
+                        if (prevC.active > 0) prevC.active--;
+                        prevC.tips = Math.max(0, Number(((prevC.tips || 0) - tipAmt).toFixed(2)));
+                        prevC.earnings = Math.max(0, Number(((prevC.earnings || 0) - earnAmt).toFixed(2)));
+                    }
+                    if (nextC) {
+                        nextC.active = (nextC.active || 0) + 1;
+                        nextC.tips = Number(((nextC.tips || 0) + tipAmt).toFixed(2));
+                        nextC.earnings = Number(((nextC.earnings || 0) + earnAmt).toFixed(2));
+                    }
+                }
+                const matchedFront = (st.couriers || []).find(c => c.id === srvId);
+                const resolvedCourierName = matchedFront ? matchedFront.name : (srvCourier.name || orderObj.courier);
+                orderObj.courierId = srvId;
+                orderObj.courier = resolvedCourierName;
+                if (typeof srvCourier.distance_km === 'number') orderObj.courierDistKm = srvCourier.distance_km;
+                if (typeof srvCourier.score === 'number') orderObj.courierScore = srvCourier.score;
+            }
+
             if (st.activeOrder && st.activeOrder.id === orderObj.id) {
                 st.activeOrder.serverOrderId = sid;
+                if (orderObj.deliveryMode !== 'takeaway' && srvCourier && srvCourier.id) {
+                    st.activeOrder.courierId = orderObj.courierId;
+                    st.activeOrder.courier = orderObj.courier;
+                    st.activeOrder.courierDistKm = orderObj.courierDistKm;
+                    st.activeOrder.courierScore = orderObj.courierScore;
+                }
             }
             if (Array.isArray(st.orderHistory)) {
                 st.orderHistory.forEach(o => {
-                    if (o && o.id === orderObj.id) o.serverOrderId = sid;
+                    if (o && o.id === orderObj.id) {
+                        o.serverOrderId = sid;
+                        if (orderObj.deliveryMode !== 'takeaway' && srvCourier && srvCourier.id) {
+                            o.courierId = orderObj.courierId;
+                            o.courier = orderObj.courier;
+                        }
+                    }
                 });
             }
             GustoState.persist();
+            if (st.activeOrder && st.activeOrder.id === orderObj.id) {
+                updateOrderTrackerUI();
+            }
         }
         return result;
     }).finally(() => {

@@ -246,4 +246,128 @@ final class OrderControllerTest extends TestCase
         $this->assertSame(1, $adminReport['total_orders']);
         $this->assertEqualsWithDelta(240.0, (float)$adminReport['total_revenue'], 0.01);
     }
+
+    public function testCreateOrderRejectsUnknownOrInactiveRestaurantAndNegativeItemPrice(): void
+    {
+        $inactiveRest = new Restaurant(
+            id: 2,
+            userId: 5,
+            name: 'Kapalı Mutfak',
+            locationX: 12,
+            locationY: 12,
+            phone: '02160000000',
+            isActive: false,
+            latitude: 40.9860,
+            longitude: 29.0290,
+            neighborhood: 'Moda'
+        );
+        $this->restaurantRepo->save($inactiveRest);
+
+        $service = new OrderService(
+            orderRepo: $this->orderRepo,
+            restaurantRepo: $this->restaurantRepo,
+            courierRepo: $this->courierRepo,
+            stateMachine: $this->stateMachine
+        );
+
+        try {
+            $service->createOrder(1, 99999, 180.0, 18, 14, []);
+            $this->fail('Var olmayan restoran ID ile sipariş oluşturulamamalıdır.');
+        } catch (\InvalidArgumentException) {
+            $this->assertCount(0, $this->orderRepo->findAll());
+        }
+
+        try {
+            $service->createOrder(1, 2, 180.0, 18, 14, []);
+            $this->fail('Pasif restoran için sipariş oluşturulamamalıdır.');
+        } catch (\InvalidArgumentException) {
+            $this->assertCount(0, $this->orderRepo->findAll());
+        }
+
+        try {
+            $service->createOrder(1, 1, 180.0, 18, 14, [['name' => 'Hatalı Ürün', 'quantity' => 1, 'price' => -25.0]]);
+            $this->fail('Negatif ürün fiyatı kabul edilmemelidir.');
+        } catch (\InvalidArgumentException) {
+            $this->assertCount(0, $this->orderRepo->findAll());
+        }
+    }
+
+    public function testTakeawayOrderSkipsCourierAssignmentAndPreservesMode(): void
+    {
+        $service = new OrderService(
+            orderRepo: $this->orderRepo,
+            restaurantRepo: $this->restaurantRepo,
+            courierRepo: $this->courierRepo,
+            stateMachine: $this->stateMachine
+        );
+
+        $res = $service->createOrder(
+            customerId: 1,
+            restaurantId: 1,
+            totalAmount: 160.0,
+            delX: 18,
+            delY: 14,
+            items: [['name' => 'Adana Dürüm', 'quantity' => 1, 'price' => 160.0]],
+            deliveryMode: 'takeaway'
+        );
+
+        $this->assertSame('takeaway', $res['delivery_mode']);
+        $this->assertNull($res['assigned_courier']);
+
+        $saved = $this->orderRepo->findById((int)$res['order_id']);
+        $this->assertNotNull($saved);
+        $this->assertNull($saved->courierId);
+        $this->assertSame('takeaway', $saved->deliveryMode);
+
+        // Kurye iş yükü artmamış olmalıdır
+        $veli = $this->courierRepo->findById(2);
+        $this->assertNotNull($veli);
+        $this->assertSame(0, $veli->activeOrdersCount);
+
+        $formatted = $service->getFormattedOrdersForUser(['id' => 1, 'role' => 'customer']);
+        $this->assertSame('takeaway', $formatted[0]['deliveryMode']);
+        $this->assertSame('Restorandan Gel-Al (Müşteri)', $formatted[0]['courier']);
+    }
+
+    public function testFleetScoresUseRealHaversineDistanceAndAtomicJsonUpdate(): void
+    {
+        $service = new OrderService(
+            orderRepo: $this->orderRepo,
+            restaurantRepo: $this->restaurantRepo,
+            courierRepo: $this->courierRepo,
+            stateMachine: $this->stateMachine
+        );
+
+        $scores = $service->getFleetScores();
+        $this->assertCount(2, $scores);
+        // Ali (0.71 km, 2 görev -> 4.71) vs Veli (1.31 km, 0 görev -> 1.31)
+        $this->assertNotEquals(5.0, $scores[0]['score']);
+        $this->assertNotEquals(1.0, $scores[1]['score']);
+        $this->assertLessThan($scores[0]['score'], $scores[1]['score']);
+
+        // Atomik JsonStorageHelper::update() testi
+        $tmpFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cravelo_atomic_test_' . uniqid() . '.json';
+        try {
+            $id1 = \App\Storage\JsonStorageHelper::update($tmpFile, static function (array $rows): array {
+                $rows[] = ['id' => 1, 'val' => 'a'];
+                return ['data' => $rows, 'result' => 1];
+            });
+            $id2 = \App\Storage\JsonStorageHelper::update($tmpFile, static function (array $rows): array {
+                $rows[] = ['id' => count($rows) + 1, 'val' => 'b'];
+                return ['data' => $rows, 'result' => count($rows)];
+            });
+            $skipped = \App\Storage\JsonStorageHelper::update($tmpFile, static function (array $rows): array {
+                return ['data' => [], 'result' => 'noop', 'write' => false];
+            });
+
+            $this->assertSame(1, $id1);
+            $this->assertSame(2, $id2);
+            $this->assertSame('noop', $skipped);
+            $persisted = \App\Storage\JsonStorageHelper::read($tmpFile);
+            $this->assertCount(2, $persisted);
+        } finally {
+            @unlink($tmpFile);
+            @unlink($tmpFile . '.lock');
+        }
+    }
 }

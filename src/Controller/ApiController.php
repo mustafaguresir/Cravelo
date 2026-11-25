@@ -66,6 +66,15 @@ final class ApiController extends Controller
             $action = (string)($data['action'] ?? '');
         }
 
+        $postOnlyActions = ['login', 'register', 'logout', 'create_order', 'change_status', 'cancel_order'];
+        if (in_array($action, $postOnlyActions, true) && $request->getMethod() !== 'POST') {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Bu işlem güvenlik gereği yalnızca HTTP POST yöntemiyle çağrılabilir.'
+            ], 405);
+            return;
+        }
+
         $publicActions = ['health', 'ping', 'calculate_distance', 'login', 'register', 'logout'];
         if (!in_array($action, $publicActions, true) && !Session::has('user')) {
             Response::json([
@@ -108,6 +117,7 @@ final class ApiController extends Controller
                     Response::json(['status' => 'error', 'message' => 'Hatalı kullanıcı adı veya parola!'], 401);
                     return;
                 }
+                Session::regenerate();
                 Session::set('user', [
                     'id' => $logged->id,
                     'username' => $logged->username,
@@ -346,6 +356,7 @@ final class ApiController extends Controller
         $items = (array)($body['items'] ?? []);
 
         try {
+            $deliveryMode = (string)($body['delivery_mode'] ?? 'courier');
             // Güvenlik: customerId DAİMA oturum açan kullanıcıdan alınır
             $res = $this->orderService->createOrder(
                 (int)$user['id'],
@@ -355,7 +366,8 @@ final class ApiController extends Controller
                 $delY,
                 $items,
                 (float)($body['delivery_latitude'] ?? 40.9850),
-                (float)($body['delivery_longitude'] ?? 29.0280)
+                (float)($body['delivery_longitude'] ?? 29.0280),
+                $deliveryMode
             );
             $res['message'] = 'Siparişiniz başarıyla alındı!';
             Response::json($res, 201);

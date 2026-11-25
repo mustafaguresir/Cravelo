@@ -8,7 +8,27 @@ final class Session
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
+            if (!headers_sent()) {
+                @ini_set('session.use_strict_mode', '1');
+                $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                    || ((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+                @session_set_cookie_params([
+                    'lifetime' => 0,
+                    'path' => '/',
+                    'secure' => $isHttps,
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                ]);
+            }
             @session_start();
+        }
+    }
+
+    public static function regenerate(): void
+    {
+        self::start();
+        if (!headers_sent() && session_status() === PHP_SESSION_ACTIVE) {
+            @session_regenerate_id(true);
         }
     }
 
@@ -39,8 +59,23 @@ final class Session
     public static function destroy(): void
     {
         self::start();
-        session_unset();
-        session_destroy();
+        $_SESSION = [];
+        if (!headers_sent() && (bool)ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            $cookieName = session_name();
+            if ($cookieName !== false) {
+                @setcookie($cookieName, '', [
+                    'expires' => time() - 42000,
+                    'path' => $params['path'],
+                    'domain' => $params['domain'],
+                    'secure' => $params['secure'],
+                    'httponly' => $params['httponly'],
+                    'samesite' => 'Lax',
+                ]);
+            }
+        }
+        @session_unset();
+        @session_destroy();
     }
 
     public static function setFlash(string $type, string $message): void

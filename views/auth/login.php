@@ -171,6 +171,15 @@
 </div>
 
 <script>
+function escapeLoginHtml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function fillLogin(username, label, btnEl) {
     var uEl = document.getElementById('input-username');
     var pEl = document.getElementById('input-password');
@@ -186,7 +195,7 @@ function fillLogin(username, label, btnEl) {
     var hint = document.getElementById('demo-fill-hint');
     if (hint) {
         hint.classList.remove('d-none');
-        hint.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> <strong>' + (label || username) + '</strong> bilgileri dolduruldu. Devam etmek için <strong>Giriş Yap</strong> butonuna tıklayın.';
+        hint.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> <strong>' + escapeLoginHtml(label || username) + '</strong> bilgileri dolduruldu. Devam etmek için <strong>Giriş Yap</strong> butonuna tıklayın.';
     }
     var submitBtn = document.getElementById('btn-login-submit');
     if (submitBtn) submitBtn.focus();
@@ -197,8 +206,17 @@ function fillLogin(username, label, btnEl) {
         var params = new URLSearchParams(window.location.search);
         var demo = params.get('demo');
         if (demo) {
-            var target = document.querySelector('.demo-pill[data-demo-user="' + demo.replace(/"/g, '') + '"]');
-            fillLogin(demo, target ? target.textContent.trim() : demo, target);
+            var pills = document.querySelectorAll('.demo-pill[data-demo-user]');
+            var matched = null;
+            for (var i = 0; i < pills.length; i++) {
+                if (pills[i].getAttribute('data-demo-user') === demo) {
+                    matched = pills[i];
+                    break;
+                }
+            }
+            if (matched) {
+                fillLogin(demo, matched.textContent.trim(), matched);
+            }
         }
     } catch (e) {}
 })();

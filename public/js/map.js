@@ -11,6 +11,16 @@ const GustoMap = (function () {
     let currentAnimPos = { x: 14, y: 10 };
     let currentFilter = 'all'; // 'all' | 'couriers' | 'restaurants' | 'customers'
 
+    function escMapHtml(val) {
+        if (val === null || typeof val === 'undefined') return '';
+        return String(val)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // Kadıköy Coğrafi Sınırları ve GPS Dönüşümü
     const KADIKOY_BOUNDS = {
         minLat: 40.9700,
@@ -337,12 +347,12 @@ const GustoMap = (function () {
                 const statusBg = hoveredEntity.active > 0 ? 'rgba(245,158,11,0.18);color:#F59E0B' : 'rgba(16,185,129,0.18);color:#10B981';
                 html = `
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
-                        <strong style="color:#38BDF8;font-size:13px;font-weight:800;">🛵 ${hoveredEntity.name}</strong>
+                        <strong style="color:#38BDF8;font-size:13px;font-weight:800;">🛵 ${escMapHtml(hoveredEntity.name)}</strong>
                         <span style="background:${statusBg};font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;">${hoveredEntity.active > 0 ? hoveredEntity.active + ' Aktif' : 'Müsait'}</span>
                     </div>
-                    <div style="color:#E2E8F0;font-size:11.5px;margin-bottom:3px;"><i class="fa-solid fa-location-dot" style="color:#FF6B35;margin-right:4px;"></i> ${streetText}</div>
+                    <div style="color:#E2E8F0;font-size:11.5px;margin-bottom:3px;"><i class="fa-solid fa-location-dot" style="color:#FF6B35;margin-right:4px;"></i> ${escMapHtml(streetText)}</div>
                     <div style="color:#94A3B8;font-size:11px;display:flex;justify-content:space-between;gap:8px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.08);margin-top:5px;">
-                        <span>${hoveredEntity.vehicle}</span>
+                        <span>${escMapHtml(hoveredEntity.vehicle)}</span>
                         <span style="color:#FF6B35;font-weight:800;">${distKm.toFixed(2)} km • Skor ${score.toFixed(2)}</span>
                     </div>
                 `;
@@ -350,22 +360,22 @@ const GustoMap = (function () {
                 const streetText = getStreetLabelForCoords(hoveredEntity.x, hoveredEntity.y, hoveredEntity.lat, hoveredEntity.lon, hoveredEntity.neighborhood);
                 html = `
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
-                        <strong style="color:#FF6B35;font-size:13px;font-weight:800;">${hoveredEntity.emoji || '🍽️'} ${hoveredEntity.name}</strong>
-                        <span style="background:rgba(245,158,11,0.18);color:#F59E0B;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;">★ ${hoveredEntity.rating}</span>
+                        <strong style="color:#FF6B35;font-size:13px;font-weight:800;">${escMapHtml(hoveredEntity.emoji || '🍽️')} ${escMapHtml(hoveredEntity.name)}</strong>
+                        <span style="background:rgba(245,158,11,0.18);color:#F59E0B;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;">★ ${escMapHtml(hoveredEntity.rating)}</span>
                     </div>
-                    <div style="color:#E2E8F0;font-size:11.5px;margin-bottom:3px;"><i class="fa-solid fa-location-dot" style="color:#FF6B35;margin-right:4px;"></i> ${streetText}</div>
+                    <div style="color:#E2E8F0;font-size:11.5px;margin-bottom:3px;"><i class="fa-solid fa-location-dot" style="color:#FF6B35;margin-right:4px;"></i> ${escMapHtml(streetText)}</div>
                     <div style="color:#94A3B8;font-size:11px;display:flex;justify-content:space-between;gap:8px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.08);margin-top:5px;">
-                        <span>${hoveredEntity.cat || 'Restoran'}</span>
-                        <span style="color:#10B981;font-weight:800;">~${hoveredEntity.time || '20-30'} dk</span>
+                        <span>${escMapHtml(hoveredEntity.cat || 'Restoran')}</span>
+                        <span style="color:#10B981;font-weight:800;">~${escMapHtml(hoveredEntity.time || '20-30')} dk</span>
                     </div>
                 `;
             } else {
                 const streetText = getStreetLabelForCoords(custLoc.x, custLoc.y, custLoc.lat, custLoc.lon, custLoc.neighborhood || 'Moda, Kadıköy');
                 html = `
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-                        <strong style="color:#10B981;font-size:13px;font-weight:800;">🏠 ${hoveredEntity.name || 'Teslimat Noktası'}</strong>
+                        <strong style="color:#10B981;font-size:13px;font-weight:800;">🏠 ${escMapHtml(hoveredEntity.name || 'Teslimat Noktası')}</strong>
                     </div>
-                    <div style="color:#E2E8F0;font-size:11.5px;"><i class="fa-solid fa-map-pin" style="color:#10B981;margin-right:4px;"></i> ${streetText}</div>
+                    <div style="color:#E2E8F0;font-size:11.5px;"><i class="fa-solid fa-map-pin" style="color:#10B981;margin-right:4px;"></i> ${escMapHtml(streetText)}</div>
                     <div style="color:#94A3B8;font-size:10.5px;margin-top:4px;">Aktif Müşteri Teslimat Adresi</div>
                 `;
             }
@@ -830,15 +840,15 @@ const GustoMap = (function () {
                 const marker = L.marker(pos, { icon: createPinIcon('restaurant', 34, false) }).addTo(leafletMaps.admin);
                 marker.bindPopup(`
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-                        <strong style="font-size:13.5px;font-weight:800;">${r.emoji || '🍽️'} ${r.name}</strong>
-                        <span style="background:rgba(245,158,11,0.16);color:#F59E0B;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;">★ ${r.rating}</span>
+                        <strong style="font-size:13.5px;font-weight:800;">${escMapHtml(r.emoji || '🍽️')} ${escMapHtml(r.name)}</strong>
+                        <span style="background:rgba(245,158,11,0.16);color:#F59E0B;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;">★ ${escMapHtml(r.rating)}</span>
                     </div>
                     <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-bottom:6px;">
-                        <i class="fa-solid fa-location-dot" style="color:#FF5722;margin-right:4px;"></i>${street}
+                        <i class="fa-solid fa-location-dot" style="color:#FF5722;margin-right:4px;"></i>${escMapHtml(street)}
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding-top:6px;border-top:1px solid var(--border, rgba(255,255,255,0.1));">
-                        <span style="font-weight:700;color:var(--text-2, #94A3B8);">${r.cat}</span>
-                        <span style="font-weight:800;color:#FF6B35;">~${r.time} dk • ${r.promo || 'Açık'}</span>
+                        <span style="font-weight:700;color:var(--text-2, #94A3B8);">${escMapHtml(r.cat)}</span>
+                        <span style="font-weight:800;color:#FF6B35;">~${escMapHtml(r.time)} dk • ${escMapHtml(r.promo || 'Açık')}</span>
                     </div>
                 `, { className: 'cravelo-leaflet-popup' });
                 leafletLayers.adminMarkers.push(marker);
@@ -858,14 +868,14 @@ const GustoMap = (function () {
                 const marker = L.marker(pos, { icon: createPinIcon('courier', 36, c.active > 0) }).addTo(leafletMaps.admin);
                 marker.bindPopup(`
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-                        <strong style="font-size:13.5px;font-weight:800;">🛵 ${c.name}</strong>
+                        <strong style="font-size:13.5px;font-weight:800;">🛵 ${escMapHtml(c.name)}</strong>
                         <span style="${badgeStyle}font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;">${c.active > 0 ? c.active + ' Aktif' : 'Müsait'}</span>
                     </div>
                     <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-bottom:6px;">
-                        <i class="fa-solid fa-location-dot" style="color:#38BDF8;margin-right:4px;"></i>${street}
+                        <i class="fa-solid fa-location-dot" style="color:#38BDF8;margin-right:4px;"></i>${escMapHtml(street)}
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding-top:6px;border-top:1px solid var(--border, rgba(255,255,255,0.1));">
-                        <span>${c.vehicle}</span>
+                        <span>${escMapHtml(c.vehicle)}</span>
                         <span style="font-weight:800;color:#FF6B35;">Skor: ${score.toFixed(2)} (${distKm.toFixed(2)} km)</span>
                     </div>
                 `, { className: 'cravelo-leaflet-popup' });
@@ -880,11 +890,11 @@ const GustoMap = (function () {
             const custMarker = L.marker(custPos, { icon: createPinIcon('customer', 34, false) }).addTo(leafletMaps.admin);
             custMarker.bindPopup(`
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-                    <strong style="font-size:13.5px;font-weight:800;">🏠 ${custLoc.name || 'Teslimat Noktası'}</strong>
+                    <strong style="font-size:13.5px;font-weight:800;">🏠 ${escMapHtml(custLoc.name || 'Teslimat Noktası')}</strong>
                     <span style="background:rgba(16,185,129,0.16);color:#10B981;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;">Müşteri</span>
                 </div>
                 <div style="font-size:11.5px;color:var(--text-2, #94A3B8);">
-                    <i class="fa-solid fa-map-pin" style="color:#10B981;margin-right:4px;"></i>${custStreet}
+                    <i class="fa-solid fa-map-pin" style="color:#10B981;margin-right:4px;"></i>${escMapHtml(custStreet)}
                 </div>
             `, { className: 'cravelo-leaflet-popup' });
             leafletLayers.adminMarkers.push(custMarker);
@@ -930,8 +940,8 @@ const GustoMap = (function () {
 
         // Restoran Marker
         const restPopupHtml = `
-            <strong style="font-size:13px;">🍽️ ${restObj.name}</strong>
-            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${getStreetLabelForCoords(restObj.x, restObj.y, restObj.lat, restObj.lon, restObj.neighborhood)}</div>
+            <strong style="font-size:13px;">🍽️ ${escMapHtml(restObj.name)}</strong>
+            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${escMapHtml(getStreetLabelForCoords(restObj.x, restObj.y, restObj.lat, restObj.lon, restObj.neighborhood))}</div>
             <div style="font-size:11px;color:#FF6B35;font-weight:700;margin-top:4px;">Sipariş Alım Noktası</div>
         `;
         if (!leafletLayers.courierRestMarker) {
@@ -944,8 +954,8 @@ const GustoMap = (function () {
 
         // Müşteri Marker
         const custPopupHtml = `
-            <strong style="font-size:13px;">🏠 ${custLoc.name || 'Teslimat Adresi'}</strong>
-            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${getStreetLabelForCoords(custLoc.x, custLoc.y, custLoc.lat, custLoc.lon, 'Moda, Kadıköy')}</div>
+            <strong style="font-size:13px;">🏠 ${escMapHtml(custLoc.name || 'Teslimat Adresi')}</strong>
+            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${escMapHtml(getStreetLabelForCoords(custLoc.x, custLoc.y, custLoc.lat, custLoc.lon, 'Moda, Kadıköy'))}</div>
             <div style="font-size:11px;color:#10B981;font-weight:700;margin-top:4px;">Müşteri Varış Noktası</div>
         `;
         if (!leafletLayers.courierCustMarker) {
@@ -990,8 +1000,8 @@ const GustoMap = (function () {
             ? gridToGps(currentAnimPos.x, currentAnimPos.y)
             : ((curCourier && curCourier.lat && curCourier.lon) ? [curCourier.lat, curCourier.lon] : gridToGps(curCourier?.x ?? 14, curCourier?.y ?? 10));
         const courierPopupHtml = `
-            <strong style="font-size:13px;">🛵 ${curCourier ? curCourier.name : 'Aktif Kurye'}</strong>
-            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${curCourier ? curCourier.vehicle : 'Motor'} • Canlı GPS</div>
+            <strong style="font-size:13px;">🛵 ${escMapHtml(curCourier ? curCourier.name : 'Aktif Kurye')}</strong>
+            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${escMapHtml(curCourier ? curCourier.vehicle : 'Motor')} • Canlı GPS</div>
         `;
         if (!leafletLayers.courierMarker) {
             leafletLayers.courierMarker = L.marker(curGps, { icon: createPinIcon('courier', 38, true) })
@@ -1083,8 +1093,8 @@ const GustoMap = (function () {
 
         // Restoran Marker + Popup
         const rPopup = `
-            <strong style="font-size:13px;">🍽️ ${r.name || activeOrder.restaurant}</strong>
-            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${getStreetLabelForCoords(r.x, r.y, r.lat, r.lon, r.neighborhood)}</div>
+            <strong style="font-size:13px;">🍽️ ${escMapHtml(r.name || activeOrder.restaurant)}</strong>
+            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${escMapHtml(getStreetLabelForCoords(r.x, r.y, r.lat, r.lon, r.neighborhood))}</div>
             <div style="font-size:11px;color:#FF6B35;font-weight:700;margin-top:4px;">Sipariş Restoranı</div>
         `;
         const rM = L.marker(restPos, { icon: createPinIcon('restaurant', 34, false) })
@@ -1093,8 +1103,8 @@ const GustoMap = (function () {
 
         // Müşteri Teslimat Noktası Marker + Popup
         const cPopup = `
-            <strong style="font-size:13px;">🏠 ${custLoc.name || 'Teslimat Adresiniz'}</strong>
-            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${getStreetLabelForCoords(custLoc.x, custLoc.y, custLoc.lat, custLoc.lon, 'Moda, Kadıköy')}</div>
+            <strong style="font-size:13px;">🏠 ${escMapHtml(custLoc.name || 'Teslimat Adresiniz')}</strong>
+            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${escMapHtml(getStreetLabelForCoords(custLoc.x, custLoc.y, custLoc.lat, custLoc.lon, 'Moda, Kadıköy'))}</div>
             <div style="font-size:11px;color:#10B981;font-weight:700;margin-top:4px;">Teslimat Adresiniz</div>
         `;
         const cM = L.marker(custPos, { icon: createPinIcon('customer', 34, false) })
@@ -1112,7 +1122,7 @@ const GustoMap = (function () {
                 const addonPos = (addonR.lat && addonR.lon) ? [addonR.lat, addonR.lon] : gridToGps(addonR.x, addonR.y);
                 const aM = L.marker(addonPos, { icon: createPinIcon('restaurant', 30, false) })
                     .addTo(leafletMaps.customer)
-                    .bindPopup(`<strong style="font-size:13px;">🍰 Ara Durak: ${addonR.name}</strong>`, { className: 'cravelo-leaflet-popup' });
+                    .bindPopup(`<strong style="font-size:13px;">🍰 Ara Durak: ${escMapHtml(addonR.name)}</strong>`, { className: 'cravelo-leaflet-popup' });
                 leafletLayers.customerMarkers.push(aM);
                 boundsPoints.push(addonPos);
                 routePoints = [restPos, addonPos, custPos];
@@ -1146,8 +1156,8 @@ const GustoMap = (function () {
                 ? activeOrder.courier
                 : (assignedCourier?.name || 'Siparişinizin Kuryesi');
             const kPopup = `
-                <strong style="font-size:13px;">🛵 ${cName}</strong>
-                <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${assignedCourier?.vehicle || 'Motor Kurye'} • Canlı GPS</div>
+                <strong style="font-size:13px;">🛵 ${escMapHtml(cName)}</strong>
+                <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${escMapHtml(assignedCourier?.vehicle || 'Motor Kurye')} • Canlı GPS</div>
                 <div style="font-size:11px;color:#38BDF8;font-weight:700;margin-top:4px;">Siparişinizin Kuryesi</div>
             `;
             const kM = L.marker(curGps, { icon: createPinIcon('courier', 38, true) })

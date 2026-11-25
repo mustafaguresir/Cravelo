@@ -87,7 +87,8 @@ final class AuthController extends Controller
             return;
         }
 
-        // Oturumu Başlat
+        // Oturumu Başlat (Session Fixation koruması)
+        Session::regenerate();
         Session::set('user', [
             'id' => $user->id,
             'username' => $user->username,
@@ -254,6 +255,8 @@ final class AuthController extends Controller
     public function logout(Request $request): void
     {
         Session::destroy();
+        Session::start();
+        Session::regenerate();
         Session::setFlash('info', 'Oturumunuz güvenli biçimde sonlandırıldı.');
         Response::redirect($request->url('/login'), 303);
     }

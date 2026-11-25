@@ -42,33 +42,33 @@ final class JsonUserRepository implements UserRepositoryInterface
 
     public function save(User $user): int
     {
-        $records = JsonStorageHelper::read($this->filePath);
-        $maxId = 0;
-        $foundIndex = -1;
+        return (int)JsonStorageHelper::update($this->filePath, static function (array $records) use ($user): array {
+            $maxId = 0;
+            $foundIndex = -1;
 
-        foreach ($records as $index => $row) {
-            $id = (int)$row['id'];
-            if ($id > $maxId) {
-                $maxId = $id;
+            foreach ($records as $index => $row) {
+                $id = (int)$row['id'];
+                if ($id > $maxId) {
+                    $maxId = $id;
+                }
+                if ($user->id > 0 && $id === $user->id) {
+                    $foundIndex = $index;
+                }
             }
-            if ($user->id > 0 && $id === $user->id) {
-                $foundIndex = $index;
+
+            if ($user->id <= 0) {
+                $user->id = $maxId + 1;
             }
-        }
 
-        if ($user->id <= 0) {
-            $user->id = $maxId + 1;
-        }
+            $data = $user->toArray();
+            if ($foundIndex >= 0) {
+                $records[$foundIndex] = $data;
+            } else {
+                $records[] = $data;
+            }
 
-        $data = $user->toArray();
-        if ($foundIndex >= 0) {
-            $records[$foundIndex] = $data;
-        } else {
-            $records[] = $data;
-        }
-
-        JsonStorageHelper::write($this->filePath, $records);
-        return $user->id;
+            return ['data' => $records, 'result' => $user->id];
+        });
     }
 
     public function findAll(): array
@@ -79,13 +79,11 @@ final class JsonUserRepository implements UserRepositoryInterface
 
     public function delete(int $id): bool
     {
-        $records = JsonStorageHelper::read($this->filePath);
-        $newRecords = array_values(array_filter($records, fn($r) => (int)$r['id'] !== $id));
-        if (count($records) !== count($newRecords)) {
-            JsonStorageHelper::write($this->filePath, $newRecords);
-            return true;
-        }
-        return false;
+        return (bool)JsonStorageHelper::update($this->filePath, static function (array $records) use ($id): array {
+            $newRecords = array_values(array_filter($records, static fn(array $r): bool => (int)$r['id'] !== $id));
+            $changed = count($records) !== count($newRecords);
+            return ['data' => $newRecords, 'result' => $changed, 'write' => $changed];
+        });
     }
 }
 

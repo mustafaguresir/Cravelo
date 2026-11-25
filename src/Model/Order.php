@@ -23,12 +23,14 @@ final class Order
         public ?string $createdAt = null,
         array $items = [],
         public ?int $deliveryX = 18,
-        public ?int $deliveryY = 14
+        public ?int $deliveryY = 14,
+        public string $deliveryMode = 'courier'
     ) {
         $this->items = $items;
         $this->createdAt = $createdAt ?? date('Y-m-d H:i:s');
         $this->deliveryX = $deliveryX ?? (int)round($deliveryLatitude);
         $this->deliveryY = $deliveryY ?? (int)round($deliveryLongitude);
+        $this->deliveryMode = ($deliveryMode === 'takeaway') ? 'takeaway' : 'courier';
     }
 
     public function addItem(OrderItem $item): void
@@ -49,6 +51,7 @@ final class Order
             'delivery_longitude' => $this->deliveryLongitude,
             'delivery_x' => $this->deliveryX,
             'delivery_y' => $this->deliveryY,
+            'delivery_mode' => $this->deliveryMode,
             'estimated_delivery_time' => $this->estimatedDeliveryTime,
             'created_at' => $this->createdAt,
             'items' => array_map(fn(OrderItem $i) => $i->toArray(), $this->items)
@@ -68,6 +71,7 @@ final class Order
         $lon = (float)($data['delivery_longitude'] ?? $data['deliveryY'] ?? 29.0280);
         $delX = isset($data['delivery_x']) ? (int)$data['delivery_x'] : 18;
         $delY = isset($data['delivery_y']) ? (int)$data['delivery_y'] : 14;
+        $mode = ((string)($data['delivery_mode'] ?? 'courier') === 'takeaway') ? 'takeaway' : 'courier';
 
         return new self(
             id: (int)$data['id'],
@@ -82,7 +86,8 @@ final class Order
             createdAt: $data['created_at'] ?? null,
             items: $items,
             deliveryX: $delX,
-            deliveryY: $delY
+            deliveryY: $delY,
+            deliveryMode: $mode
         );
     }
 }
