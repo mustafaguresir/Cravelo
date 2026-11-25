@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cravelo — Giriş Yap & Kayıt Ol (Modern FoodTech Deneyimi)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FF6B35'/%3E%3Cstop offset='100%25' stop-color='%23FA4A0C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Cpath d='M16 28c0-8 7.2-13 16-13s16 5 16 13H16zm-2 5h36a3 3 0 0 1 0 6H14a3 3 0 0 1 0-6zm3 9h30v3c0 3.3-2.7 6-6 6H23c-3.3 0-6-2.7-6-6v-3z' fill='%23fff'/%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root,
+        :root[data-theme="dark"] {
+            --crv-primary: #FF6B35;
+            --crv-primary-deep: #FA4A0C;
+            --crv-primary-glow: rgba(255, 107, 53, 0.34);
+            --crv-primary-soft: rgba(255, 107, 53, 0.14);
+            --crv-emerald: #10B981;
+            --crv-emerald-deep: #059669;
+            --crv-emerald-soft: rgba(16, 185, 129, 0.14);
+            --crv-bg: #080C16;
+            --crv-bg-mesh-1: rgba(255, 107, 53, 0.15);
+            --crv-bg-mesh-2: rgba(56, 189, 248, 0.08);
+            --crv-bg-mesh-3: rgba(245, 158, 11, 0.07);
+            --crv-surface: rgba(15, 22, 38, 0.88);
+            --crv-surface-2: rgba(255, 255, 255, 0.04);
+            --crv-surface-hover: rgba(255, 255, 255, 0.07);
+            --crv-brand-bg: linear-gradient(155deg, #131B2E 0%, #1C1414 55%, #0D1322 100%);
+            --crv-brand-border: rgba(255, 255, 255, 0.08);
+            --crv-border: rgba(255, 255, 255, 0.09);
+            --crv-border-strong: rgba(255, 255, 255, 0.15);
+            --crv-input-bg: rgba(9, 14, 26, 0.85);
+            --crv-input-focus: rgba(15, 23, 42, 0.98);
+            --crv-text: #F8FAFC;
+            --crv-text-2: #94A3B8;
+            --crv-text-3: #64748B;
+            --crv-shadow: 0 32px 72px -16px rgba(0, 0, 0, 0.78), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            --crv-chip-bg: rgba(255, 255, 255, 0.04);
+            --crv-chip-border: rgba(255, 255, 255, 0.08);
+            --crv-dot-grid: rgba(255, 255, 255, 0.045);
+        }
+
+        :root[data-theme="light"] {
+            --crv-primary: #FA4A0C;
+            --crv-primary-deep: #E03E05;
+            --crv-primary-glow: rgba(250, 74, 12, 0.25);
+            --crv-primary-soft: rgba(250, 74, 12, 0.1);
+            --crv-emerald: #059669;
+            --crv-emerald-deep: #047857;
+            --crv-emerald-soft: rgba(16, 185, 129, 0.12);
+            --crv-bg: #F8FAFC;
+            --crv-bg-mesh-1: rgba(255, 107, 53, 0.11);
+            --crv-bg-mesh-2: rgba(56, 189, 248, 0.07);
+            --crv-bg-mesh-3: rgba(245, 158, 11, 0.06);
+            --crv-surface: rgba(255, 255, 255, 0.96);
+            --crv-surface-2: #F1F5F9;
+            --crv-surface-hover: #E2E8F0;
+            --crv-brand-bg: linear-gradient(155deg, #FFF7F2 0%, #FFEFE5 52%, #FFFFFF 100%);
+            --crv-brand-border: rgba(250, 74, 12, 0.14);
+            --crv-border: #E2E8F0;
+            --crv-border-strong: #CBD5E1;
+            --crv-input-bg: #FFFFFF;
+            --crv-input-focus: #FFFFFF;
+            --crv-text: #0F172A;
+            --crv-text-2: #475569;
+            --crv-text-3: #64748B;
+            --crv-shadow: 0 28px 64px -16px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.05);
+            --crv-chip-bg: #F8FAFC;
+            --crv-chip-border: #E2E8F0;
+            --crv-dot-grid: rgba(15, 23, 42, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            color: var(--crv-text);
+            background-color: var(--crv-bg);
+            background-image:
+                radial-gradient(ellipse 65% 50% at 15% 15%, var(--crv-bg-mesh-1), transparent 60%),
+                radial-gradient(ellipse 55% 45% at 88% 85%, var(--crv-bg-mesh-2), transparent 60%),
+                radial-gradient(ellipse 50% 45% at 85% 12%, var(--crv-bg-mesh-3), transparent 55%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: safe center;
+            padding: 20px 16px 28px;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        /* Floating Top Utility Bar */
+        .auth-topbar {
+            width: 100%;
+            max-width: 1080px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .auth-back-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            background: var(--crv-surface);
+            border: 1px solid var(--crv-border);
+            color: var(--crv-text-2);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .auth-back-pill:hover {
+            color: var(--crv-text);
+            border-color: var(--crv-primary);
+            transform: translateY(-1px);
+        }
+
+        .auth-theme-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 9999px;
+            background: var(--crv-surface);
+            border: 1px solid var(--crv-border);
+            color: var(--crv-text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            cursor: pointer;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .auth-theme-btn:hover {
+            border-color: var(--crv-primary);
+            color: var(--crv-primary);
+            transform: translateY(-1px) scale(1.04);
+        }
+
+        /* Split-Screen Container */
+        .auth-page {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-split {
+            width: 100%;
+            max-width: 1080px;
+            display: grid;
+            grid-template-columns: 1fr 1.12fr;
+            background: var(--crv-surface);
+            border: 1px solid var(--crv-border);
+            border-radius: 28px;
+            box-shadow: var(--crv-shadow);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            overflow: hidden;
+        }
+
+        /* Left Brand Showcase Panel */
+        .auth-brand-panel {
+            position: relative;
+            padding: 40px 38px;
+            background: var(--crv-brand-bg);
+            border-right: 1px solid var(--crv-brand-border);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 28px;
+            overflow: hidden;
+        }
+
+        .auth-brand-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(var(--crv-dot-grid) 1.2px, transparent 1.2px);
+            background-size: 22px 22px;
+            pointer-events: none;
+        }
+
+        .auth-brand-panel::after {
+            content: "";
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            right: -110px;
+            bottom: -110px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.24) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .auth-brand-panel > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-brand-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .auth-brand-lockup {
+            display: inline-flex;
+            align-items: center;
+            gap: 11px;
+            text-decoration: none;
+            color: var(--crv-text);
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: -0.6px;
+        }
+
+        .auth-brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+            background: linear-gradient(135deg, #FF6B35, #FA4A0C);
+            color: #FFFFFF;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 8px 22px rgba(255, 107, 53, 0.4);
+        }
+
+        .auth-live-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 11.5px;
+            font-weight: 800;
+            color: var(--crv-emerald);
+            background: var(--crv-emerald-soft);
+            border: 1px solid rgba(16, 185, 129, 0.28);
+        }
+
+        .auth-live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--crv-emerald);
+            box-shadow: 0 0 8px var(--crv-emerald);
+            animation: crvPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes crvPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(0.82); }
+        }
+
+        .auth-brand-copy h1 {
+            font-size: clamp(26px, 2.7vw, 33px);
+            font-weight: 900;
+            line-height: 1.18;
+            letter-spacing: -0.9px;
+            color: var(--crv-text);
+            margin: 0 0 14px;
+        }
+
+        .auth-brand-copy h1 span {
+            color: var(--crv-primary);
+        }
+
+        .auth-brand-copy p {
+            font-size: 14.5px;
+            line-height: 1.65;
+            color: var(--crv-text-2);
+            margin: 0;
+        }
+
+        .auth-stat-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .auth-stat-tile {
+            background: var(--crv-surface);
+            border: 1px solid var(--crv-border);
+            border-radius: 16px;
+            padding: 14px 12px;
+            backdrop-filter: blur(12px);
+        }
+
+        .auth-stat-val {
+            font-size: 19px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            color: var(--crv-text);
+            line-height: 1.1;
+            margin-bottom: 4px;
+        }
+
+        .auth-stat-val.accent {
+            color: var(--crv-primary);
+        }
+
+        .auth-stat-lbl {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--crv-text-2);
+        }
+
+        .auth-eco-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .auth-eco-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: var(--crv-surface-2);
+            border: 1px solid var(--crv-border);
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--crv-text);
+        }
+
+        .auth-eco-ico {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        /* Right Form Panel */
+        .auth-form-panel {
+            padding: 34px 36px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .auth-mobile-brand {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .auth-form-head {
+            margin-bottom: 18px;
+        }
+
+        .auth-form-head h2 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.6px;
+            color: var(--crv-text);
+            margin: 0 0 5px;
+        }
+
+        .auth-form-head p {
+            font-size: 13.5px;
+            color: var(--crv-text-2);
+            margin: 0;
+        }
+
+        /* Segmented Control Tab Switcher */
+        .segmented-control {
+            display: flex;
+            background: var(--crv-surface-2);
+            border: 1px solid var(--crv-border);
+            border-radius: 14px;
+            padding: 4px;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+
+        .segmented-control .btn {
+            border-radius: 10px !important;
+            border: none !important;
+            padding: 10px 16px !important;
+            font-size: 13.5px !important;
+            font-weight: 700 !important;
+            letter-spacing: -0.2px;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .segmented-control .btn-primary {
+            background: linear-gradient(135deg, #FF6B35, #FA4A0C) !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 16px var(--crv-primary-glow) !important;
+        }
+
+        .segmented-control .btn-success {
+            background: linear-gradient(135deg, #10B981, #059669) !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.36) !important;
+        }
+
+        .segmented-control .text-secondary {
+            background: transparent !important;
+            color: var(--crv-text-2) !important;
+        }
+
+        .segmented-control .text-secondary:hover {
+            color: var(--crv-text) !important;
+            background: var(--crv-surface-hover) !important;
+        }
+
+        /* Compact Environment Hint */
+        .env-hint-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 13px;
+            border-radius: 12px;
+            background: var(--crv-surface-2);
+            border: 1px solid var(--crv-border);
+            font-size: 11.5px;
+            color: var(--crv-text-2);
+            margin-bottom: 14px;
+        }
+
+        .env-hint-pill code {
+            color: var(--crv-primary);
+            font-weight: 700;
+            background: var(--crv-primary-soft);
+            padding: 1px 6px;
+            border-radius: 6px;
+        }
+
+        /* Self-Contained Layout & Utility Fallbacks (100% CDN-Independent) */
+        .w-100 { width: 100% !important; }
+        .d-none { display: none !important; }
+        .flex-fill { flex: 1 1 0% !important; }
+        .text-center { text-align: center !important; }
+        .fw-bold { font-weight: 700 !important; }
+        .small { font-size: 12.5px; }
+        .mb-2 { margin-bottom: 10px !important; }
+        .mb-3 { margin-bottom: 16px !important; }
+        .mb-4 { margin-bottom: 22px !important; }
+        .me-1 { margin-right: 4px !important; }
+        .me-2 { margin-right: 8px !important; }
+        .py-2 { padding-top: 9px !important; padding-bottom: 9px !important; }
+        .px-3 { padding-left: 14px !important; padding-right: 14px !important; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+            line-height: 1.4;
+            cursor: pointer;
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+
+        .crv-form-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            width: 100%;
+        }
+
+        .auth-form-panel form {
+            width: 100%;
+        }
+
+        /* Form Controls & Inputs */
+        .form-label {
+            display: block;
+            width: 100%;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--crv-text);
+            margin-bottom: 5px;
+            letter-spacing: -0.15px;
+        }
+
+        .crv-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .crv-input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--crv-text-3);
+            font-size: 13.5px;
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .form-control {
+            display: block;
+            width: 100% !important;
+            min-width: 0;
+            font-family: inherit;
+            line-height: 1.45;
+            outline: none;
+            background-color: var(--crv-input-bg) !important;
+            border: 1.5px solid var(--crv-border-strong) !important;
+            color: var(--crv-text) !important;
+            border-radius: 12px !important;
+            padding: 11px 14px !important;
+            font-size: 13.5px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .crv-input-wrap .form-control {
+            padding-left: 40px !important;
+        }
+
+        .crv-input-wrap.has-toggle .form-control {
+            padding-right: 42px !important;
+        }
+
+        .form-control:focus {
+            border-color: var(--crv-primary) !important;
+            box-shadow: 0 0 0 3.5px var(--crv-primary-soft) !important;
+            background-color: var(--crv-input-focus) !important;
+        }
+
+        .crv-input-wrap:focus-within .crv-input-icon {
+            color: var(--crv-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--crv-text-3) !important;
+            font-size: 13px;
+        }
+
+        .crv-pwd-toggle {
+            position: absolute;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 9px;
+            background: transparent;
+            color: var(--crv-text-3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: color 0.2s ease, background 0.2s ease;
+        }
+
+        .crv-pwd-toggle:hover {
+            color: var(--crv-text);
+            background: var(--crv-surface-2);
+        }
+
+        /* Action Buttons */
+        .btn-brand-primary {
+            background: linear-gradient(135deg, #FF6B35, #FA4A0C);
+            border: none;
+            border-radius: 14px;
+            color: #FFFFFF;
+            font-weight: 800;
+            font-size: 14.5px;
+            letter-spacing: -0.2px;
+            padding: 12px 20px;
+            box-shadow: 0 8px 22px var(--crv-primary-glow);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-brand-primary:hover {
+            background: linear-gradient(135deg, #FA4A0C, #DC3B04);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px var(--crv-primary-glow);
+            color: #FFFFFF;
+        }
+
+        .btn-brand-success {
+            background: linear-gradient(135deg, #10B981, #059669);
+            border: none;
+            border-radius: 14px;
+            color: #FFFFFF;
+            font-weight: 800;
+            font-size: 14.5px;
+            letter-spacing: -0.2px;
+            padding: 12px 20px;
+            box-shadow: 0 8px 22px rgba(16, 185, 129, 0.36);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-brand-success:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(16, 185, 129, 0.45);
+            color: #FFFFFF;
+        }
+
+        .fr15-notice {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            padding: 10px 13px;
+            border-radius: 12px;
+            font-size: 11.5px;
+            line-height: 1.5;
+            margin-bottom: 14px;
+            background: var(--crv-emerald-soft);
+            border: 1px solid rgba(16, 185, 129, 0.28);
+            color: var(--crv-text);
+        }
+
+        .fr15-notice i {
+            color: var(--crv-emerald);
+            margin-top: 2px;
+        }
+
+        /* Demo Accounts Card (10 Official System Users) */
+        .demo-box {
+            background: var(--crv-surface-2);
+            border: 1px solid var(--crv-border);
+            border-radius: 18px;
+            padding: 15px 16px;
+            margin-top: 18px;
+        }
+
+        .demo-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .demo-head-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--crv-text);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .demo-pass-badge {
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            background: var(--crv-primary-soft);
+            color: var(--crv-primary);
+            border: 1px solid rgba(255, 107, 53, 0.28);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        .demo-section-title {
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--crv-text-3);
+            margin-top: 10px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 7px;
+        }
+
+        .demo-pill {
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 11px;
+            padding: 7px 11px;
+            background: var(--crv-chip-bg);
+            border: 1px solid var(--crv-chip-border);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            color: var(--crv-text);
+        }
+
+        .demo-pill:hover {
+            background: var(--crv-primary-soft);
+            border-color: rgba(255, 107, 53, 0.42);
+            transform: translateY(-1px);
+            color: var(--crv-primary);
+        }
+
+        .demo-pill .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9.5px;
+            font-weight: 800;
+            border-radius: 6px;
+            padding: 3px 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+        }
+
+        .badge.bg-danger { background: #EF4444 !important; color: #FFFFFF !important; }
+        .badge.bg-success { background: #10B981 !important; color: #FFFFFF !important; }
+        .badge.bg-info { background: #38BDF8 !important; color: #0F172A !important; }
+        .badge.bg-warning { background: #F59E0B !important; color: #0F172A !important; }
+
+        .alert {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            border-radius: 13px;
+            font-weight: 600;
+            font-size: 12.5px;
+            line-height: 1.45;
+            letter-spacing: -0.1px;
+            border: 1px solid transparent;
+        }
+        .alert-info {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: rgba(56, 189, 248, 0.32);
+            color: var(--crv-text);
+        }
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.35);
+            color: var(--crv-text);
+        }
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: var(--crv-text);
+        }
+
+        @media (max-width: 920px) {
+            .auth-split {
+                grid-template-columns: 1fr;
+                max-width: 520px;
+            }
+            .auth-topbar {
+                max-width: 520px;
+            }
+            .auth-brand-panel {
+                display: none;
+            }
+            .auth-mobile-brand {
+                display: flex;
+            }
+            .auth-form-panel {
+                padding: 28px 24px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .crv-form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-topbar">
+        <a href="index.html" class="auth-back-pill">
+            <i class="fa-solid fa-arrow-left"></i> Ana Sayfa
+        </a>
+        <button type="button" class="auth-theme-btn" id="auth-theme-toggle" title="Açık / Koyu Tema" aria-label="Temayı Değiştir" onclick="toggleAuthTheme()">
+            <i class="fa-solid fa-sun" id="auth-theme-icon"></i>
+        </button>
+    </div>
+
+    <main class="auth-page">
+        <div class="auth-split">
+            <!-- Left Cravelo Brand Visual Panel -->
+            <aside class="auth-brand-panel">
+                <div class="auth-brand-top">
+                    <a href="index.html" class="auth-brand-lockup">
+                        <span class="auth-brand-mark"><i class="fa-solid fa-burger"></i></span>
+                        <span>Crave<em style="color: var(--crv-primary); font-style: normal;">lo</em></span>
+                    </a>
+                    <span class="auth-live-pill">
+                        <span class="auth-live-dot"></span> Kadıköy Canlı
+                    </span>
+                </div>
+
+                <div class="auth-brand-copy">
+                    <h1>Sıcak lezzetler, <span>akıllı kurye</span> rotasıyla kapında.</h1>
+                    <p>
+                        Tek hesapla favori mutfaklardan sipariş verin, canlı haritada kuryenizi adım adım izleyin veya 4 farklı yönetim kokpitini anında deneyimleyin.
+                    </p>
+                    <div class="auth-stat-cards">
+                        <div class="auth-stat-tile">
+                            <div class="auth-stat-val accent">~22 Dk</div>
+                            <div class="auth-stat-lbl">Ort. Teslimat</div>
+                        </div>
+                        <div class="auth-stat-tile">
+                            <div class="auth-stat-val">%20</div>
+                            <div class="auth-stat-lbl">Gel-Al İndirimi</div>
+                        </div>
+                        <div class="auth-stat-tile">
+                            <div class="auth-stat-val">4.9 ★</div>
+                            <div class="auth-stat-lbl">25K+ Sipariş</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-eco-list">
+                    <div class="auth-eco-item">
+                        <span class="auth-eco-ico" style="background: rgba(16,185,129,0.15); color: #10B981;"><i class="fa-solid fa-bag-shopping"></i></span>
+                        <span>Müşteri Portalı</span>
+                    </div>
+                    <div class="auth-eco-item">
+                        <span class="auth-eco-ico" style="background: rgba(245,158,11,0.15); color: #F59E0B;"><i class="fa-solid fa-utensils"></i></span>
+                        <span>Restoran KDS</span>
+                    </div>
+                    <div class="auth-eco-item">
+                        <span class="auth-eco-ico" style="background: rgba(6,182,212,0.15); color: #06B6D4;"><i class="fa-solid fa-motorcycle"></i></span>
+                        <span>Kurye Kokpiti</span>
+                    </div>
+                    <div class="auth-eco-item">
+                        <span class="auth-eco-ico" style="background: rgba(239,68,68,0.15); color: #EF4444;"><i class="fa-solid fa-shield-halved"></i></span>
+                        <span>Yönetici Merkezi</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Right Interactive Auth Panel -->
+            <section class="auth-form-panel">
+                <div class="auth-mobile-brand">
+                    <span class="auth-brand-mark"><i class="fa-solid fa-burger"></i></span>
+                    <span style="font-size: 22px; font-weight: 900; letter-spacing: -0.6px; color: var(--crv-text);">
+                        Crave<em style="color: var(--crv-primary); font-style: normal;">lo</em>
+                    </span>
+                </div>
+
+                <div class="auth-form-head">
+                    <h2 id="auth-heading">Cravelo'ya Hoş Geldiniz</h2>
+                    <p id="auth-subtext">Hesabınıza giriş yapın veya tek tıkla 10 demo rolden birini seçin.</p>
+                </div>
+
+                <!-- Sekme Seçimi: Giriş Yap / Yeni Kayıt Ol -->
+                <div class="segmented-control">
+                    <button type="button" class="btn btn-sm flex-fill fw-bold btn-primary" id="tab-btn-login" onclick="switchAuthTab('login')">
+                        <i class="fa-solid fa-right-to-bracket me-1"></i> Giriş Yap
+                    </button>
+                    <button type="button" class="btn btn-sm flex-fill fw-bold text-secondary" id="tab-btn-register" onclick="switchAuthTab('register')">
+                        <i class="fa-solid fa-user-plus me-1"></i> Yeni Kayıt Ol
+                    </button>
+                </div>
+
+                <!-- Ortam Bilgilendirme Rozeti -->
+                <div class="env-hint-pill">
+                    <i class="fa-solid fa-server" style="color: #06B6D4;"></i>
+                    <span>Senkron oturumlar için önerilen adres: <code>http://localhost:8000</code></span>
+                </div>
+
+                <!-- Dinamik Uyarı ve Bildirim Kutusu -->
+                <div id="alert-box" class="alert alert-info py-2 small d-none"></div>
+
+                <!-- 1. Giriş Yap Formu -->
+                <form id="login-form" action="/login" method="POST" onsubmit="handleStaticLogin(event)">
+                    <div class="mb-3">
+                        <label class="form-label" for="inp-username">Kullanıcı Adı veya E-Posta Adresi</label>
+                        <div class="crv-input-wrap">
+                            <i class="fa-solid fa-user crv-input-icon"></i>
+                            <input type="text" id="inp-username" name="username"
+                                class="form-control"
+                                placeholder="Örn: ahmet_musteri veya mustafaguresir@gmail.com" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="inp-password">Parola</label>
+                        <div class="crv-input-wrap has-toggle">
+                            <i class="fa-solid fa-lock crv-input-icon"></i>
+                            <input type="password" id="inp-password" name="password"
+                                class="form-control" placeholder="••••••••" value="hash123"
+                                required>
+                            <button type="button" class="crv-pwd-toggle" onclick="togglePwdField('inp-password', this)" aria-label="Parolayı Göster">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-brand-primary w-100 fw-bold">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i> Giriş Yap
+                    </button>
+                </form>
+
+                <!-- 2. Yeni Kayıt Ol Formu (Müşteri - FR-15) -->
+                <form id="register-form" action="/register" method="POST" onsubmit="handleRegister(event)" style="display: none;">
+                    <div class="fr15-notice">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span><strong>Güvenlik Kuralı (FR-15):</strong> Dış kayıt sistemiyle yalnızca <strong>Müşteri</strong> hesabı açılabilir. Yönetici ve Kurye hesapları dışarıdan oluşturulamaz.</span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" for="reg-fullname">Ad Soyad</label>
+                        <div class="crv-input-wrap">
+                            <i class="fa-solid fa-id-card crv-input-icon"></i>
+                            <input type="text" id="reg-fullname" name="fullname" class="form-control" placeholder="Örn: Zeynep Demir" required>
+                        </div>
+                    </div>
+
+                    <div class="crv-form-row mb-2">
+                        <div>
+                            <label class="form-label" for="reg-username">Kullanıcı Adı <span style="color: var(--crv-text-3); font-weight: 500;">(Min 3)</span></label>
+                            <div class="crv-input-wrap">
+                                <i class="fa-solid fa-at crv-input-icon"></i>
+                                <input type="text" id="reg-username" name="username" class="form-control" placeholder="zeynep_demir" minlength="3" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label" for="reg-phone">Telefon Numarası</label>
+                            <div class="crv-input-wrap">
+                                <i class="fa-solid fa-phone crv-input-icon"></i>
+                                <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="0555 123 45 67" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" for="reg-email">E-Posta Adresi</label>
+                        <div class="crv-input-wrap">
+                            <i class="fa-solid fa-envelope crv-input-icon"></i>
+                            <input type="email" id="reg-email" name="email" class="form-control" placeholder="Örn: zeynep@ornek.com" required>
+                        </div>
+                    </div>
+
+                    <div class="crv-form-row mb-3">
+                        <div>
+                            <label class="form-label" for="reg-password">Parola <span style="color: var(--crv-text-3); font-weight: 500;">(Min 6)</span></label>
+                            <div class="crv-input-wrap has-toggle">
+                                <i class="fa-solid fa-lock crv-input-icon"></i>
+                                <input type="password" id="reg-password" name="password" class="form-control" placeholder="••••••••" minlength="6" required>
+                                <button type="button" class="crv-pwd-toggle" onclick="togglePwdField('reg-password', this)" aria-label="Parolayı Göster">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label" for="reg-password-confirm">Parola Tekrarı</label>
+                            <div class="crv-input-wrap has-toggle">
+                                <i class="fa-solid fa-check-double crv-input-icon"></i>
+                                <input type="password" id="reg-password-confirm" name="password_confirm" class="form-control" placeholder="••••••••" minlength="6" required>
+                                <button type="button" class="crv-pwd-toggle" onclick="togglePwdField('reg-password-confirm', this)" aria-label="Parola Tekrarını Göster">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-brand-success w-100 fw-bold">
+                        <i class="fa-solid fa-user-plus me-2"></i> Kayıt Ol ve Giriş Yap (Müşteri)
+                    </button>
+                </form>
+
+                <!-- Hızlı Test / Demo Hesapları (Tüm 10 Sistem Kullanıcısı) -->
+                <div id="demo-accounts-box" class="demo-box">
+                    <div class="demo-head">
+                        <span class="demo-head-title">
+                            <i class="fa-solid fa-bolt" style="color: var(--crv-primary);"></i> Tüm 10 Sistem Kullanıcısı
+                        </span>
+                        <span class="demo-pass-badge">Şifre: hash123</span>
+                    </div>
+
+                    <!-- 1. Sistem Yöneticisi -->
+                    <div class="demo-section-title">👑 Sistem Yöneticisi</div>
+                    <div class="demo-pill" onclick="fillLogin('mustafaguresir@gmail.com', 'admin_mustafa', 'Mustafa Güreşir (Yönetici)')">
+                        <span>👑 <strong>Mustafa Güreşir</strong></span>
+                        <span class="badge bg-danger">Yönetici</span>
+                    </div>
+
+                    <!-- 2. Müşteriler -->
+                    <div class="demo-section-title">🛍️ Müşteri Hesapları</div>
+                    <div class="demo-grid">
+                        <div class="demo-pill" onclick="fillLogin('ahmet_musteri', 'ahmet_musteri', 'Ahmet Yılmaz')">
+                            <span>🛍️ <strong>Ahmet Y.</strong></span>
+                            <span class="badge bg-success">Müşteri</span>
+                        </div>
+                        <div class="demo-pill" onclick="fillLogin('ayse_musteri', 'ayse_musteri', 'Ayşe Kaya')">
+                            <span>🛍️ <strong>Ayşe K.</strong></span>
+                            <span class="badge bg-success">Müşteri</span>
+                        </div>
+                        <div class="demo-pill" style="grid-column: span 2;" onclick="fillLogin('mehmet_musteri', 'mehmet_musteri', 'Mehmet Demir')">
+                            <span>🛍️ <strong>Mehmet Demir</strong></span>
+                            <span class="badge bg-success">Müşteri</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Kuryeler -->
+                    <div class="demo-section-title">🛵 Kurye Filosu</div>
+                    <div class="demo-grid">
+                        <div class="demo-pill" onclick="fillLogin('kurye_ali', 'kurye_ali', 'Ali Kaya')">
+                            <span>🛵 <strong>Ali</strong> (Motor)</span>
+                            <span class="badge bg-info text-dark">Kurye</span>
+                        </div>
+                        <div class="demo-pill" onclick="fillLogin('kurye_veli', 'kurye_veli', 'Veli Demir')">
+                            <span>🛵 <strong>Veli</strong> (Motor)</span>
+                            <span class="badge bg-info text-dark">Kurye</span>
+                        </div>
+                        <div class="demo-pill" style="grid-column: span 2;" onclick="fillLogin('kurye_can', 'kurye_can', 'Can Öz')">
+                            <span>🚲 <strong>Can Öz</strong> (E-Bisiklet)</span>
+                            <span class="badge bg-info text-dark">Kurye</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Restoranlar -->
+                    <div class="demo-section-title">👨‍🍳 Restoran & Mutfak Yetkilileri</div>
+                    <div class="demo-grid">
+                        <div class="demo-pill" onclick="fillLogin('restoran_lezzet', 'restoran_lezzet', 'Lezzet Kebap')">
+                            <span>🔥 <strong>Lezzet Kebap</strong></span>
+                            <span class="badge bg-warning text-dark">Restoran</span>
+                        </div>
+                        <div class="demo-pill" onclick="fillLogin('restoran_burger', 'restoran_burger', 'Burger Lab')">
+                            <span>🍔 <strong>Burger Lab</strong></span>
+                            <span class="badge bg-warning text-dark">Restoran</span>
+                        </div>
+                        <div class="demo-pill" style="grid-column: span 2;" onclick="fillLogin('restoran_pizza', 'restoran_pizza', 'Pizza Roma')">
+                            <span>🍕 <strong>Pizza Roma</strong></span>
+                            <span class="badge bg-warning text-dark">Restoran</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        function syncAuthThemeIcon() {
+            try {
+                if (typeof document === 'undefined' || !document.documentElement) return;
+                var icon = document.getElementById('auth-theme-icon');
+                if (!icon) return;
+                var current = document.documentElement.getAttribute('data-theme') || 'dark';
+                icon.className = current === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+            } catch (e) {}
+        }
+
+        function toggleAuthTheme() {
+            try {
+                if (typeof document === 'undefined' || !document.documentElement) return;
+                var current = document.documentElement.getAttribute('data-theme') || 'dark';
+                var next = current === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', next);
+                if (typeof localStorage !== 'undefined' && localStorage.setItem) {
+                    localStorage.setItem('gustogo-theme', next);
+                }
+                syncAuthThemeIcon();
+            } catch (e) {}
+        }
+
+        function togglePwdField(inputId, btnEl) {
+            try {
+                var inp = document.getElementById(inputId);
+                if (!inp) return;
+                var isPwd = inp.type === 'password';
+                inp.type = isPwd ? 'text' : 'password';
+                if (btnEl && btnEl.querySelector) {
+                    var ic = btnEl.querySelector('i');
+                    if (ic) ic.className = isPwd ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+                }
+            } catch (e) {}
+        }
+
+        try {
+            if (typeof document !== 'undefined' && document.documentElement && typeof document.documentElement.setAttribute === 'function') {
+                const savedTheme = (typeof localStorage !== 'undefined' && localStorage.getItem) ? (localStorage.getItem('gustogo-theme') || 'dark') : 'dark';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                syncAuthThemeIcon();
+            }
+        } catch (e) {}
+
+        // 10 Resmi Sistem Kullanıcısı (users.json ile %100 senkron)
+        const USER_REGISTRY = {
+            'admin_mustafa': { role: 'admin', fullName: 'Mustafa Güreşir (Yönetici)', email: 'mustafaguresir@gmail.com', phone: '05557778899', password: 'hash123' },
+            'mustafaguresir@gmail.com': { role: 'admin', fullName: 'Mustafa Güreşir (Yönetici)', email: 'mustafaguresir@gmail.com', phone: '05557778899', password: 'hash123' },
+
+            'ahmet_musteri': { role: 'customer', fullName: 'Ahmet Yılmaz', email: 'ahmet@ornek.com', phone: '05551112233', password: 'hash123' },
+            'ahmet@ornek.com': { role: 'customer', fullName: 'Ahmet Yılmaz', email: 'ahmet@ornek.com', phone: '05551112233', password: 'hash123' },
+
+            'ayse_musteri': { role: 'customer', fullName: 'Ayşe Kaya', email: 'ayse@ornek.com', phone: '05552223344', password: 'hash123' },
+            'ayse@ornek.com': { role: 'customer', fullName: 'Ayşe Kaya', email: 'ayse@ornek.com', phone: '05552223344', password: 'hash123' },
+
+            'mehmet_musteri': { role: 'customer', fullName: 'Mehmet Demir', email: 'mehmet@ornek.com', phone: '05553334455', password: 'hash123' },
+            'mehmet@ornek.com': { role: 'customer', fullName: 'Mehmet Demir', email: 'mehmet@ornek.com', phone: '05553334455', password: 'hash123' },
+
+            'kurye_ali': { role: 'courier', fullName: 'Ali Kaya', email: 'ali.kurye@ornek.com', phone: '05554445566', password: 'hash123', cId: 1 },
+            'ali.kurye@ornek.com': { role: 'courier', fullName: 'Ali Kaya', email: 'ali.kurye@ornek.com', phone: '05554445566', password: 'hash123', cId: 1 },
+
+            'kurye_veli': { role: 'courier', fullName: 'Veli Demir', email: 'veli.kurye@ornek.com', phone: '05555556677', password: 'hash123', cId: 2 },
+            'veli.kurye@ornek.com': { role: 'courier', fullName: 'Veli Demir', email: 'veli.kurye@ornek.com', phone: '05555556677', password: 'hash123', cId: 2 },
+
+            'kurye_can': { role: 'courier', fullName: 'Can Öz', email: 'can.kurye@ornek.com', phone: '05556667788', password: 'hash123', cId: 3 },
+            'can.kurye@ornek.com': { role: 'courier', fullName: 'Can Öz', email: 'can.kurye@ornek.com', phone: '05556667788', password: 'hash123', cId: 3 },
+
+            'restoran_lezzet': { role: 'restaurant', fullName: 'Lezzet Kebap', email: 'lezzet@ornek.com', phone: '02163334455', password: 'hash123', rId: 1 },
+            'lezzet@ornek.com': { role: 'restaurant', fullName: 'Lezzet Kebap', email: 'lezzet@ornek.com', phone: '02163334455', password: 'hash123', rId: 1 },
+
+            'restoran_burger': { role: 'restaurant', fullName: 'Burger Lab', email: 'burger@ornek.com', phone: '02164445566', password: 'hash123', rId: 2 },
+            'burger@ornek.com': { role: 'restaurant', fullName: 'Burger Lab', email: 'burger@ornek.com', phone: '02164445566', password: 'hash123', rId: 2 },
+
+            'restoran_pizza': { role: 'restaurant', fullName: 'Pizza Roma', email: 'pizza@ornek.com', phone: '02165556677', password: 'hash123', rId: 3 },
+            'pizza@ornek.com': { role: 'restaurant', fullName: 'Pizza Roma', email: 'pizza@ornek.com', phone: '02165556677', password: 'hash123', rId: 3 }
+        };
+
+        // Yerel depolamadaki kayıtlı kullanıcılar
+        function getRegisteredUsers() {
+            try {
+                const raw = localStorage.getItem('gustogo_registered_users');
+                return raw ? JSON.parse(raw) : [];
+            } catch (err) {
+                return [];
+            }
+        }
+
+        function saveRegisteredUsers(list) {
+            try {
+                localStorage.setItem('gustogo_registered_users', JSON.stringify(list));
+            } catch (err) {}
+        }
+
+        // Giriş ve Kayıt sekmeleri arası geçiş
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const tabLogin = document.getElementById('tab-btn-login');
+            const tabRegister = document.getElementById('tab-btn-register');
+            const demoBox = document.getElementById('demo-accounts-box');
+            const alertEl = document.getElementById('alert-box');
+            const heading = document.getElementById('auth-heading');
+            const subtext = document.getElementById('auth-subtext');
+            alertEl.classList.add('d-none');
+
+            if (tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                tabLogin.className = 'btn btn-sm flex-fill fw-bold btn-primary';
+                tabRegister.className = 'btn btn-sm flex-fill fw-bold text-secondary';
+                if (demoBox) demoBox.style.display = 'block';
+                if (heading) heading.innerText = "Cravelo'ya Hoş Geldiniz";
+                if (subtext) subtext.innerText = 'Hesabınıza giriş yapın veya tek tıkla 10 demo rolden birini seçin.';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                tabLogin.className = 'btn btn-sm flex-fill fw-bold text-secondary';
+                tabRegister.className = 'btn btn-sm flex-fill fw-bold btn-success';
+                if (demoBox) demoBox.style.display = 'none';
+                if (heading) heading.innerText = 'Yeni Müşteri Hesabı';
+                if (subtext) subtext.innerText = 'Bilgilerinizi doldurun, saniyeler içinde Cravelo deneyimine başlayın.';
+            }
+        }
+
+        function fillLogin(val, username, title) {
+            switchAuthTab('login');
+            document.getElementById('inp-username').value = val;
+            document.getElementById('inp-password').value = 'hash123';
+            const alertEl = document.getElementById('alert-box');
+            alertEl.classList.remove('d-none');
+            alertEl.className = 'alert alert-info py-2 small';
+            alertEl.innerHTML = '<strong>' + title + '</strong> hesabı seçildi. "Giriş Yap" butonuna tıklayabilirsiniz.';
+        }
+
+        // Katı Giriş Doğrulaması (Kullanıcı Adı & Parola Kontrolü)
+        function handleStaticLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('inp-username').value.trim();
+            const p = document.getElementById('inp-password').value;
+            const alertEl = document.getElementById('alert-box');
+
+            if (!u || !p) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerText = 'Lütfen kullanıcı adı ve parolanızı girin.';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            const uLower = u.toLowerCase();
+
+            // 1. Resmi kullanıcı kayıtlarında ara
+            let foundUser = null;
+            let expectedPassword = null;
+
+            if (USER_REGISTRY[uLower]) {
+                foundUser = USER_REGISTRY[uLower];
+                expectedPassword = foundUser.password || 'hash123';
+            } else {
+                // 2. Yeni kayıt olan müşterilerde ara
+                const registeredList = getRegisteredUsers();
+                const matchedReg = registeredList.find(item =>
+                    (item.username && item.username.toLowerCase() === uLower) ||
+                    (item.email && item.email.toLowerCase() === uLower)
+                );
+                if (matchedReg) {
+                    foundUser = matchedReg;
+                    expectedPassword = matchedReg.password;
+                }
+            }
+
+            // GÜVENLİK: Kullanıcı kayıtlı değilse KESİNLİKLE giriş izni verme!
+            if (!foundUser) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Giriş başarısız!</strong> Böyle bir kullanıcı bulunamadı. Lütfen bilgilerinizi kontrol edin veya <strong>Yeni Kayıt Ol</strong> sekmesinden hesap açın.';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            // Parola doğrulaması
+            if (p !== expectedPassword) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Hatalı parola!</strong> Lütfen şifrenizi kontrol edin.';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            // Kimlik doğrulandı, oturumu oluştur
+            const role = foundUser.role || 'customer';
+            const name = foundUser.fullName || foundUser.full_name || u;
+            const email = foundUser.email || (u.includes('@') ? u : u + '@ornek.com');
+            const phone = foundUser.phone || '0555 111 22 33';
+
+            const sessionData = {
+                username: foundUser.username || u,
+                role: role,
+                fullName: name,
+                email: email,
+                phone: phone,
+                selectedVendorRestId: foundUser.rId || 1,
+                selectedCourierId: foundUser.cId || 1
+            };
+            localStorage.setItem('cravelo_session', JSON.stringify(sessionData));
+            localStorage.setItem('kuryo_session', JSON.stringify(sessionData));
+            localStorage.setItem('gustogo_session', JSON.stringify(sessionData));
+            localStorage.setItem('tgo_session', JSON.stringify(sessionData));
+
+            try {
+                const rawState = localStorage.getItem('cravelo_state_v2') || localStorage.getItem('kuryo_state_v2') || localStorage.getItem('gustogo_state_v2') || localStorage.getItem('tgo_state_v2');
+                let st = rawState ? JSON.parse(rawState) : {};
+                st.currentUser = { fullName: name, phone: phone, email: email, role: role, username: foundUser.username || u };
+                st.currentRole = role;
+                if (foundUser.rId) st.selectedVendorRestId = foundUser.rId;
+                if (foundUser.cId) st.selectedCourierId = foundUser.cId;
+                localStorage.setItem('cravelo_state_v2', JSON.stringify(st));
+                localStorage.setItem('kuryo_state_v2', JSON.stringify(st));
+                localStorage.setItem('gustogo_state_v2', JSON.stringify(st));
+                localStorage.setItem('tgo_state_v2', JSON.stringify(st));
+            } catch (err) { }
+
+            alertEl.className = 'alert alert-success py-2 small';
+            alertEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Giriş başarılı! Yönlendiriliyorsunuz...';
+            alertEl.classList.remove('d-none');
+
+            setTimeout(() => {
+                window.location.href = 'index.html?t=' + Date.now();
+            }, 300);
+        }
+
+        // Yeni Müşteri Kayıt İşlemi (FR-15 & FR-16)
+        function handleRegister(e) {
+            e.preventDefault();
+            const alertEl = document.getElementById('alert-box');
+
+            const fullName = document.getElementById('reg-fullname').value.trim();
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const passwordConfirm = document.getElementById('reg-password-confirm').value;
+
+            if (!fullName || !username || !email || !phone || !password || !passwordConfirm) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = '<i class="fa-solid fa-circle-xmark me-1"></i> Lütfen tüm alanları eksiksiz doldurun.';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            // FR-16: Kullanıcı adı en az 3 karakter olmalıdır
+            if (username.length < 3) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = '<i class="fa-solid fa-circle-xmark me-1"></i> Kullanıcı adı en az 3 karakterden oluşmalıdır (FR-16).';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            // FR-16: Parola en az 6 karakter olmalıdır
+            if (password.length < 6) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = '<i class="fa-solid fa-circle-xmark me-1"></i> Parola en az 6 karakterden oluşmalıdır (FR-16).';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            // Parola tekrar kontrolü
+            if (password !== passwordConfirm) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = '<i class="fa-solid fa-circle-xmark me-1"></i> Girdiğiniz parolalar birbiriyle eşleşmiyor! Lütfen tekrar deneyin.';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            const uLower = username.toLowerCase();
+            const eLower = email.toLowerCase();
+
+            // Mükerrer kullanıcı adı veya e-posta denetimi (Resmi kullanıcılar)
+            if (USER_REGISTRY[uLower] || USER_REGISTRY[eLower]) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Bu kullanıcı adı veya e-posta adresi sistemde zaten kayıtlı!';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            // Mükerrer kayıt denetimi (Yeni kayıtlılar)
+            const registeredUsers = getRegisteredUsers();
+            const isDuplicate = registeredUsers.some(item =>
+                (item.username && item.username.toLowerCase() === uLower) ||
+                (item.email && item.email.toLowerCase() === eLower)
+            );
+
+            if (isDuplicate) {
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Bu kullanıcı adı veya e-posta adresi ile daha önce kayıt yapılmış!';
+                alertEl.classList.remove('d-none');
+                return;
+            }
+
+            // FR-15: Dış kayıt sistemiyle YALNIZCA Müşteri ('customer') rolü atanabilir!
+            const newCustomer = {
+                id: Date.now(),
+                username: username,
+                fullName: fullName + ' (Müşteri)',
+                email: email,
+                phone: phone,
+                password: password,
+                role: 'customer',
+                created_at: new Date().toISOString()
+            };
+
+            registeredUsers.push(newCustomer);
+            saveRegisteredUsers(registeredUsers);
+
+            // Yeni kullanıcı oturumunu aç
+            const sessionData = {
+                username: newCustomer.username,
+                role: 'customer',
+                fullName: newCustomer.fullName,
+                email: newCustomer.email,
+                phone: newCustomer.phone
+            };
+            localStorage.setItem('cravelo_session', JSON.stringify(sessionData));
+            localStorage.setItem('kuryo_session', JSON.stringify(sessionData));
+            localStorage.setItem('gustogo_session', JSON.stringify(sessionData));
+            localStorage.setItem('tgo_session', JSON.stringify(sessionData));
+
+            try {
+                const rawState = localStorage.getItem('cravelo_state_v2') || localStorage.getItem('kuryo_state_v2') || localStorage.getItem('gustogo_state_v2') || localStorage.getItem('tgo_state_v2');
+                let st = rawState ? JSON.parse(rawState) : {};
+                st.currentUser = {
+                    fullName: newCustomer.fullName,
+                    phone: newCustomer.phone,
+                    email: newCustomer.email,
+                    role: 'customer'
+                };
+                st.currentRole = 'customer';
+                localStorage.setItem('cravelo_state_v2', JSON.stringify(st));
+                localStorage.setItem('kuryo_state_v2', JSON.stringify(st));
+                localStorage.setItem('gustogo_state_v2', JSON.stringify(st));
+                localStorage.setItem('tgo_state_v2', JSON.stringify(st));
+            } catch (err) { }
+
+            alertEl.className = 'alert alert-success py-2 small';
+            alertEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> 🎉 Kaydınız başarıyla tamamlandı! Sisteme giriş yapılıyor...';
+            alertEl.classList.remove('d-none');
+
+            setTimeout(() => {
+                window.location.href = 'index.html?t=' + Date.now();
+            }, 400);
+        }
+
+        // Sayfa URL parametresi kontrolü (?tab=register & ?demo=<username>)
+        window.addEventListener('DOMContentLoaded', () => {
+            syncAuthThemeIcon();
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('tab') === 'register') {
+                switchAuthTab('register');
+            }
+            const demoParam = urlParams.get('demo');
+            if (demoParam) {
+                const key = demoParam.toLowerCase();
+                if (USER_REGISTRY[key]) {
+                    fillLogin(demoParam, demoParam, USER_REGISTRY[key].fullName);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

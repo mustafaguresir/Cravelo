@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0B0F19">
+    <title>Cravelo – Kapında Sıcak Lezzetler &amp; Hızlı Kurye Takip</title>
+    <meta name="description" content="Akıllı kurye atama, canlı animasyonlu kurye takibi, ürün özelleştirme ve cüzdan sistemli yemek sipariş platformu.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FF6B35'/%3E%3Cstop offset='100%25' stop-color='%23FA4A0C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Cpath d='M16 28c0-8 7.2-13 16-13s16 5 16 13H16zm-2 5h36a3 3 0 0 1 0 6H14a3 3 0 0 1 0-6zm3 9h30v3c0 3.3-2.7 6-6 6H23c-3.3 0-6-2.7-6-6v-3z' fill='%23fff'/%3E%3C/svg%3E">
+
+    <!-- Early Theme Hydration (Zero Flash in Light/Dark Mode) -->
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('cravelo-theme') || localStorage.getItem('gustogo-theme') || 'dark';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            } catch (e) {}
+        })();
+    </script>
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome 6 Free (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Leaflet CSS for Real Google Maps Street Engine -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Cravelo Design System Stylesheet -->
+    <link rel="stylesheet" href="css/style.css?v=3.0">
+</head>
+<body>
+
+<!-- Unified Cravelo Frosted Glass Header Navigation -->
+<header class="topnav">
+    <a class="brand" onclick="handleBrandClick()" title="Ana Görünüme Git" aria-label="Cravelo Ana Sayfa">
+        <div class="brand-logo"><i class="fa-solid fa-burger"></i></div>
+        <span>Crave<em>lo</em></span>
+    </a>
+
+    <!-- Role-Specific Center Telemetry Banners (Admin / Courier / Restaurant) -->
+    <div class="role-center-banner admin-center-banner" id="banner-admin" style="display:none;">
+        <span class="status-pill danger"><i class="fa-solid fa-shield-halved"></i> YÖNETİCİ</span>
+        <strong>Cravelo Komuta &amp; Denetim Merkezi</strong>
+    </div>
+    <div class="role-center-banner courier-center-banner" id="banner-courier" style="display:none;">
+        <span class="status-pill info"><i class="fa-solid fa-motorcycle"></i> KURYE</span>
+        <strong>Kurye Teslimat &amp; Canlı Kokpit</strong>
+    </div>
+    <div class="role-center-banner restaurant-center-banner" id="banner-restaurant" style="display:none;">
+        <span class="status-pill warning"><i class="fa-solid fa-utensils"></i> RESTORAN</span>
+        <strong>Mutfak Ekranı (KDS) &amp; Menü Masası</strong>
+    </div>
+
+    <!-- Müşteriye Özel Adres Seçici (Customer Only) -->
+    <button type="button" class="nav-address customer-only-ui" onclick="openAddressModal()" id="btn-nav-address" title="Teslimat Adresini Değiştir" style="display:none;">
+        <i class="fa-solid fa-location-dot pin"></i>
+        <span id="nav-addr-label">Kadıköy Moda, İstanbul</span>
+        <i class="fa-solid fa-chevron-down" style="font-size:10.5px;color:var(--text-3);margin-left:auto;"></i>
+    </button>
+
+    <!-- Müşteriye Özel Teslimat Türü Segmented Switch (Customer Only) -->
+    <div class="del-mode-toggle customer-only-ui" id="del-mode-toggle" role="group" aria-label="Teslimat Yöntemi" style="display:none;">
+        <button type="button" class="del-mode-btn active" id="btn-del-courier" onclick="switchDeliveryMode('courier')" title="Kurye ile Adrese Teslim">
+            <i class="fa-solid fa-motorcycle"></i> Adrese Teslim
+        </button>
+        <button type="button" class="del-mode-btn" id="btn-del-takeaway" onclick="switchDeliveryMode('takeaway')" title="Restorandan Gel-Al: 0 ₺ Teslimat + %20 Ek İndirim">
+            <i class="fa-solid fa-person-walking"></i> Gel-Al <span class="badge-discount-tag">%20 İndirim</span>
+        </button>
+    </div>
+
+    <!-- Müşteriye Özel Expanding Omnibox Arama Çubuğu (Customer Only) -->
+    <div class="nav-search customer-only-ui" id="global-search-box" style="display:none;">
+        <input type="text" id="global-search" placeholder="Restoran veya lezzetli bir yemek arayın…" oninput="globalSearch()" autocomplete="off">
+        <i class="fa-solid fa-magnifying-glass"></i>
+    </div>
+
+    <div class="nav-actions">
+        <!-- Müşteriye Özel Sepetim Butonu (Customer Only) -->
+        <button type="button" class="nav-cart-btn customer-only-ui" onclick="openCartModal()" id="btn-nav-cart" title="Sepetimi Görüntüle" style="display:none;">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <span class="nav-cart-text">Sepetim</span>
+            <span class="cart-badge" id="nav-cart-count">0</span>
+        </button>
+
+        <!-- Müşteriye Özel Siparişlerim Butonu (Customer Only) -->
+        <button type="button" class="nav-orders-btn customer-only-ui" onclick="openOrdersTab()" id="btn-nav-orders" title="Siparişlerimi Görüntüle ve Kuryemi Takip Et" style="display:none;">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span class="nav-orders-text">Siparişlerim</span>
+            <span class="cart-badge" id="nav-orders-badge" style="display:none;">0</span>
+        </button>
+
+        <!-- Theme Toggle (Light / Dark) -->
+        <button type="button" class="action-icon-btn" onclick="toggleTheme()" title="Açık / Koyu Tema" aria-label="Temayı Değiştir">
+            <i class="fa-solid fa-sun" id="theme-ico"></i>
+        </button>
+
+        <!-- Unauthenticated Auth & Landing Actions (Menü, Kampanyalar, Kurye Ol, Giriş Yap, Kayıt Ol) -->
+        <div id="nav-auth-actions" style="display:flex;align-items:center;gap:12px;">
+            <a href="#burger-scrolly-container" class="landing-nav-link">Menü</a>
+            <a href="#campaigns" class="landing-nav-link">Kampanyalar</a>
+            <a href="#courier-apply" class="landing-nav-link">Kurye Ol</a>
+            <a href="login.html" class="nav-auth-btn nav-auth-login" id="header-btn-login">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                <span>Giriş Yap</span>
+            </a>
+            <a href="login.html?tab=register" class="nav-auth-btn nav-auth-register" id="header-btn-register">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Kayıt Ol</span>
+            </a>
+            <a href="login.html" class="landing-nav-cta" id="landing-btn-main-cta">
+                <i class="fa-solid fa-burger"></i> Giriş Yap / Sipariş Ver
+            </a>
+        </div>
+
+        <!-- Authenticated User Actions -->
+        <div id="nav-user-actions" style="display:none;align-items:center;gap:10px;">
+            <!-- User Profile Pill -->
+            <div class="user-pill" onclick="openAccountModal()" role="button" tabindex="0" title="Profil &amp; Cravelo Cüzdan">
+                <div class="user-avatar" id="nav-avatar">A</div>
+                <div class="user-meta">
+                    <div class="user-name" id="nav-name">Kullanıcı</div>
+                    <div class="user-role-badge" id="nav-role"><i class="fa-solid fa-coins"></i> Giriş Yapıldı</div>
+                </div>
+            </div>
+
+            <!-- Safe Logout Button -->
+            <button type="button" onclick="logoutUser(event)" class="nav-logout-btn" title="Güvenli Çıkış Yap">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Çıkış Yap</span>
+            </button>
+        </div>
+
+        <script>
+            (function() {
+                try {
+                    var s = JSON.parse(localStorage.getItem('cravelo_session') || localStorage.getItem('kuryo_session') || localStorage.getItem('tgo_session') || localStorage.getItem('gustogo_session') || '{}');
+                    if (s && s.fullName) {
+                        var el = document.getElementById('nav-name');
+                        if (el) el.innerText = s.fullName;
+                        var rEl = document.getElementById('nav-role');
+                        if (rEl && s.role === 'admin') rEl.innerText = 'SİSTEM YÖNETİCİSİ';
+                    }
+                } catch(e) {}
+            })();
+        </script>
+    </div>
+</header>
+
+<!-- Floating Bottom Cart Bar (Theme-Adaptive Frosted Glass Pill) -->
+<div class="floating-cart-bar" id="floating-cart-bar" onclick="openCartModal()" role="button" tabindex="0" title="Sepeti İncele">
+    <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg, var(--primary), var(--primary-2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;box-shadow:0 4px 14px var(--primary-glow);flex-shrink:0;" id="float-cart-count">1</div>
+        <div>
+            <div style="font-size:13.5px;font-weight:800;color:var(--text);letter-spacing:-0.2px;" id="float-cart-text">Sepetinizde 1 lezzet var</div>
+            <div style="font-size:15px;color:var(--primary);font-weight:900;" id="float-cart-total">250.00 ₺</div>
+        </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openCartModal();" style="border-radius:9999px;padding:9px 18px;font-size:13px;">
+            <i class="fa-solid fa-basket-shopping"></i> Sepetim
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openCheckoutModal();" style="border-radius:9999px;padding:9px 22px;font-size:13px;">
+            <i class="fa-solid fa-credit-card"></i> Öde
+        </button>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- 0. KARŞILAMA VE AUTH GATE EKRANI (CRAVELO LANDING)       -->
+<!-- ======================================================== -->
+<!-- Cravelo Architecture Engine -->
+<style id="landing-polish-helpers">
+    .landing-brand-accent {
+        color: var(--primary-2, #FF6B35);
+        font-style: normal;
+    }
+    .landing-brand-badge {
+        font-size: 10.5px;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        background: rgba(255, 107, 53, 0.14);
+        border: 1px solid rgba(255, 107, 53, 0.28);
+        color: var(--primary-2, #FF6B35);
+        padding: 3px 9px;
+        border-radius: 9999px;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+    .landing-metric-top {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        margin-bottom: 14px;
+        font-size: 18px;
+        background: var(--primary-light, rgba(255, 107, 53, 0.12));
+        color: var(--primary-2, #FF6B35);
+    }
+    .landing-metric-top.is-emerald {
+        background: var(--success-light, rgba(11, 191, 128, 0.14));
+        color: var(--success, #0BBF80);
+    }
+    .landing-metric-top.is-amber {
+        background: var(--yellow-light, rgba(245, 158, 11, 0.14));
+        color: var(--yellow, #F59E0B);
+    }
+    .landing-metric-top.is-blue {
+        background: var(--blue-light, rgba(47, 142, 255, 0.14));
+        color: var(--blue, #2F8EFF);
+    }
+    .landing-role-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .landing-role-tag {
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+        color: var(--text-3, #64748B);
+        background: var(--surface-2, rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+        padding: 4px 10px;
+        border-radius: 9999px;
+    }
+    .landing-role-title {
+        font-size: 19px;
+        font-weight: 800;
+        color: var(--text, #F8FAFC);
+        letter-spacing: -0.35px;
+        margin: 0 0 10px;
+    }
+    .landing-role-desc {
+        font-size: 14px;
+        color: var(--text-2, #94A3B8);
+        line-height: 1.62;
+        margin: 0 0 22px;
+        flex-grow: 1;
+    }
+    .landing-role-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border, rgba(255, 255, 255, 0.07));
+    }
+    .landing-role-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--text-2, #94A3B8);
+        text-decoration: none;
+        transition: color 0.2s ease, transform 0.2s ease;
+    }
+    .landing-role-card:hover .landing-role-link {
+        color: var(--primary-2, #FF6B35);
+        transform: translateX(2px);
+    }
+    .landing-demo-pass-code {
+        background: var(--primary-light, rgba(255, 107, 53, 0.14));
+        color: var(--primary-2, #FF6B35);
+        border: 1px solid rgba(255, 107, 53, 0.3);
+        padding: 3px 10px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 13px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .landing-demo-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 24px;
+    }
+    .landing-banner-content {
+        max-width: 640px;
+    }
+    .landing-banner-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--primary-2, #FF6B35);
+        letter-spacing: 0.9px;
+        margin-bottom: 12px;
+        background: var(--primary-light, rgba(255, 107, 53, 0.14));
+        border: 1px solid rgba(255, 107, 53, 0.28);
+        padding: 5px 13px;
+        border-radius: 9999px;
+    }
+    .landing-banner-title {
+        font-size: clamp(24px, 3vw, 32px);
+        font-weight: 900;
+        color: var(--text, #F8FAFC);
+        letter-spacing: -0.6px;
+        margin: 0 0 10px;
+    }
+    .landing-banner-desc {
+        color: var(--text-2, #94A3B8);
+        font-size: 15px;
+        line-height: 1.65;
+        margin: 0 0 18px;
+    }
+    .landing-perk-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .landing-perk-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--text, #F8FAFC);
+        background: var(--surface, rgba(255, 255, 255, 0.04));
+        border: 1px solid var(--border, rgba(255, 255, 255, 0.09));
+        padding: 6px 13px;
+        border-radius: 9999px;
+    }
+    .landing-perk-chip i {
+        color: var(--primary-2, #FF6B35);
+    }
+    .landing-stars {
+        display: inline-flex;
+        gap: 3px;
+        color: #F59E0B;
+        font-size: 13.5px;
+        margin-bottom: 14px;
+    }
+    .landing-quote {
+        font-size: 14.5px;
+        color: var(--text, #E2E8F0);
+        line-height: 1.65;
+        margin: 0 0 20px;
+    }
+    .landing-author {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+    }
+    .landing-author-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #FF6B35, #FA4A0C);
+        color: #FFFFFF;
+        font-size: 13px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .landing-author-name {
+        font-size: 13.5px;
+        font-weight: 800;
+        color: var(--text, #F8FAFC);
+    }
+    .landing-author-loc {
+        font-size: 12px;
+        color: var(--text-3, #64748B);
+    }
+    .site-footer-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+        text-decoration: none;
+        color: var(--text, #F8FAFC);
+        font-size: 21px;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+    }
+    .site-footer-brand-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #FF6B35, #FA4A0C);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #FFFFFF;
+        font-size: 17px;
+        box-shadow: 0 4px 14px rgba(255, 107, 53, 0.35);
+    }
+    .site-footer-desc {
+        font-size: 13.5px;
+        color: var(--text-2, #94A3B8);
+        line-height: 1.65;
+        max-width: 310px;
+        margin: 0;
+    }
+    .site-footer-col-title {
+        color: var(--text, #F8FAFC);
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: -0.2px;
+        margin: 0 0 14px;
+    }
+    .site-footer-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: 13.5px;
+    }
+    .site-footer-list a,
+    .site-footer-list span {
+        color: var(--text-2, #94A3B8);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: color 0.2s ease;
+    }
+    .site-footer-list a:hover {
+        color: var(--primary-2, #FF6B35);
+    }
+    .site-footer-legal {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .site-footer-legal a {
+        color: var(--text-3, #64748B);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .site-footer-legal a:hover {
+        color: var(--text, #F8FAFC);
+    }
+    @media (max-width: 768px) {
+        .landing-brand-badge {
+            display: none;
+        }
+    }
+</style>
+
+<div id="view-landing" class="landing-hero" style="display:block; width:100%; max-width:100vw; margin:0; padding:0; overflow-x:clip;">
+    <!-- 380vh Burger Hero Scrollytelling Section -->
+    <section id="burger-scrolly-container">
+        <div id="burger-sticky-viewport">
+            <!-- Scroll Progress Indicator -->
+            <div id="burger-scroll-progress-container">
+                <div id="burger-scroll-progress-bar"></div>
+            </div>
+
+            <!-- Soft Warm Radial Spotlight -->
+            <div id="burger-spotlight"></div>
+
+            <!-- Floating Ambient Spice/Sesame Particles -->
+            <div class="burger-ambient-particles">
+                <div class="burger-ambient-particle" style="width: 6px; height: 6px; top: 22%; left: 18%; animation-delay: 0s;"></div>
+                <div class="burger-ambient-particle" style="width: 8px; height: 8px; top: 40%; left: 82%; animation-delay: 1.5s;"></div>
+                <div class="burger-ambient-particle" style="width: 5px; height: 5px; top: 68%; left: 24%; animation-delay: 2.2s;"></div>
+                <div class="burger-ambient-particle" style="width: 7px; height: 7px; top: 32%; left: 74%; animation-delay: 3.1s;"></div>
+                <div class="burger-ambient-particle" style="width: 6px; height: 6px; top: 78%; left: 78%; animation-delay: 0.8s;"></div>
+            </div>
+
+            <!-- Dynamic Turkish Micro-Copy Glass Badge -->
+            <div id="burger-microcopy-badge">
+                <span class="burger-badge-tag">CRAVELO LEZZET SIRRI</span>
+                <h3 id="burger-badge-title">Taze Brioche Ekmeği</h3>
+                <p id="burger-badge-subtitle">Tereyağlı, altın sarısı fırın bazı</p>
+            </div>
+
+            <!-- Centered Burger Assembly Stage -->
+            <div id="burger-stage">
+                <!-- Layer 1 (0% scroll, z-index: 1): Toasted golden brioche bottom bun -->
+                <div class="burger-layer" data-layer="1">
+                    <img src="img/hero/layer-1-bun-bottom.svg" alt="Taze Brioche Ekmeği (Alt Taban)">
+                </div>
+
+                <!-- Layer 2 (15% scroll, z-index: 2): Crisp wavy iceberg lettuce -->
+                <div class="burger-layer" data-layer="2">
+                    <img src="img/hero/layer-2-lettuce.svg" alt="Çıtır Taze Kıvırcık Marul">
+                </div>
+
+                <!-- Layer 3 (30% scroll, z-index: 3): Flame-grilled beef patty -->
+                <div class="burger-layer" data-layer="3">
+                    <img src="img/hero/layer-3-patty.svg" alt="%100 Dana Antrikot Köfte">
+                </div>
+
+                <!-- Layer 4 (45% scroll, z-index: 4): Melted cheddar cheese slice -->
+                <div class="burger-layer" data-layer="4">
+                    <img src="img/hero/layer-4-cheese.svg" alt="Erimiş Cheddar">
+                </div>
+
+                <!-- Layer 5 (60% scroll, z-index: 5): Fresh thick-cut heirloom tomatoes -->
+                <div class="burger-layer" data-layer="5">
+                    <img src="img/hero/layer-5-tomatoes.svg" alt="Taze Tarla Domatesleri">
+                </div>
+
+                <!-- Layer 6 (75% scroll, z-index: 6): Caramelized onions & dill pickles -->
+                <div class="burger-layer" data-layer="6">
+                    <img src="img/hero/layer-6-onions-pickles.svg" alt="Karamelize Soğan ve Kornişon Turşu">
+                </div>
+
+                <!-- Layer 7 (90% scroll, z-index: 7): Sesame brioche top bun -->
+                <div class="burger-layer" data-layer="7">
+                    <img src="img/hero/layer-7-bun-top.svg" alt="Taze Brioche Ekmeği (Üst Taç)">
+                </div>
+
+                <!-- Atmospheric Steam (above patty) -->
+                <div id="burger-steam">
+                    <img src="img/hero/steam-wisps.svg" alt="Sıcak Buhar">
+                </div>
+            </div>
+
+            <!-- Final State (100% scroll): Prominent CTA Button & Quick Search -->
+            <div id="burger-final-cta-container">
+                <a href="login.html" id="btn-hero-order">
+                    <i class="fa-solid fa-burger"></i> Hemen Sipariş Ver
+                </a>
+                <div id="hero-address-search">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <input type="text" id="hero-address-input" placeholder="Teslimat adresinizi veya restoran arayın...">
+                    <button type="button" id="btn-hero-search" onclick="window.location.href='login.html'">Keşfet</button>
+                </div>
+            </div>
+
+            <!-- Scroll Down Hint Indicator -->
+            <div class="burger-scroll-hint">
+                <i class="fa-solid fa-angles-down"></i>
+                <span>Aşağı Kaydırın • Burger Katmanlarını Keşfedin</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Post-Hero Showcases Section -->
+    <section class="landing-content-section" id="campaigns">
+        <div class="landing-content-wrapper">
+            <!-- Bento Live Delivery Metrics Strip -->
+            <div class="landing-metrics-grid">
+                <div class="landing-metric-card">
+                    <div class="landing-metric-top"><i class="fa-solid fa-bag-shopping"></i></div>
+                    <div class="landing-metric-val">25.000+</div>
+                    <div class="landing-metric-label">Tamamlanan Sipariş</div>
+                </div>
+                <div class="landing-metric-card">
+                    <div class="landing-metric-top is-blue"><i class="fa-solid fa-utensils"></i></div>
+                    <div class="landing-metric-val">120+</div>
+                    <div class="landing-metric-label">Seçkin Partner Mutfak</div>
+                </div>
+                <div class="landing-metric-card">
+                    <div class="landing-metric-top is-emerald"><i class="fa-solid fa-bolt-lightning"></i></div>
+                    <div class="landing-metric-val">~22 Dk</div>
+                    <div class="landing-metric-label">Ortalama Teslimat Süresi</div>
+                </div>
+                <div class="landing-metric-card">
+                    <div class="landing-metric-top is-amber"><i class="fa-solid fa-star"></i></div>
+                    <div class="landing-metric-val">%99.8</div>
+                    <div class="landing-metric-label">Müşteri Memnuniyeti</div>
+                </div>
+            </div>
+
+            <!-- 4-Role Cockpit Showcase -->
+            <div class="landing-features" style="margin-bottom: 68px;">
+                <div class="landing-section-head">
+                    <span class="landing-section-eyebrow">
+                        <i class="fa-solid fa-bolt"></i> Uçtan Uca Entegre Yemek &amp; Kurye Ekosistemi
+                    </span>
+                    <h2>4 Ayrı Rol, 4 Özel Yönetim Kokpiti</h2>
+                    <p>Cravelo rol tabanlı mimarisiyle müşteri, mutfak, kurye ve yönetici için sıfır karmaşa ile optimize edilmiş ayrı kokpitler sunar.</p>
+                </div>
+
+                <div class="landing-roles-grid">
+                    <!-- Customer Role Showcase -->
+                    <article class="landing-role-card">
+                        <div class="landing-role-head">
+                            <div class="landing-role-icon is-emerald"><i class="fa-solid fa-bag-shopping"></i></div>
+                            <span class="landing-role-tag">Müşteri</span>
+                        </div>
+                        <h3 class="landing-role-title">Müşteri Paneli</h3>
+                        <p class="landing-role-desc">
+                            Akıllı kategori filtreleri, Gel-Al (%20 indirim) veya Kurye modu, akıllı ürün özelleştirici ve 5 adımlı canlı sipariş takibi.
+                        </p>
+                        <div class="landing-role-footer">
+                            <span class="landing-role-pill"><i class="fa-solid fa-check"></i> Gel-Al %20 &amp; Cüzdan</span>
+                            <a href="login.html?demo=ahmet_musteri" class="landing-role-link">Dene <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    </article>
+
+                    <!-- Restaurant Role Showcase -->
+                    <article class="landing-role-card">
+                        <div class="landing-role-head">
+                            <div class="landing-role-icon is-amber"><i class="fa-solid fa-utensils"></i></div>
+                            <span class="landing-role-tag">Mutfak KDS</span>
+                        </div>
+                        <h3 class="landing-role-title">Restoran / KDS</h3>
+                        <p class="landing-role-desc">
+                            Canlı Mutfak Ekranı (KDS) ile gelen siparişleri tek dokunuşla onaylama, hazırlık sayacı, stok kontrolü ve kuryeye devir.
+                        </p>
+                        <div class="landing-role-footer">
+                            <span class="landing-role-pill"><i class="fa-solid fa-check"></i> Anlık Durum İlerletme</span>
+                            <a href="login.html?demo=restoran_lezzet" class="landing-role-link">Dene <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    </article>
+
+                    <!-- Courier Role Showcase -->
+                    <article class="landing-role-card">
+                        <div class="landing-role-head">
+                            <div class="landing-role-icon is-cyan"><i class="fa-solid fa-motorcycle"></i></div>
+                            <span class="landing-role-tag">Kurye Kokpiti</span>
+                        </div>
+                        <h3 class="landing-role-title">Kurye Kokpiti</h3>
+                        <p class="landing-role-desc">
+                            Haversine küresel mesafe ve iş yükü puanlamasıyla akıllı görev ataması, canlı Kadıköy harita rotası ve tek tıkla teslimat.
+                        </p>
+                        <div class="landing-role-footer">
+                            <span class="landing-role-pill"><i class="fa-solid fa-check"></i> Canlı Rota &amp; Telemetri</span>
+                            <a href="login.html?demo=kurye_ali" class="landing-role-link">Dene <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    </article>
+
+                    <!-- Admin Role Showcase -->
+                    <article class="landing-role-card">
+                        <div class="landing-role-head">
+                            <div class="landing-role-icon is-rose"><i class="fa-solid fa-shield-halved"></i></div>
+                            <span class="landing-role-tag">Yönetim Merkezi</span>
+                        </div>
+                        <h3 class="landing-role-title">Yönetici Merkezi</h3>
+                        <p class="landing-role-desc">
+                            Mustafa Güreşir tam yetkili denetim kokpiti, şehir harita radarı, kurye iş yükü barları, atomik audit log ve canlı rol önizleme.
+                        </p>
+                        <div class="landing-role-footer">
+                            <span class="landing-role-pill"><i class="fa-solid fa-check"></i> Simülasyon &amp; Denetim</span>
+                            <a href="login.html?demo=admin_mustafa" class="landing-role-link">Dene <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <!-- Interactive Demo Credentials Quick-Reference Card -->
+            <div class="landing-demo-box" id="landing-demo-guide">
+                <div id="landing-demo-box">
+                    <span class="landing-section-eyebrow">
+                        <i class="fa-solid fa-key"></i> Tek Tıkla Canlı Önizleme
+                    </span>
+                    <h3 style="margin: 10px 0 8px; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: var(--text);">
+                        Hızlı Demo Girişi ile Rolleri Deneyin
+                    </h3>
+                    <p style="margin: 0 0 22px; font-size: 14.5px; color: var(--text-2);">
+                        Aşağıdaki demo hesaplarından birine tıklayarak otomatik doldurulmuş giriş ekranına geçin. Ortak parola:
+                        <code class="landing-demo-pass-code">hash123</code>
+                    </p>
+
+                    <div class="landing-demo-chips">
+                        <a href="login.html?demo=admin_mustafa" class="landing-demo-chip is-rose">
+                            <i class="fa-solid fa-crown"></i> admin_mustafa <span>Yönetici</span>
+                        </a>
+                        <a href="login.html?demo=ahmet_musteri" class="landing-demo-chip is-emerald">
+                            <i class="fa-solid fa-bag-shopping"></i> ahmet_musteri <span>Müşteri</span>
+                        </a>
+                        <a href="login.html?demo=restoran_lezzet" class="landing-demo-chip is-amber">
+                            <i class="fa-solid fa-fire-burner"></i> restoran_lezzet <span>Restoran</span>
+                        </a>
+                        <a href="login.html?demo=kurye_ali" class="landing-demo-chip is-cyan">
+                            <i class="fa-solid fa-motorcycle"></i> kurye_ali <span>Kurye</span>
+                        </a>
+                    </div>
+
+                    <div class="landing-demo-actions">
+                        <a href="login.html" class="landing-nav-cta" id="landing-demo-login-btn">
+                            <i class="fa-solid fa-right-to-bracket"></i> Giriş Yaparak Bir Rol Seçin
+                        </a>
+                        <a href="login.html" id="btn-landing-demo-login" style="display:none;">Giriş Ekranına Git</a>
+                        <a href="login.html?tab=register" class="nav-auth-btn nav-auth-login" id="landing-demo-register-btn">
+                            <i class="fa-solid fa-user-plus"></i> Yeni Kayıt Oluştur
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courier Recruitment Banner -->
+            <div class="landing-recruitment-banner" id="courier-apply">
+                <div class="landing-banner-content">
+                    <div class="landing-banner-eyebrow">
+                        <i class="fa-solid fa-motorcycle"></i> Cravelo Filosuna Katıl
+                    </div>
+                    <h3 class="landing-banner-title">Cravelo Kuryesi Ol, Özgürce Kazan</h3>
+                    <p class="landing-banner-desc">
+                        Kendi çalışma saatlerini belirle, yapay zekâ destekli akıllı rota dağılımı ve jet hızında haftalık ödemelerle Cravelo teslimat filosunda yerini al.
+                    </p>
+                    <div class="landing-perk-row">
+                        <span class="landing-perk-chip"><i class="fa-solid fa-clock"></i> Esnek Saatler</span>
+                        <span class="landing-perk-chip"><i class="fa-solid fa-wallet"></i> Haftalık Anında Ödeme</span>
+                        <span class="landing-perk-chip"><i class="fa-solid fa-route"></i> Akıllı Rota HUD</span>
+                    </div>
+                </div>
+                <div>
+                    <a href="login.html?tab=register" class="landing-nav-cta" style="padding: 15px 34px; font-size: 15px;">
+                        <i class="fa-solid fa-motorcycle"></i> Hemen Başvur &amp; Kurye Ol
+                    </a>
+                </div>
+            </div>
+
+            <!-- Customer Testimonials -->
+            <div style="margin-bottom: 24px;">
+                <div class="landing-section-head">
+                    <span class="landing-section-eyebrow">
+                        <i class="fa-solid fa-heart"></i> Gerçek Kullanıcı Deneyimleri
+                    </span>
+                    <h2>Müşterilerimiz Ne Diyor?</h2>
+                    <p>Kadıköy ve çevresindeki binlerce lezzet tutkunu ve partner mutfağın Cravelo yorumları</p>
+                </div>
+
+                <div class="landing-testimonials-grid">
+                    <article class="landing-testimonial-card">
+                        <div class="landing-stars" aria-label="5 üzerinden 5 yıldız">
+                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                        </div>
+                        <p class="landing-quote">"Kadıköy Moda'da 18 dakikada burgerim sıcacık geldi! Kurye canlı haritada sokak sokak izlenebiliyor, hız ve arayüz inanılmaz."</p>
+                        <div class="landing-author">
+                            <span class="landing-author-avatar">EK</span>
+                            <div>
+                                <div class="landing-author-name">Elif K.</div>
+                                <div class="landing-author-loc">Moda, Kadıköy</div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="landing-testimonial-card">
+                        <div class="landing-stars" aria-label="5 üzerinden 5 yıldız">
+                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                        </div>
+                        <p class="landing-quote">"KDS mutfak paneli sayesinde en yoğun akşam saatlerinde bile siparişler hiç karışmıyor. Puan bazlı kurye ataması çok dengeli."</p>
+                        <div class="landing-author">
+                            <span class="landing-author-avatar" style="background: linear-gradient(135deg, #F59E0B, #D97706);">ŞM</span>
+                            <div>
+                                <div class="landing-author-name">Şef Mehmet</div>
+                                <div class="landing-author-loc">Partner Restoran • Kadıköy</div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="landing-testimonial-card">
+                        <div class="landing-stars" aria-label="5 üzerinden 5 yıldız">
+                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                        </div>
+                        <p class="landing-quote">"Gel-Al modundaki %20 anında indirim ve her siparişte biriken Cravelo Puan cüzdanı çok avantajlı, neredeyse her gün kullanıyorum."</p>
+                        <div class="landing-author">
+                            <span class="landing-author-avatar" style="background: linear-gradient(135deg, #0BBF80, #059669);">AY</span>
+                            <div>
+                                <div class="landing-author-name">Ahmet Y.</div>
+                                <div class="landing-author-loc">Rıhtım, Kadıköy</div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4-Column Modern Footer -->
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div class="site-footer-grid">
+                <div>
+                    <a href="index.html" class="site-footer-brand">
+                        <span class="site-footer-brand-icon"><i class="fa-solid fa-burger"></i></span>
+                        <span>Crave<em class="landing-brand-accent">lo</em></span>
+                    </a>
+                    <p class="site-footer-desc">
+                        Mahallenizin en seçkin lezzetlerini süpersonik hızda kapınıza ulaştıran akıllı yemek sipariş ve kurye lojistik platformu.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="site-footer-col-title">Keşfet</h4>
+                    <ul class="site-footer-list">
+                        <li><a href="#burger-scrolly-container">Menü &amp; Restoranlar</a></li>
+                        <li><a href="#campaigns">Kampanyalar</a></li>
+                        <li><a href="#campaigns">Gel-Al %20 İndirim</a></li>
+                        <li><a href="login.html">Cravelo Puan Cüzdanı</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="site-footer-col-title">İş Ortaklığı</h4>
+                    <ul class="site-footer-list">
+                        <li><a href="#courier-apply">Cravelo Kuryesi Ol</a></li>
+                        <li><a href="login.html?demo=restoran_lezzet">Restoran Mutfak (KDS)</a></li>
+                        <li><a href="login.html?demo=admin_mustafa">Yönetici Denetim Merkezi</a></li>
+                        <li><a href="#courier-apply">Akıllı Filo Yönetimi</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="site-footer-col-title">Güvenlik &amp; İletişim</h4>
+                    <ul class="site-footer-list">
+                        <li><span><i class="fa-solid fa-location-dot" style="color: var(--primary-2, #FF6B35);"></i> Kadıköy, İstanbul</span></li>
+                        <li><span><i class="fa-solid fa-headset" style="color: var(--success, #0BBF80);"></i> 7/24 Canlı Destek</span></li>
+                        <li><span><i class="fa-solid fa-shield-halved" style="color: var(--blue, #2F8EFF);"></i> 256-Bit SSL &amp; Bcrypt Güvenliği</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="site-footer-bottom">
+                <div>© 2026 Cravelo. Tüm hakları saklıdır. — Akıllı Yemek Teslimat ve Kurye Takip Teknolojileri A.Ş.</div>
+                <div class="site-footer-legal">
+                    <a href="#">Kullanım Koşulları</a>
+                    <a href="#">KVKK &amp; Gizlilik</a>
+                    <a href="#">Çerez Politikası</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<main class="main-container" id="main-container" style="display:none;">
+    <!-- Yönetici Canlı Önizleme Geri Dönüş Barı -->
+    <div id="admin-return-bar" class="admin-return-bar" style="display:none;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <span style="font-size:13.5px;line-height:1.4;">
+                <strong>Yönetici Canlı Önizleme Modu:</strong> Şu anda başka bir rolün Cravelo arayüzünü inceliyorsunuz.
+            </span>
+        </div>
+        <button type="button" class="btn btn-sm" onclick="adminPreviewView('admin')" style="background:#FFFFFF;color:#0F172A;border-radius:9999px;padding:8px 18px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,0.15);white-space:nowrap;">
+            <i class="fa-solid fa-arrow-left"></i> Yönetici Merkezine Dön
+        </button>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 1. MÜŞTERİ PANELİ (CRAVELO CUSTOMER PORTAL)              -->
+    <!-- ======================================================== -->
+    <div id="view-customer" class="hidden" style="display:none;">
+        <!-- 1. Category Discovery Squircle Tiles (DoorDash / Wolt Style) -->
+        <div class="stories-bar" id="stories-bar" role="tablist" aria-label="Mutfak Kategorileri">
+            <div class="story-item" data-cat="Burger" onclick="filterCategory('Burger')" title="Burger Restoranları" role="tab" tabindex="0">
+                <div class="story-ring"><img class="story-img" src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=150&q=80" alt="Burger"></div>
+                <span class="story-label">Burgerler</span>
+            </div>
+            <div class="story-item" data-cat="Kebap" onclick="filterCategory('Kebap')" title="Kebap &amp; Dürüm Restoranları" role="tab" tabindex="0">
+                <div class="story-ring"><img class="story-img" src="https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=150&q=80" alt="Kebap"></div>
+                <span class="story-label">Kebap &amp; Dürüm</span>
+            </div>
+            <div class="story-item" data-cat="Pizza" onclick="filterCategory('Pizza')" title="Pizzacılar" role="tab" tabindex="0">
+                <div class="story-ring"><img class="story-img" src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=150&q=80" alt="Pizza"></div>
+                <span class="story-label">Pizzalar</span>
+            </div>
+            <div class="story-item" data-cat="Sushi" onclick="filterCategory('Sushi')" title="Sushi Bar Restoranları" role="tab" tabindex="0">
+                <div class="story-ring"><img class="story-img" src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=150&q=80" alt="Sushi"></div>
+                <span class="story-label">Sushi Bar</span>
+            </div>
+            <div class="story-item" data-cat="Tatlı" onclick="filterCategory('Tatlı')" title="Tatlı &amp; Waffle Mekanları" role="tab" tabindex="0">
+                <div class="story-ring"><img class="story-img" src="https://images.unsplash.com/photo-1562376552-0d160a2f238d?auto=format&fit=crop&w=150&q=80" alt="Tatlı"></div>
+                <span class="story-label">Tatlı &amp; Waffle</span>
+            </div>
+            <div class="story-item" data-cat="Tavuk" onclick="filterCategory('Tavuk')" title="Çıtır Tavuk Restoranları" role="tab" tabindex="0">
+                <div class="story-ring"><img class="story-img" src="https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?auto=format&fit=crop&w=150&q=80" alt="Tavuk"></div>
+                <span class="story-label">Çıtır Tavuk</span>
+            </div>
+            <div class="story-item" data-cat="Balık" onclick="filterCategory('Balık')" title="Deniz Ürünleri &amp; Balıkçılar" role="tab" tabindex="0">
+                <div class="story-ring"><img class="story-img" src="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=150&q=80" alt="Balık"></div>
+                <span class="story-label">Deniz Ürünleri</span>
+            </div>
+        </div>
+
+        <!-- 2. Editorial Hero Banner (Uber Eats & DoorDash Standard) -->
+        <section class="hero-banner" aria-label="Cravelo Öne Çıkanlar">
+            <div class="hero-content">
+                <div class="hero-tag">
+                    <span class="hero-tag-pulse"></span>
+                    <i class="fa-solid fa-bolt"></i> Cravelo Express • ~22 Dk Sıcak Teslimat
+                </div>
+                <h1 class="hero-title">
+                    Canın ne çekiyorsa,<br>
+                    <span class="hero-highlight">en hızlı kuryeyle</span> kapında!
+                </h1>
+                <p class="hero-desc">
+                    Kadıköy'ün en seçkin mutfaklarından taptaze lezzetler. Akıllı kurye rota motoruyla yemeğin soğumadan dakikalar içinde masanda.
+                </p>
+                <div class="hero-actions">
+                    <button type="button" class="hero-btn" onclick="scrollToRestaurants()">
+                        <span>Lezzetleri Keşfet</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <div class="hero-quick-perks">
+                        <span class="perk-chip"><i class="fa-solid fa-person-walking" style="color:var(--primary);"></i> Gel-Al %20 İndirim</span>
+                        <span class="perk-chip"><i class="fa-solid fa-leaf" style="color:var(--success);"></i> Doğa Dostu</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-img-wrap">
+                <img class="hero-main-img" src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=640&q=80" alt="Cravelo Gurme Lezzetler">
+                <div class="hero-floating-badge hero-badge-eta">
+                    <div class="hero-badge-icon"><i class="fa-solid fa-motorcycle"></i></div>
+                    <div>
+                        <div class="hero-badge-label">Ortalama Teslimat</div>
+                        <div class="hero-badge-val">~22 Dakika</div>
+                    </div>
+                </div>
+                <div class="hero-floating-badge hero-badge-rating">
+                    <i class="fa-solid fa-star" style="color:#F59E0B;font-size:18px;"></i>
+                    <div>
+                        <div class="hero-badge-val">4.9 / 5.0</div>
+                        <div class="hero-badge-label">14.8k+ Değerlendirme</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Flash Deals Section -->
+        <section id="flash-deals-section">
+            <div class="sec-head">
+                <div>
+                    <div class="sec-title"><i class="fa-solid fa-bolt" style="color:var(--danger);"></i> Flaş İndirimler &amp; Süper Fırsatlar</div>
+                    <div class="sec-sub">Sınırlı süre için kaçırılmayacak şef fırsatları</div>
+                </div>
+                <div class="flash-timer-pill">
+                    <i class="fa-regular fa-clock" style="color:var(--primary);"></i>
+                    <span>Kalan Süre:</span>
+                    <strong id="flash-timer" style="color:var(--primary);font-weight:900;font-variant-numeric:tabular-nums;">02:44:18</strong>
+                </div>
+            </div>
+            <div class="flash-grid" id="flash-grid"></div>
+        </section>
+
+        <!-- 4. Chef Picks / Popular Showcase Section -->
+        <section id="popular-showcase-section">
+            <div class="sec-head">
+                <div>
+                    <div class="sec-title"><i class="fa-solid fa-fire" style="color:var(--primary);"></i> Şefin Seçimleri &amp; Çok Satanlar</div>
+                    <div class="sec-sub">Kadıköy'de en çok sipariş edilen ve tam puan alan tabaklar</div>
+                </div>
+            </div>
+            <div class="pop-food-grid" id="pop-food-grid"></div>
+        </section>
+
+        <!-- 5. Restaurants & Smart Sort Section -->
+        <section id="rest-section">
+            <div class="sec-head">
+                <div>
+                    <div class="sec-title" id="rest-section-title"><i class="fa-solid fa-store" style="color:var(--primary);"></i> Çevrendeki Restoranlar</div>
+                    <div class="sec-sub">Kadıköy teslimat adresine olan yakınlık ve hız skoruna göre sıralanıyor</div>
+                </div>
+                <div class="badge badge-musait" id="rest-count-badge">7 Restoran açık</div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div class="cat-scroll" id="cat-pills"></div>
+
+            <!-- Smart Sort Chips -->
+            <div class="sort-bar" role="group" aria-label="Restoran Sıralama">
+                <button type="button" class="sort-chip active" id="sort-fast" onclick="setSortMode('fast')">
+                    <i class="fa-solid fa-bolt"></i> En Hızlı Teslimat
+                </button>
+                <button type="button" class="sort-chip" id="sort-rating" onclick="setSortMode('rating')">
+                    <i class="fa-solid fa-star"></i> En Yüksek Puan
+                </button>
+                <button type="button" class="sort-chip" id="sort-promo" onclick="setSortMode('promo')">
+                    <i class="fa-solid fa-tag"></i> Kampanyalılar
+                </button>
+                <button type="button" class="sort-chip" id="sort-delivery" onclick="setSortMode('delivery')">
+                    <i class="fa-solid fa-motorcycle"></i> Düşük Teslimat Ücreti
+                </button>
+            </div>
+
+            <div class="rest-grid" id="rest-grid"></div>
+        </section>
+
+        <!-- 6. Uber Eats-Style Restaurant Menu & Sticky Cart Detail View -->
+        <section id="menu-section" class="customer-grid" style="display:none;">
+            <div>
+                <button type="button" class="btn btn-outline" style="margin-bottom:18px;border-radius:9999px;padding:9px 18px;" onclick="showRestaurants()">
+                    <i class="fa-solid fa-arrow-left"></i> Restoranlara Dön
+                </button>
+
+                <div class="menu-header">
+                    <img class="menu-header-img" id="mh-img" src="" alt="Restoran Görseli">
+                    <div style="flex:1;min-width:0;">
+                        <div class="menu-header-name" id="mh-name">Restoran Adı</div>
+                        <div class="menu-header-sub">
+                            <span class="mh-badge"><i class="fa-solid fa-star" style="color:var(--yellow);"></i> <strong id="mh-rating">4.8</strong></span>
+                            <span class="mh-badge"><i class="fa-solid fa-clock" style="color:var(--primary);"></i> <strong id="mh-time">25-35</strong> dk</span>
+                            <span class="mh-badge"><i class="fa-solid fa-location-dot" style="color:var(--blue);"></i> <strong id="mh-loc">Moda, Kadıköy</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="food-grid" id="food-grid"></div>
+            </div>
+
+            <!-- Sticky Checkout Cart & Live Order Banner Sidebar -->
+            <aside class="cart-sticky">
+                <div class="cart-box">
+                    <div class="cart-head">
+                        <div class="cart-title">
+                            <i class="fa-solid fa-bag-shopping" style="color:var(--primary);"></i>
+                            <span>Sepetim</span>
+                        </div>
+                        <span class="cart-count-badge" id="cart-badge">0</span>
+                    </div>
+
+                    <!-- Group Order & Delivery Type Bar -->
+                    <div class="cart-top-pills">
+                        <span class="cart-mode-indicator" id="cart-mode-indicator"><i class="fa-solid fa-motorcycle"></i> Adrese Teslim</span>
+                        <button type="button" class="btn-group-pill" id="btn-group-cart" onclick="openGroupOrderModal()" title="Arkadaşlarınla ortak sepet oluştur">
+                            <i class="fa-solid fa-users"></i> <span id="group-cart-label">Ortak Sepet</span>
+                        </button>
+                    </div>
+
+                    <div class="cart-body">
+                        <div style="font-size:12.5px;color:var(--text-3);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                            <i class="fa-solid fa-store" style="color:var(--primary);font-size:11.5px;"></i>
+                            <span>Restoran:</span>
+                            <strong id="cart-from" style="color:var(--text);">—</strong>
+                        </div>
+
+                        <div class="cart-empty" id="cart-empty">
+                            <i class="fa-solid fa-basket-shopping"></i>
+                            <p>Sepetiniz şu anda boş.<br>Menüden dilediğiniz lezzetleri ekleyin.</p>
+                        </div>
+
+                        <div id="cart-items" style="display:none;"></div>
+
+                        <!-- Eco-friendly Delivery Option in Cart -->
+                        <div class="cart-eco-row" id="cart-eco-area" style="display:none;">
+                            <label class="eco-checkbox-label">
+                                <input type="checkbox" id="cart-eco-check" checked onchange="toggleEcoFriendly(this.checked)">
+                                <span><i class="fa-solid fa-leaf" style="color:var(--success);"></i> Doğa Dostu Yeşil Teslimat (Çatal/Bıçak İstemiyorum)</span>
+                            </label>
+                        </div>
+
+                        <!-- Promo Coupon Field -->
+                        <div class="coupon-box" id="cart-coupon-area" style="display:none;">
+                            <input type="text" class="coupon-input" id="cart-coupon-code" placeholder="KUPON KODU (örn: CRAVELO30)">
+                            <button type="button" class="coupon-btn" onclick="applyCartCouponInput()">Uygula</button>
+                        </div>
+
+                        <!-- Cart Totals Summary -->
+                        <div class="cart-summary" id="cart-summ" style="display:none;">
+                            <div class="summ-row"><span>Ara Toplam</span><span id="s-sub">0.00 ₺</span></div>
+                            <div class="summ-row discount" id="s-discount-row" style="display:none;"><span>İndirim</span><span id="s-disc">-0.00 ₺</span></div>
+                            <div class="summ-row"><span>Teslimat</span><span id="s-del">0.00 ₺</span></div>
+                            <div class="summ-row"><span>Tahmini Süre</span><span id="s-time">~0 dk</span></div>
+                            <div class="summ-row total"><span>Ödenecek Tutar</span><span id="s-total">0.00 ₺</span></div>
+                        </div>
+
+                        <button type="button" class="btn-order" id="btn-order" disabled onclick="openCheckoutModal()">
+                            <i class="fa-solid fa-credit-card"></i> <span>Siparişi Tamamla &amp; Öde</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Order Quick Notification Banner -->
+                <div id="active-order-floating-banner" class="panel-card" style="display:none;border-color:var(--primary);padding:18px;margin-top:16px;margin-bottom:0;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="live-pulse-dot"></span>
+                            <span style="font-weight:800;font-size:13.5px;color:var(--text);" id="menu-active-order-title">Aktif Siparişiniz Var</span>
+                        </div>
+                        <span class="status-pill primary" id="menu-active-order-status">Yolda</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-bottom:14px;line-height:1.45;" id="menu-active-order-courier">Kuryeniz siparişinizi teslim etmek üzere yola çıktı.</div>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="openOrdersTab()" style="width:100%;border-radius:9999px;padding:10px 16px;">
+                        <i class="fa-solid fa-map-location-dot"></i> Kuryeyi Canlı Takip Et
+                    </button>
+                </div>
+            </aside>
+        </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 2. RESTORAN MUTFAK EKRANI (CRAVELO KDS)                  -->
+    <!-- ======================================================== -->
+    <div id="view-restaurant" class="panel-wrap hidden" style="display:none;">
+        <div class="panel-top-bar">
+            <div>
+                <div class="panel-top-title">
+                    <i class="fa-solid fa-utensils" style="color:var(--primary);"></i>
+                    <span>Restoran Mutfak Ekranı (KDS)</span>
+                </div>
+                <div style="font-size:13.5px;color:var(--text-2);margin-top:4px;">Canlı Mutfak Sipariş Akışı, Hazırlık Durumları ve Anlık Menü Stok Kontrol Masası</div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <div class="live-status-pill">
+                    <span class="live-pulse-dot"></span> Canlı KDS Hattı Aktif
+                </div>
+                <span class="status-pill warning" title="Aktif Restoran Değerlendirmesi">
+                    <i class="fa-solid fa-star"></i> <strong id="kpi-res-rating">4.9 ⭐</strong>
+                </span>
+                <div class="panel-selector-pill">
+                    <label for="res-selector" style="font-size:12.5px;font-weight:800;color:var(--text-2);white-space:nowrap;">Aktif Restoran:</label>
+                    <select class="form-input" id="res-selector" style="width:220px;padding:7px 12px;border-radius:10px;" onchange="changeVendorRestaurant()"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive KDS KPI Bento Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--success-light);color:var(--success);">
+                    <i class="fa-solid fa-turkish-lira-sign"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Günlük Ciro</div>
+                    <div class="kpi-val" id="kpi-revenue">0.00 ₺</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--blue-light);color:var(--blue);">
+                    <i class="fa-solid fa-bowl-food"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Aktif Sipariş</div>
+                    <div class="kpi-val" id="kpi-orders">0 Adet</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--yellow-light);color:var(--yellow);">
+                    <i class="fa-solid fa-fire-burner"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Hazırlanan</div>
+                    <div class="kpi-val" id="kpi-preparing">0 Adet</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--purple-light);color:var(--purple);">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Tamamlanan</div>
+                    <div class="kpi-val" id="kpi-completed">0 Adet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Kitchen Orders Board (KDS Tickets) -->
+        <section class="panel-card">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-bell" style="color:var(--yellow);"></i>
+                        <span>Canlı Mutfak Siparişleri</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Gelen siparişleri tek tıkla hazırlamaya alın, paketleyin ve en yakın kuryeyi çağırın</div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button type="button" class="btn btn-sm btn-outline" onclick="GustoAudio.play('bell');showToast('🔔', 'KDS Mutfak Bildirim Zili Çaldı!');" title="KDS Mutfak Yeni Sipariş Zili">
+                        <i class="fa-solid fa-bell"></i> KDS Zil Çal
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="printKdsKitchenSlip()" title="KDS Mutfak Fişi Yazdır">
+                        <i class="fa-solid fa-print"></i> Mutfak Fişi
+                    </button>
+                </div>
+            </div>
+            <div id="res-orders-body" class="kds-board"></div>
+        </section>
+
+        <!-- Modern Menu & Stock Toggle Cards -->
+        <section class="panel-card">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-sliders" style="color:var(--primary);"></i>
+                        <span>Menü &amp; Anlık Stok Yönetimi</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Tükenen yemekleri anında satışa kapatın veya stok yenilendiğinde tekrar aktif edin</div>
+                </div>
+                <span class="status-pill success"><i class="fa-solid fa-bolt"></i> Anlık Senkronizasyon</span>
+            </div>
+            <div id="res-menu-body" class="menu-toggle-grid"></div>
+        </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 3. KURYE KOKPİTİ (CRAVELO COURIER COCKPIT)               -->
+    <!-- ======================================================== -->
+    <div id="view-courier" class="panel-wrap hidden" style="display:none;">
+        <div class="panel-top-bar">
+            <div>
+                <div class="panel-top-title">
+                    <i class="fa-solid fa-motorcycle" style="color:var(--primary);"></i>
+                    <span>Kurye Teslimat &amp; Canlı Kokpit</span>
+                </div>
+                <div style="font-size:13.5px;color:var(--text-2);margin-top:4px;">Canlı Kadıköy Google Harita Rotası, Aktif Teslimat Görevleri ve Kazanç Telemetrisi</div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <div class="live-status-pill">
+                    <span class="live-pulse-dot"></span> Canlı GPS Aktif
+                </div>
+                <span class="status-pill warning" title="Kurye Teslimat Puanı">
+                    <i class="fa-solid fa-trophy"></i> <strong>4.95 ⭐</strong>
+                </span>
+                <div class="panel-selector-pill">
+                    <label for="courier-selector" style="font-size:12.5px;font-weight:800;color:var(--text-2);white-space:nowrap;">Aktif Kurye:</label>
+                    <select class="form-input" id="courier-selector" style="width:225px;padding:7px 12px;border-radius:10px;" onchange="changeCourierUser()"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Courier Telemetry KPI Strip -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--blue-light);color:var(--blue);">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Anlık Kurye Bölgesi</div>
+                    <div class="kpi-val" id="courier-kpi-loc" style="font-size:19px;">Kadıköy Moda</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--success-light);color:var(--success);">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Günlük Kazanç</div>
+                    <div class="kpi-val" id="courier-kpi-earnings">185.00 ₺</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--primary-light);color:var(--primary);">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Aktif Görev</div>
+                    <div class="kpi-val" id="courier-kpi-active">0 Görev</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--yellow-light);color:var(--yellow);">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Toplam Bahşiş</div>
+                    <div class="kpi-val" id="courier-kpi-tips">45.00 ₺</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Delivery Mission Cards -->
+        <section class="panel-card">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-route" style="color:var(--primary);"></i>
+                        <span>Atanmış Teslimat Görevi</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Sipariş mutfakta hazırlandığında akıllı mesafe ve iş yükü skoruyla göreviniz otomatik açılır</div>
+                </div>
+                <span class="badge badge-musait" id="courier-badge-status">MÜSAİT</span>
+            </div>
+            <div id="courier-task-area"></div>
+        </section>
+
+        <!-- Google Maps Live Route Frame with Floating HUD Legend -->
+        <section class="panel-card">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i>
+                        <span>Canlı Google Harita &amp; Teslimat Rotası</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Kadıköy sokak ağı üzerinde restoran teslim alma ve müşteri varış rotası</div>
+                </div>
+                <span class="status-pill info"><i class="fa-solid fa-satellite-dish"></i> Kadıköy GPS Ağı</span>
+            </div>
+            <div id="courier-map-container" class="map-frame map-hud-container">
+                <div id="courier-map-leaflet" style="width:100%;height:320px;z-index:2;"></div>
+                <canvas id="courier-map-canvas" class="map-canvas" width="900" height="280" style="position:absolute;top:0;left:0;width:100%;height:280px;cursor:crosshair;display:none;" onmousemove="GustoMap.handleCanvasMouseMove(event, 'courier-map-canvas')" onmouseleave="GustoMap.hideTooltip()"></canvas>
+                <div class="map-hud-legend">
+                    <span><i class="fa-solid fa-circle" style="color:#FF5722;font-size:8px;"></i> Restoran</span>
+                    <span><i class="fa-solid fa-circle" style="color:#2F8EFF;font-size:8px;"></i> Kurye</span>
+                    <span><i class="fa-solid fa-circle" style="color:#0BBF80;font-size:8px;"></i> Müşteri</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Street Zone & Status Controls (Zero Raw Coordinates Visible) -->
+        <section class="panel-card">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-compass" style="color:var(--blue);"></i>
+                        <span>Hızlı Saha Bölgesi &amp; Konum Kontrolleri</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Canlı Kadıköy GPS bölgenizi tek dokunuşla güncelleyerek yeni siparişlere yakınlaşın</div>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary" onclick="updateCourierLocation()" style="border-radius:9999px;">
+                    <i class="fa-solid fa-arrows-rotate"></i> Konumu Senkronize Et
+                </button>
+            </div>
+
+            <!-- Internal grid sync fields kept hidden from UI for app.js compatibility -->
+            <div style="display:none;" aria-hidden="true">
+                <input type="number" id="courier-input-x" value="14" min="0" max="35">
+                <input type="number" id="courier-input-y" value="10" min="0" max="35">
+            </div>
+
+            <div class="map-filter-bar" id="courier-zone-chips" style="flex-wrap:wrap;gap:10px;">
+                <button type="button" class="sort-chip active" onclick="selectCourierZone(14, 10, 40.9910, 29.0250, 'Rıhtım, Kadıköy', this)">
+                    <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Kadıköy Rıhtım
+                </button>
+                <button type="button" class="sort-chip" onclick="selectCourierZone(12, 8, 40.9850, 29.0280, 'Moda Cad., Kadıköy', this)">
+                    <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Moda Caddesi
+                </button>
+                <button type="button" class="sort-chip" onclick="selectCourierZone(16, 12, 40.9880, 29.0310, 'Bahariye, Kadıköy', this)">
+                    <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Bahariye / Süreyya
+                </button>
+                <button type="button" class="sort-chip" onclick="selectCourierZone(10, 6, 40.9950, 29.0280, 'Yeldeğirmeni, Kadıköy', this)">
+                    <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Yeldeğirmeni
+                </button>
+                <button type="button" class="sort-chip" onclick="selectCourierZone(20, 24, 40.9750, 29.0350, 'Fenerbahçe, Kadıköy', this)">
+                    <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Fenerbahçe Parkı
+                </button>
+                <button type="button" class="sort-chip" onclick="selectCourierZone(22, 26, 40.9740, 29.0410, 'Kalamış Marina, Kadıköy', this)">
+                    <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Kalamış Marina
+                </button>
+            </div>
+        </section>
+
+        <script>
+            function selectCourierZone(x, y, lat, lon, neighborhood, btnEl) {
+                var inX = document.getElementById('courier-input-x');
+                var inY = document.getElementById('courier-input-y');
+                if (inX) inX.value = x;
+                if (inY) inY.value = y;
+                var chips = document.querySelectorAll('#courier-zone-chips .sort-chip');
+                chips.forEach(function(ch) { ch.classList.remove('active'); });
+                if (btnEl) btnEl.classList.add('active');
+                if (typeof GustoState !== 'undefined') {
+                    var state = GustoState.get();
+                    var c = state.couriers.find(function(item) { return item.id === state.selectedCourierId; });
+                    if (c) {
+                        c.lat = lat;
+                        c.lon = lon;
+                        c.neighborhood = neighborhood;
+                    }
+                }
+                if (typeof updateCourierLocation === 'function') {
+                    updateCourierLocation();
+                }
+            }
+        </script>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 4. YÖNETİCİ KOMUTA MERKEZİ (CRAVELO ADMIN CENTER)        -->
+    <!-- ======================================================== -->
+    <div id="view-admin" class="panel-wrap hidden" style="display:none;">
+        <div class="panel-top-bar">
+            <div>
+                <div class="panel-top-title">
+                    <i class="fa-solid fa-shield-halved" style="color:var(--purple);"></i>
+                    <span>Cravelo Yönetici Komuta Merkezi</span>
+                </div>
+                <div style="font-size:13.5px;color:var(--text-2);margin-top:4px;">Yetkili Yönetici: <strong style="color:var(--text);">Mustafa Güreşir</strong> • Kadıköy Filo Radarı, Akıllı Atama Analizi ve Sistem Denetimi</div>
+            </div>
+
+            <!-- 4-Role Live Preview Switcher Pill Bar -->
+            <div class="admin-preview-switcher" role="group" aria-label="Rol Önizleme Seçici">
+                <span style="font-size:11.5px;font-weight:800;color:var(--text-3);padding:0 6px;display:inline-flex;align-items:center;gap:5px;">
+                    <i class="fa-solid fa-eye"></i> Canlı Önizle:
+                </span>
+                <button type="button" class="btn btn-sm btn-primary" onclick="adminPreviewView('admin')" title="Yönetici Denetim Merkezi">
+                    <i class="fa-solid fa-shield-halved"></i> Yönetici
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="adminPreviewView('restaurant')" title="Restoran Mutfak (KDS) Ekranı">
+                    <i class="fa-solid fa-utensils"></i> Restoran (KDS)
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="adminPreviewView('courier')" title="Kurye Kokpiti">
+                    <i class="fa-solid fa-motorcycle"></i> Kurye
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="adminPreviewView('customer')" title="Müşteri Sipariş Vitrini">
+                    <i class="fa-solid fa-bag-shopping"></i> Müşteri
+                </button>
+            </div>
+        </div>
+
+        <!-- Executive Admin KPI Bento Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--blue-light);color:var(--blue);">
+                    <i class="fa-solid fa-motorcycle"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Aktif Kurye Filosu</div>
+                    <div class="kpi-val" id="admin-kpi-couriers">4 Kurye</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--primary-light);color:var(--primary);">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Partner Restoranlar</div>
+                    <div class="kpi-val" id="admin-kpi-restaurants">7 Restoran</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--success-light);color:var(--success);">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Platform Siparişleri</div>
+                    <div class="kpi-val" id="admin-kpi-orders">0 Sipariş</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:var(--purple-light);color:var(--purple);">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Denetim Kayıtları</div>
+                    <div class="kpi-val" id="admin-kpi-audits">0 Kayıt</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Kadıköy Google Maps City Radar -->
+        <section class="panel-card">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i>
+                        <span>Canlı Kadıköy Şehir Radarı (Google Haritalar)</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Tüm restoranlar, saha kuryeleri ve müşteri teslimat noktalarının gerçek zamanlı dağılımı</div>
+                </div>
+                <div class="map-filter-bar" id="map-filter-group" role="group" aria-label="Harita Katman Filtreleri">
+                    <button type="button" class="sort-chip active" id="map-btn-all" onclick="GustoMap.setFilter('all', this)">
+                        <i class="fa-solid fa-layer-group"></i> Tümü
+                    </button>
+                    <button type="button" class="sort-chip" id="map-btn-restaurants" onclick="GustoMap.setFilter('restaurants', this)">
+                        <i class="fa-solid fa-utensils"></i> Restoranlar
+                    </button>
+                    <button type="button" class="sort-chip" id="map-btn-couriers" onclick="GustoMap.setFilter('couriers', this)">
+                        <i class="fa-solid fa-motorcycle"></i> Kuryeler
+                    </button>
+                    <button type="button" class="sort-chip" id="map-btn-customers" onclick="GustoMap.setFilter('customers', this)">
+                        <i class="fa-solid fa-house"></i> Müşteriler
+                    </button>
+                </div>
+            </div>
+
+            <div class="map-frame map-hud-container">
+                <div id="admin-map-leaflet" style="width:100%;height:350px;z-index:2;"></div>
+                <canvas id="admin-map-canvas" class="map-canvas" width="900" height="310" style="position:absolute;top:0;left:0;width:100%;height:310px;cursor:crosshair;display:none;" onmousemove="GustoMap.handleCanvasMouseMove(event, 'admin-map-canvas')" onmouseleave="GustoMap.hideTooltip()"></canvas>
+                <!-- Canlı İnteraktif HUD Tooltip Kartı -->
+                <div id="map-hud-tooltip" style="display:none;position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--blue);box-shadow:var(--shadow-elevated);border-radius:14px;padding:12px 15px;color:var(--text);font-size:12px;z-index:30;backdrop-filter:blur(12px);min-width:190px;"></div>
+                <!-- Floating Map Legend -->
+                <div class="map-hud-legend">
+                    <span><i class="fa-solid fa-circle" style="color:#FF5722;font-size:8px;"></i> Restoran</span>
+                    <span><i class="fa-solid fa-circle" style="color:#2F8EFF;font-size:8px;"></i> Kurye</span>
+                    <span><i class="fa-solid fa-circle" style="color:#0BBF80;font-size:8px;"></i> Müşteri</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Courier Fleet Workload & Smart Assignment Panel -->
+        <section class="panel-card">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-users" style="color:var(--blue);"></i>
+                        <span>Kurye Filosu &amp; Akıllı İş Yükü Skorlaması</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Haversine mesafe ve aktif görev yükü dengesine göre en düşük skorlu kurye yeni siparişe otomatik atanır</div>
+                </div>
+                <span class="status-pill info"><i class="fa-solid fa-calculator"></i> Skor = Mesafe + 2×Görev</span>
+            </div>
+            <div class="tbl-responsive">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>Kurye Adı</th>
+                            <th>Araç Tipi</th>
+                            <th>Bölge / Cadde</th>
+                            <th>İş Yükü</th>
+                            <th>Atama Skoru</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-couriers-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Clean Audit Log Table -->
+        <section class="panel-card">
+            <div class="panel-card-head">
+                <div>
+                    <div class="panel-card-title">
+                        <i class="fa-solid fa-clock-rotate-left" style="color:var(--purple);"></i>
+                        <span>Sipariş Durum Tarihçesi (Audit Log)</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-2);margin-top:3px;">Durum geçişleri, sorumlu aktör rolü ve zaman damgalı sistem denetim kayıtları</div>
+                </div>
+                <div class="live-status-pill">
+                    <span class="live-pulse-dot"></span> Denetim Kaydı Aktif
+                </div>
+            </div>
+            <div class="tbl-responsive">
+                <table class="tbl">
+                    <thead>
+                        <tr>
+                            <th>Zaman</th>
+                            <th>Sipariş No</th>
+                            <th>Önceki Durum</th>
+                            <th>Yeni Durum</th>
+                            <th>Değiştiren Rol</th>
+                            <th>Açıklama</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-audit-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- ======================================================== -->
+<!-- CRAVELO ETKİLEŞİMLİ MODALLAR (9 MODERN SHEET)            -->
+<!-- ======================================================== -->
+
+<!-- 1. Bağımsız Sepet Modalı -->
+<div class="modal-overlay" id="cart-overlay" role="dialog" aria-modal="true" aria-labelledby="cart-modal-title">
+    <div class="modal-box" style="max-width:540px;">
+        <button type="button" class="modal-close" onclick="closeCartModal()" title="Kapat" aria-label="Sepeti Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="modal-header modal-header-with-close">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:44px;height:44px;border-radius:14px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+                <div>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <h2 id="cart-modal-title" style="font-size:20px;font-weight:900;color:var(--text);margin:0;">Sepetim</h2>
+                        <span class="badge badge-musait" id="modal-cart-badge" style="font-size:11px;">0 Ürün</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--text-3);margin-top:2px;" id="modal-cart-from">—</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Empty Cart State -->
+            <div id="modal-cart-empty" style="text-align:center;padding:40px 18px;display:none;">
+                <div style="width:74px;height:74px;border-radius:22px;background:var(--surface-2);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;color:var(--text-3);font-size:30px;margin-bottom:16px;">
+                    <i class="fa-solid fa-cart-arrow-down"></i>
+                </div>
+                <h3 style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:6px;">Sepetiniz henüz boş</h3>
+                <p style="font-size:13.5px;color:var(--text-2);margin-bottom:20px;line-height:1.5;">Kadıköy'ün en sevilen restoranlarından sıcak lezzetleri seçip sepetinize ekleyin.</p>
+                <button type="button" class="btn btn-primary" onclick="closeCartModal(); scrollToRestaurants();" style="border-radius:9999px;padding:11px 26px;">
+                    <i class="fa-solid fa-utensils"></i> Lezzetleri Keşfet
+                </button>
+            </div>
+
+            <!-- Populated Cart Content -->
+            <div id="modal-cart-content">
+                <div class="cart-items" id="modal-cart-items" style="max-height:280px;overflow-y:auto;padding-right:4px;"></div>
+
+                <div class="cart-summary" style="margin-top:16px;">
+                    <div class="summ-row">
+                        <span>Ürünler Toplamı</span>
+                        <strong id="m-sub" style="color:var(--text);">0.00 ₺</strong>
+                    </div>
+                    <div class="summ-row discount" id="m-discount-row" style="display:none;">
+                        <span>İndirim Tutarı</span>
+                        <strong id="m-disc">-0.00 ₺</strong>
+                    </div>
+                    <div class="summ-row">
+                        <span>Teslimat Ücreti</span>
+                        <strong id="m-del" style="color:var(--text);">0.00 ₺</strong>
+                    </div>
+                    <div class="summ-row total">
+                        <span>Genel Toplam</span>
+                        <strong id="m-total" style="color:var(--primary);">0.00 ₺</strong>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="display:flex;gap:10px;margin-top:18px;">
+                    <button type="button" class="btn btn-outline-danger" onclick="clearCartConfirm()" style="flex:1;border-radius:9999px;padding:12px 16px;">
+                        <i class="fa-solid fa-trash-can"></i> Temizle
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="closeCartModal(); openCheckoutModal();" style="flex:2;border-radius:9999px;padding:12px 22px;font-size:14.5px;">
+                        <i class="fa-solid fa-credit-card"></i> Siparişi Tamamla
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Kategoriye Duyarlı Akıllı Ürün Özelleştirme Modalı -->
+<div class="modal-overlay" id="customizer-overlay" role="dialog" aria-modal="true" aria-labelledby="cust-name">
+    <div class="modal-box">
+        <button type="button" class="modal-close" onclick="closeCustomizer()" title="Kapat" aria-label="Özelleştiriciyi Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="modal-header modal-header-with-close" style="display:flex;gap:16px;align-items:center;">
+            <img id="cust-img" src="" alt="Ürün Görseli" style="width:88px;height:88px;border-radius:18px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">
+            <div style="min-width:0;">
+                <h3 id="cust-name" style="font-size:20px;font-weight:900;color:var(--text);margin:0 0 4px 0;letter-spacing:-0.3px;">Yemek Adı</h3>
+                <p id="cust-desc" style="font-size:13px;color:var(--text-2);line-height:1.45;margin:0;">Açıklama</p>
+                <div id="cust-base-price" style="font-size:19px;font-weight:900;color:var(--primary);margin-top:8px;">0.00 ₺</div>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Dinamik ve Kategoriye Özel Özelleştirme Alanı (Tatlı, Burger, Kebap, Pizza, İçecek) -->
+            <div id="cust-dynamic-options"></div>
+
+            <div class="form-group" style="margin-top:14px;">
+                <label class="form-label" for="cust-note">Mutfak Şefine Not</label>
+                <input type="text" class="form-input" id="cust-note" placeholder="Örn: Sosu ayrı kapta olsun, çıtır pişsin…">
+            </div>
+        </div>
+
+        <div class="modal-footer" style="display:flex;gap:14px;align-items:center;margin-top:20px;">
+            <div class="qty-ctrl" style="background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:6px 12px;">
+                <button type="button" class="qty-btn" onclick="changeCustomQty(-1)" aria-label="Azalt">−</button>
+                <span class="qty-val" id="cust-qty" style="font-size:16px;min-width:24px;">1</span>
+                <button type="button" class="qty-btn" onclick="changeCustomQty(1)" aria-label="Artır">+</button>
+            </div>
+            <button type="button" class="btn btn-primary" style="flex:1;padding:14px 20px;font-size:15px;border-radius:14px;" onclick="addCustomizedItemToCart()">
+                <i class="fa-solid fa-plus"></i> <span id="btn-cust-text">Sepete Ekle • 0.00 ₺</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Gelişmiş Ödeme & Checkout Modalı -->
+<div class="modal-overlay" id="checkout-overlay" role="dialog" aria-modal="true" aria-labelledby="checkout-modal-title">
+    <div class="modal-box modal-box-wide">
+        <button type="button" class="modal-close" onclick="closeCheckoutModal()" title="Kapat" aria-label="Ödemeyi Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="modal-header modal-header-with-close">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:14px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h2 id="checkout-modal-title" style="font-size:21px;font-weight:900;color:var(--text);margin:0;">Siparişi Onayla &amp; Öde</h2>
+                    <p style="font-size:13px;color:var(--text-2);margin:3px 0 0 0;">Ödeme yönteminizi, kurye bahşişini ve teslimat talimatlarınızı seçin.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Delivery Mode Notice -->
+            <div id="checkout-del-mode-notice" class="del-mode-notice" style="display:none;">
+                <i class="fa-solid fa-person-walking" style="font-size:19px;"></i>
+                <div>
+                    <strong>Gel-Al Siparişi:</strong> Siparişiniz restorandan sizin tarafınızdan teslim alınacak.
+                    <div style="font-size:12px;opacity:0.9;margin-top:2px;">Teslimat ücreti 0 ₺ • %20 Gel-Al İndirimi Otomatik Uygulandı!</div>
+                </div>
+            </div>
+
+            <div class="custom-sec-title"><span>1. Ödeme Yöntemi Seçin</span></div>
+            <div class="pay-method-cards">
+                <div class="pay-card active" id="pay-card-cc" onclick="selectPayMethod('cc')" role="button" tabindex="0">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Kredi / Banka Kartı</span>
+                </div>
+                <div class="pay-card" id="pay-card-cod" onclick="selectPayMethod('cod')" role="button" tabindex="0">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <span>Kapıda Nakit / POS</span>
+                </div>
+                <div class="pay-card" id="pay-card-wallet" onclick="selectPayMethod('wallet')" role="button" tabindex="0">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Cravelo Cüzdan</span>
+                </div>
+            </div>
+
+            <!-- Kredi Kartı Formu -->
+            <div id="cc-form-area" style="background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;">
+                <div class="form-group">
+                    <label class="form-label">Kart Numarası</label>
+                    <input type="text" class="form-input" placeholder="4543 •••• •••• 9821" value="4543 8920 1124 9821">
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Son Kullanma</label>
+                        <input type="text" class="form-input" placeholder="AA/YY" value="11/28">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">CVV Güvenlik</label>
+                        <input type="text" class="form-input" placeholder="•••" value="384">
+                    </div>
+                </div>
+            </div>
+
+            <div class="custom-sec-title"><span>2. Kuryeye Bahşiş Ekle</span> <span style="font-size:11.5px;color:var(--text-3);font-weight:600;">%100 kuryeye aktarılır</span></div>
+            <div class="tip-pills">
+                <div class="tip-pill active" id="tip-0" onclick="setTip(0)">Yok (0 ₺)</div>
+                <div class="tip-pill" id="tip-10" onclick="setTip(10)">+10 ₺</div>
+                <div class="tip-pill" id="tip-20" onclick="setTip(20)">+20 ₺ ⭐</div>
+                <div class="tip-pill" id="tip-50" onclick="setTip(50)">+50 ₺ 🚀</div>
+            </div>
+
+            <div class="custom-sec-title"><span>3. Teslimat Zamanı</span></div>
+            <div class="sched-pills" id="sched-pills">
+                <div class="sched-pill active" onclick="setScheduledTime('now', this)"><i class="fa-solid fa-bolt"></i> Hemen Gelsin (~25 dk)</div>
+                <div class="sched-pill" onclick="setScheduledTime('19:00 - 19:30', this)"><i class="fa-regular fa-clock"></i> 19:00 - 19:30</div>
+                <div class="sched-pill" onclick="setScheduledTime('20:00 - 20:30', this)"><i class="fa-regular fa-clock"></i> 20:00 - 20:30</div>
+                <div class="sched-pill" onclick="setScheduledTime('21:00 - 21:30', this)"><i class="fa-regular fa-clock"></i> 21:00 - 21:30</div>
+            </div>
+
+            <div class="custom-sec-title"><span>4. Akıllı Teslimat Talimatları &amp; Özel Not</span></div>
+            <div class="instruction-chips" id="instruction-chips">
+                <div class="inst-chip active" onclick="selectInstruction('Zile Basma Bebek Uyuyor 👶', this)">
+                    <i class="fa-solid fa-baby"></i> Zile Basma Bebek Uyuyor
+                </div>
+                <div class="inst-chip" onclick="selectInstruction('Kapıya As &amp; Zile Bas 🚪', this)">
+                    <i class="fa-solid fa-door-open"></i> Kapıya As &amp; Zile Bas
+                </div>
+                <div class="inst-chip" onclick="selectInstruction('Güvenliğe Bırak 🛡️', this)">
+                    <i class="fa-solid fa-shield"></i> Güvenliğe Bırak
+                </div>
+                <div class="inst-chip" onclick="selectInstruction('Gelince Ara / Kapıdayım De 📞', this)">
+                    <i class="fa-solid fa-phone"></i> Gelince Ara
+                </div>
+            </div>
+            <input type="text" class="form-input" id="delivery-custom-note" placeholder="Kurye için ek adres veya kapı detayı (örn: Kat 4, Daire 8, Zil: Yılmaz)…" style="margin-top:10px;">
+
+            <label class="checkbox-row" style="margin-top:14px;">
+                <span><i class="fa-solid fa-leaf" style="color:var(--success);margin-right:6px;"></i> Doğayı Koru: Plastik çatal, kaşık ve peçete istemiyorum (-140g CO2)</span>
+                <input type="checkbox" id="eco-choice" checked onchange="toggleEcoFriendly(this.checked)">
+            </label>
+        </div>
+
+        <div class="modal-footer" style="background:var(--surface-2);border:1px solid var(--border);border-radius:18px;padding:16px 20px;margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+            <div>
+                <div style="font-size:12px;font-weight:700;color:var(--text-3);">Toplam Ödenecek Tutar</div>
+                <div style="font-size:24px;font-weight:900;color:var(--primary);letter-spacing:-0.4px;" id="checkout-final-total">0.00 ₺</div>
+            </div>
+            <button type="button" class="btn btn-primary" style="padding:14px 28px;font-size:15px;border-radius:14px;" onclick="confirmCheckoutAndPlaceOrder()">
+                <i class="fa-solid fa-lock"></i> Siparişi Onayla &amp; Başlat
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Değerlendirme & Yorum Modalı (3 Kırılımlı: Lezzet, Hız, Servis) -->
+<div class="modal-overlay" id="rating-overlay" role="dialog" aria-modal="true" aria-labelledby="rating-modal-title">
+    <div class="modal-box" style="text-align:center;max-width:520px;">
+        <button type="button" class="modal-close" onclick="closeRatingModal()" title="Kapat" aria-label="Değerlendirmeyi Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div style="width:62px;height:62px;border-radius:20px;background:var(--primary-light);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;">
+            <i class="fa-solid fa-award"></i>
+        </div>
+        <h2 id="rating-modal-title" style="font-size:22px;font-weight:900;color:var(--text);margin:0 0 6px 0;">Siparişiniz Teslim Edildi!</h2>
+        <p style="font-size:13.5px;color:var(--text-2);margin:0 0 20px 0;">Deneyiminizi puanlayarak <strong style="color:var(--primary);">+25 Cravelo Puan</strong> kazanın!</p>
+
+        <!-- 3 Kırılımlı Puanlama -->
+        <div class="rating-categories-card">
+            <div class="rating-cat-row">
+                <span class="rating-cat-label"><i class="fa-solid fa-pizza-slice" style="color:var(--primary);"></i> Lezzet Puanı</span>
+                <div class="stars-row" id="taste-stars">
+                    <i class="fa-solid fa-star active" onclick="setStars('taste', 1)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('taste', 2)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('taste', 3)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('taste', 4)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('taste', 5)"></i>
+                </div>
+            </div>
+            <div class="rating-cat-row">
+                <span class="rating-cat-label"><i class="fa-solid fa-bolt" style="color:var(--blue);"></i> Teslimat Hızı</span>
+                <div class="stars-row" id="speed-stars">
+                    <i class="fa-solid fa-star active" onclick="setStars('speed', 1)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('speed', 2)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('speed', 3)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('speed', 4)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('speed', 5)"></i>
+                </div>
+            </div>
+            <div class="rating-cat-row">
+                <span class="rating-cat-label"><i class="fa-solid fa-box-open" style="color:var(--success);"></i> Paket &amp; Servis</span>
+                <div class="stars-row" id="service-stars">
+                    <i class="fa-solid fa-star active" onclick="setStars('service', 1)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('service', 2)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('service', 3)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('service', 4)"></i>
+                    <i class="fa-solid fa-star active" onclick="setStars('service', 5)"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Değerlendirme Etiketleri -->
+        <div style="font-size:12.5px;font-weight:800;color:var(--text-2);text-align:left;margin:16px 0 8px 0;">Öne Çıkan Özellikler:</div>
+        <div class="rating-tag-chips" id="rating-tags-wrap">
+            <span class="rating-tag-chip active" onclick="toggleRatingTag(this)"><i class="fa-solid fa-fire"></i> Sıcacık Geldi</span>
+            <span class="rating-tag-chip active" onclick="toggleRatingTag(this)"><i class="fa-solid fa-bolt"></i> Süper Hızlı</span>
+            <span class="rating-tag-chip" onclick="toggleRatingTag(this)"><i class="fa-solid fa-box"></i> Özenli Paket</span>
+            <span class="rating-tag-chip" onclick="toggleRatingTag(this)"><i class="fa-solid fa-smile"></i> Kurye Çok Kibardı</span>
+            <span class="rating-tag-chip" onclick="toggleRatingTag(this)"><i class="fa-solid fa-burger"></i> Doyurucu Porsiyon</span>
+            <span class="rating-tag-chip" onclick="toggleRatingTag(this)"><i class="fa-solid fa-leaf"></i> Doğa Dostu Paket</span>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+            <input type="text" class="form-input" id="review-comment" placeholder="Yemeğin lezzeti ve teslimat hakkında yorumunuz…" value="Çok sıcak ve taze geldi, kurye arkadaşa da teşekkürler!">
+        </div>
+
+        <button type="button" class="btn btn-primary" style="width:100%;padding:14px;border-radius:14px;font-size:14.5px;" onclick="submitRatingAndReward()">
+            <i class="fa-solid fa-award"></i> Değerlendirmeyi Gönder (+25 Cravelo Puan)
+        </button>
+    </div>
+</div>
+
+<!-- 5. Ortak Sepet / Grup Siparişi Modalı -->
+<div class="modal-overlay" id="group-order-overlay" role="dialog" aria-modal="true" aria-labelledby="group-modal-title">
+    <div class="modal-box" style="max-width:520px;">
+        <button type="button" class="modal-close" onclick="closeGroupOrderModal()" title="Kapat" aria-label="Grup Siparişini Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="modal-header modal-header-with-close">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:14px;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <h2 id="group-modal-title" style="font-size:20px;font-weight:900;color:var(--text);margin:0;">Ortak Sepet &amp; Grup Siparişi</h2>
+                    <p style="font-size:12.5px;color:var(--text-2);margin:3px 0 0 0;">Ekibinizi davet edin, herkes kendi yemeğini seçsin, tek teslimatta gelsin!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Group Code & Share Link -->
+            <div class="group-share-box">
+                <div>
+                    <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;font-weight:800;letter-spacing:0.5px;">Cravelo Grup Kodu</div>
+                    <div style="font-size:20px;font-weight:900;color:var(--primary);letter-spacing:1px;margin-top:2px;" id="group-order-code">CRAVELO-7429</div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline" onclick="copyGroupOrderLink()" style="border-radius:9999px;">
+                    <i class="fa-solid fa-copy"></i> Linki Kopyala
+                </button>
+            </div>
+
+            <!-- Participants List -->
+            <div style="font-size:12px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin:18px 0 10px 0;">Gruptaki Katılımcılar ve Seçimleri</div>
+            <div class="group-members-list" id="group-members-list"></div>
+
+            <!-- Add Simulated Friend -->
+            <div style="display:flex;gap:8px;margin-top:14px;">
+                <input type="text" class="form-input" id="group-friend-name" placeholder="Arkadaş ekle (örn: Selin, Kerem)…" style="font-size:13.5px;">
+                <button type="button" class="btn btn-outline" onclick="addGroupSimulatedMember()" style="white-space:nowrap;">
+                    <i class="fa-solid fa-user-plus"></i> Ekle
+                </button>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="margin-top:18px;">
+            <button type="button" class="btn btn-primary" style="width:100%;padding:14px;border-radius:14px;" onclick="closeGroupOrderModal()">
+                <i class="fa-solid fa-check"></i> Sepete Dön &amp; Siparişi Birleştir
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 6. Kurye Canlı Mesajlaşma Modalı -->
+<div class="modal-overlay" id="chat-overlay" role="dialog" aria-modal="true" aria-labelledby="chat-courier-name">
+    <div class="modal-box" style="max-width:520px;">
+        <button type="button" class="modal-close" onclick="closeChatModal()" title="Kapat" aria-label="Sohbeti Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="modal-header modal-header-with-close" style="display:flex;align-items:center;gap:12px;">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg, var(--blue), #60A5FA);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 4px 14px var(--blue-light);flex-shrink:0;">
+                <i class="fa-solid fa-motorcycle"></i>
+            </div>
+            <div>
+                <div style="font-size:16.5px;font-weight:900;color:var(--text);" id="chat-courier-name">Ali Kaya (Kurye 🛵)</div>
+                <div style="font-size:12px;color:var(--success);font-weight:700;display:flex;align-items:center;gap:6px;margin-top:2px;">
+                    <span class="live-pulse-dot"></span> Çevrimiçi • Teslimat yolunda
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <div class="chat-body" id="chat-messages">
+                <div class="chat-msg courier">Merhaba! Siparişinizi restorandan aldım, kapınıza doğru yola çıktım. Özel bir isteğiniz var mı?</div>
+            </div>
+
+            <div class="chat-quick-replies">
+                <span class="chat-pill" onclick="sendQuickChat('Zil bozuk lütfen arayın 📞')">Zil bozuk lütfen arayın 📞</span>
+                <span class="chat-pill" onclick="sendQuickChat('Kapıya bırakabilirsiniz 🚪')">Kapıya bırakabilirsiniz 🚪</span>
+                <span class="chat-pill" onclick="sendQuickChat('Kolay gelsin teşekkürler 👍')">Kolay gelsin teşekkürler 👍</span>
+            </div>
+
+            <div style="display:flex;gap:8px;">
+                <input type="text" class="form-input" id="chat-input" placeholder="Kuryeye mesaj yazın…" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                <button type="button" class="btn btn-primary" onclick="sendChatMessage()" style="padding:0 20px;border-radius:12px;" aria-label="Gönder">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 7. Google Haritalar Adres & Konum Seçici Modalı -->
+<div class="modal-overlay" id="address-overlay" role="dialog" aria-modal="true" aria-labelledby="address-modal-title">
+    <div class="modal-box modal-box-wide">
+        <button type="button" class="modal-close" onclick="closeAddressModal()" title="Kapat" aria-label="Adres Modalını Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="modal-header modal-header-with-close">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:14px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div>
+                    <h2 id="address-modal-title" style="font-size:20px;font-weight:900;color:var(--text);margin:0;">Teslimat Konumu ve Adreslerim</h2>
+                    <p style="font-size:12.5px;color:var(--text-2);margin:3px 0 0 0;">Kurye teslimat süresi ve yakın restoranlar seçili Kadıköy adresine göre belirlenir.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <div style="font-size:11.5px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Kayıtlı Adresleriniz</div>
+            <div id="saved-address-list"></div>
+
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:20px;margin-top:18px;">
+                <div style="font-size:14px;font-weight:900;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-circle-plus" style="color:var(--primary);"></i>
+                    <span>Yeni Teslimat Adresi Ekle</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="new-addr-title">Adres Başlığı</label>
+                        <input type="text" class="form-input" id="new-addr-title" placeholder="Örn: Evim / Ofis">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="new-addr-desc">Açık Adres / Cadde &amp; Mahalle</label>
+                        <input type="text" class="form-input" id="new-addr-desc" placeholder="Örn: Moda Cad. No:14, Kadıköy">
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:12.5px;color:var(--text-2);">
+                    <span><i class="fa-solid fa-map-location-dot" style="color:var(--primary);margin-right:4px;"></i> Haritadan teslimat pinini sürükleyin veya tıklayın:</span>
+                    <span class="street-badge" id="picker-coord-text">Kadıköy Moda, İstanbul</span>
+                </div>
+
+                <div id="address-picker-map-wrap" class="map-frame" style="height:210px;">
+                    <div id="address-picker-leaflet" style="width:100%;height:100%;z-index:2;"></div>
+                    <canvas id="address-picker-canvas" width="500" height="210" style="position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;background:var(--surface);z-index:1;display:none;" onclick="GustoMap.handlePickerMapClick(event)"></canvas>
+                </div>
+
+                <!-- Internal grid sync fields kept hidden from UI for test & map sync compatibility -->
+                <div style="display:none;" aria-hidden="true">
+                    <input type="number" id="picker-x" value="18" min="0" max="35" onchange="syncPickerFromInputs()">
+                    <input type="number" id="picker-y" value="14" min="0" max="35" onchange="syncPickerFromInputs()">
+                </div>
+
+                <button type="button" class="btn btn-primary" style="width:100%;padding:13px;border-radius:14px;margin-top:14px;" onclick="addNewAddress()">
+                    <i class="fa-solid fa-check"></i> Bu Adresi Kaydet ve Aktif Et
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 8. Profil, Cravelo Cüzdan & Canlı 5-Adımlı Sipariş Takip Modalı -->
+<div class="modal-overlay" id="account-overlay" role="dialog" aria-modal="true" aria-labelledby="acc-header-name">
+    <div class="modal-box modal-box-wide">
+        <button type="button" class="modal-close" onclick="closeAccountModal()" title="Kapat" aria-label="Hesap Modalını Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="modal-header modal-header-with-close" style="display:flex;align-items:center;gap:14px;">
+            <div class="user-avatar" style="width:52px;height:52px;font-size:21px;flex-shrink:0;">
+                <i class="fa-solid fa-user-gear"></i>
+            </div>
+            <div style="min-width:0;">
+                <h2 style="font-size:20px;font-weight:900;color:var(--text);margin:0;" id="acc-header-name">Ahmet Yılmaz</h2>
+                <div style="font-size:12.5px;color:var(--text-2);display:flex;gap:14px;margin-top:4px;flex-wrap:wrap;align-items:center;">
+                    <span style="color:var(--success);font-weight:800;"><i class="fa-solid fa-wallet"></i> Bakiye: <strong id="acc-points">145 Cravelo Puan (14.50 ₺)</strong></span>
+                    <span><i class="fa-solid fa-bag-shopping" style="color:var(--blue);"></i> Toplam Sipariş: <strong id="acc-order-count">0</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-tabs" role="tablist">
+            <button type="button" class="modal-tab-btn active" id="acc-tab-btn-profile" onclick="switchAccountTab('profile')" role="tab"><i class="fa-solid fa-id-card"></i> Profilim</button>
+            <button type="button" class="modal-tab-btn" id="acc-tab-btn-orders" onclick="switchAccountTab('orders')" role="tab"><i class="fa-solid fa-clock-rotate-left"></i> Siparişlerim</button>
+            <button type="button" class="modal-tab-btn" id="acc-tab-btn-coupons" onclick="switchAccountTab('coupons')" role="tab"><i class="fa-solid fa-ticket"></i> Kuponlarım</button>
+            <button type="button" class="modal-tab-btn" id="acc-tab-btn-favs" onclick="switchAccountTab('favs')" role="tab"><i class="fa-solid fa-heart"></i> Favorilerim</button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Tab 1: Profilim & Cravelo Cüzdan -->
+            <div id="acc-tab-profile">
+                <form onsubmit="handleUpdateProfile(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="profile-fullname">Ad Soyad</label>
+                            <input type="text" class="form-input" id="profile-fullname" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="profile-phone">Telefon Numarası</label>
+                            <input type="tel" class="form-input" id="profile-phone" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="profile-email">E-Posta Adresi</label>
+                        <input type="email" class="form-input" id="profile-email" required>
+                    </div>
+
+                    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <div>
+                            <div style="font-size:11px;color:var(--text-3);font-weight:800;text-transform:uppercase;letter-spacing:0.4px;">Varsayılan Teslimat Konumu</div>
+                            <div style="font-size:14.5px;font-weight:800;color:var(--text);margin-top:4px;" id="profile-addr-title">Evim (Moda)</div>
+                            <div style="font-size:12.5px;color:var(--primary);margin-top:2px;font-weight:700;" id="profile-addr-coord"><i class="fa-solid fa-map-pin" style="margin-right:4px;"></i> Moda, Kadıköy / İstanbul</div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="closeAccountModal(); openAddressModal();" style="border-radius:9999px;">
+                            <i class="fa-solid fa-pen"></i> Değiştir
+                        </button>
+                    </div>
+
+                    <!-- Cravelo Wallet Card -->
+                    <div class="wallet-card" style="margin-bottom:18px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                            <div>
+                                <div style="font-size:14px;font-weight:900;color:var(--text);display:flex;align-items:center;gap:8px;">
+                                    <i class="fa-solid fa-wallet" style="color:var(--primary);"></i> Cravelo Cüzdan Bakiyesi
+                                </div>
+                                <div style="font-size:12px;color:var(--text-2);margin-top:2px;">Her teslimat değerlendirmesinde +25 Cravelo Puan hediye</div>
+                            </div>
+                            <span style="font-size:18px;font-weight:900;color:var(--success);" id="acc-wallet-display">145 Puan (14.50 ₺)</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--border);padding-top:12px;">
+                            <span style="font-size:11.5px;font-weight:800;color:var(--text-3);">Hızlı Bakiye Yükle:</span>
+                            <button type="button" class="wallet-topup-chip" onclick="topUpCraveloWallet(50)">+50 ₺</button>
+                            <button type="button" class="wallet-topup-chip" onclick="topUpCraveloWallet(100)">+100 ₺</button>
+                            <button type="button" class="wallet-topup-chip" onclick="topUpCraveloWallet(250)">+250 ₺</button>
+                            <button type="button" class="wallet-topup-chip" onclick="topUpCraveloWallet(500)">+500 ₺</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;border-radius:14px;font-size:14.5px;">
+                        <i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet
+                    </button>
+                </form>
+            </div>
+
+            <!-- Tab 2: Siparişlerim & Canlı 5-Adımlı Takip -->
+            <div id="acc-tab-orders" style="display:none;">
+                <div id="acc-orders-list"></div>
+            </div>
+
+            <!-- Tab 3: Kuponlarım -->
+            <div id="acc-tab-coupons" style="display:none;">
+                <div id="acc-coupons-list"></div>
+            </div>
+
+            <!-- Tab 4: Favorilerim -->
+            <div id="acc-tab-favs" style="display:none;">
+                <div id="acc-favs-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 9. Dijital Sipariş Fişi / Fatura Modalı -->
+<div class="modal-overlay" id="receipt-overlay" role="dialog" aria-modal="true" aria-label="Cravelo Dijital Sipariş Fişi">
+    <div class="modal-box" style="max-width:520px;">
+        <button type="button" class="modal-close" onclick="closeReceiptModal()" title="Kapat" aria-label="Fişi Kapat">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="receipt-body" style="padding-top:10px;"></div>
+    </div>
+</div>
+
+<!-- Toast Notification Stack -->
+<div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+<!-- ======================================================== -->
+<!-- MODÜLER JAVASCRIPT KÜTÜPHANELERİ                         -->
+<!-- ======================================================== -->
+<script src="js/gsap.min.js"></script>
+<script src="js/ScrollTrigger.min.js"></script>
+<script src="js/burger-scrollytelling.js"></script>
+<script src="js/data.js"></script>
+<script src="js/state.js"></script>
+<!-- Leaflet Engine for Real Google Maps Tiles -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/map.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

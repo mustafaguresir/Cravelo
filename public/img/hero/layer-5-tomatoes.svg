@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Soft Shadow Cast by Tomatoes onto Cheese -->
+    <radialGradient id="tomatoSliceShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b0808" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#3b0808" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#3b0808" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tomatoSkinLeft" cx="45%" cy="45%" r="55%">
+      <stop offset="65%" stop-color="#b91c1c"/>
+      <stop offset="88%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </radialGradient>
+    <radialGradient id="tomatoPulpLeft" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="60%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </radialGradient>
+    <radialGradient id="loculeGel" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7f1d1d"/>
+      <stop offset="65%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </radialGradient>
+    <linearGradient id="wetSheen" x1="0%" y1="0%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+      <stop offset="30%" stop-color="#fca5a5" stop-opacity="0.35"/>
+      <stop offset="70%" stop-color="#dc2626" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="sliceRimDepth" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#550c0c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Under-Slice Shadow -->
+  <ellipse cx="265" cy="245" rx="155" ry="50" fill="url(#tomatoSliceShadow)"/>
+  <ellipse cx="515" cy="240" rx="160" ry="52" fill="url(#tomatoSliceShadow)"/>
+
+  <!-- LEFT TOMATO SLICE (Angled -6° at ~18° perspective) -->
+  <g transform="translate(265, 225) rotate(-6)">
+    <!-- Slice Vertical Rim (Thickness / Cut Depth) -->
+    <path d="M -160 0 C -160 35, 160 35, 160 0 L 160 16 C 160 50, -160 50, -160 16 Z" fill="url(#sliceRimDepth)"/>
+    <!-- Outer Red Skin Wall -->
+    <ellipse cx="0" cy="0" rx="162" ry="74" fill="url(#tomatoSkinLeft)"/>
+    <!-- Inner Meaty Flesh Core -->
+    <ellipse cx="0" cy="0" rx="145" ry="63" fill="url(#tomatoPulpLeft)"/>
+    <ellipse cx="0" cy="0" rx="38" ry="18" fill="#fca5a5" opacity="0.7"/>
+    <!-- Fleshy Septa / Core Radiating Star -->
+    <path d="M 0 0 L -80 -30 M 0 0 L 80 -30 M 0 0 L -88 22 M 0 0 L 0 48 M 0 0 L 88 22" 
+          stroke="#f87171" stroke-width="8.5" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- Seed Locules (Pulp Cavities) -->
+    <!-- Locule 1 (Top Left) -->
+    <path d="M -22 -12 Q -60 -40 -95 -18 Q -65 5 -28 -4 Z" fill="url(#loculeGel)"/>
+    <ellipse cx="-60" cy="-18" rx="6" ry="3.8" fill="#fef08a" transform="rotate(20 -60 -18)"/>
+    <ellipse cx="-75" cy="-16" rx="5.5" ry="3.2" fill="#fde047" transform="rotate(-15 -75 -16)"/>
+
+    <!-- Locule 2 (Top Right) -->
+    <path d="M 22 -12 Q 60 -40 95 -18 Q 65 5 28 -4 Z" fill="url(#loculeGel)"/>
+    <ellipse cx="60" cy="-18" rx="6" ry="3.8" fill="#fef08a" transform="rotate(-20 60 -18)"/>
+    <ellipse cx="75" cy="-16" rx="5.5" ry="3.2" fill="#fde047" transform="rotate(15 75 -16)"/>
+
+    <!-- Locule 3 (Bottom Left) -->
+    <path d="M -26 8 Q -65 35 -88 16 Q -55 -4 -22 6 Z" fill="url(#loculeGel)"/>
+    <ellipse cx="-55" cy="18" rx="6" ry="3.8" fill="#fef08a" transform="rotate(-25 -55 18)"/>
+
+    <!-- Locule 4 (Bottom Right) -->
+    <path d="M 26 8 Q 65 35 88 16 Q 55 -4 22 6 Z" fill="url(#loculeGel)"/>
+    <ellipse cx="55" cy="18" rx="6" ry="3.8" fill="#fef08a" transform="rotate(25 55 18)"/>
+
+    <!-- Wet Cut Face Gloss Specular Arc -->
+    <path d="M -120 -25 C -75 -60, 75 -60, 120 -25" 
+          stroke="url(#wetSheen)" stroke-width="7.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- RIGHT TOMATO SLICE (Overlapping, Angled +7° at ~18° perspective) -->
+  <g transform="translate(515, 220) rotate(7)">
+    <!-- Slice Vertical Rim (Thickness / Cut Depth) -->
+    <path d="M -165 0 C -165 36, 165 36, 165 0 L 165 17 C 165 52, -165 52, -165 17 Z" fill="url(#sliceRimDepth)"/>
+    <!-- Outer Red Skin Wall -->
+    <ellipse cx="0" cy="0" rx="168" ry="76" fill="url(#tomatoSkinLeft)"/>
+    <!-- Inner Meaty Flesh Core -->
+    <ellipse cx="0" cy="0" rx="150" ry="65" fill="url(#tomatoPulpLeft)"/>
+    <ellipse cx="0" cy="0" rx="42" ry="20" fill="#fca5a5" opacity="0.7"/>
+    <!-- Fleshy Septa / Core Radiating Star -->
+    <path d="M 0 0 L -85 -30 M 0 0 L 85 -30 M 0 0 L -92 22 M 0 0 L 0 50 M 0 0 L 92 22" 
+          stroke="#f87171" stroke-width="9" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- Seed Locules -->
+    <!-- Locule 1 (Top Left) -->
+    <path d="M -22 -12 Q -65 -42 -98 -20 Q -68 5 -28 -4 Z" fill="url(#loculeGel)"/>
+    <ellipse cx="-62" cy="-20" rx="6.5" ry="4" fill="#fef08a" transform="rotate(20 -62 -20)"/>
+    <ellipse cx="-78" cy="-18" rx="5.5" ry="3.5" fill="#fde047" transform="rotate(-10 -78 -18)"/>
+
+    <!-- Locule 2 (Top Right) -->
+    <path d="M 22 -12 Q 65 -42 98 -20 Q 68 5 28 -4 Z" fill="url(#loculeGel)"/>
+    <ellipse cx="62" cy="-20" rx="6.5" ry="4" fill="#fef08a" transform="rotate(-20 62 -20)"/>
+    <ellipse cx="78" cy="-18" rx="5.5" ry="3.5" fill="#fde047" transform="rotate(10 78 -18)"/>
+
+    <!-- Locule 3 (Bottom Left) -->
+    <path d="M -26 8 Q -68 36 -92 18 Q -58 -4 -22 6 Z" fill="url(#loculeGel)"/>
+    <ellipse cx="-58" cy="20" rx="6.5" ry="4" fill="#fef08a" transform="rotate(-25 -58 20)"/>
+
+    <!-- Locule 4 (Bottom Right) -->
+    <path d="M 26 8 Q 68 36 92 18 Q 58 -4 22 6 Z" fill="url(#loculeGel)"/>
+    <ellipse cx="58" cy="20" rx="6.5" ry="4" fill="#fef08a" transform="rotate(25 58 20)"/>
+
+    <!-- Wet Cut Face Gloss Specular Arc -->
+    <path d="M -125 -26 C -75 -65, 75 -65, 125 -26" 
+          stroke="url(#wetSheen)" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Water Droplets on Tomato Cut Face -->
+  <g fill="#ffffff" opacity="0.85">
+    <ellipse cx="230" cy="205" rx="5" ry="3.5" transform="rotate(-15 230 205)"/>
+    <ellipse cx="300" cy="240" rx="4" ry="2.5"/>
+    <ellipse cx="480" cy="198" rx="5.5" ry="3.5" transform="rotate(10 480 198)"/>
+    <ellipse cx="570" cy="212" rx="4.5" ry="3"/>
+    <ellipse cx="620" cy="230" rx="5" ry="3.5" transform="rotate(20 620 230)"/>
+  </g>
+</svg>

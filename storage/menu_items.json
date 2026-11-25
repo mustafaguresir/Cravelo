@@ -1,0 +1,218 @@
+[
+    {
+        "id": 1,
+        "restaurant_id": 1,
+        "name": "Adana Kebap Dürüm",
+        "description": "Zırh kıyması, közlenmiş biber ve domates",
+        "price": 195,
+        "category": "Kebap",
+        "is_available": true
+    },
+    {
+        "id": 2,
+        "restaurant_id": 1,
+        "name": "Urfa Kebap Porsiyon",
+        "description": "Acısız zırh kıyması, bulgur pilavı ve sumaklı soğan",
+        "price": 260,
+        "category": "Kebap",
+        "is_available": true
+    },
+    {
+        "id": 3,
+        "restaurant_id": 1,
+        "name": "Künefe",
+        "description": "Hatay peynirli, tereyağlı çıtır künefe",
+        "price": 130,
+        "category": "Tatlı",
+        "is_available": true
+    },
+    {
+        "id": 4,
+        "restaurant_id": 1,
+        "name": "Yayık Ayranı",
+        "description": "Köpüklü taze yayık ayranı 300ml",
+        "price": 35,
+        "category": "İçecek",
+        "is_available": true
+    },
+    {
+        "id": 5,
+        "restaurant_id": 2,
+        "name": "Cravelo Smash Burger",
+        "description": "140g dana döş köfte, cheddar, karamelize soğan",
+        "price": 240,
+        "category": "Burger",
+        "is_available": true
+    },
+    {
+        "id": 6,
+        "restaurant_id": 2,
+        "name": "Truffle Mayo Burger",
+        "description": "Trüf mayonez, mantar, cheddar, füme et",
+        "price": 275,
+        "category": "Burger",
+        "is_available": true
+    },
+    {
+        "id": 7,
+        "restaurant_id": 2,
+        "name": "Baharatlı Patates Kızartması",
+        "description": "Cajun baharatlı çıtır parmak patates",
+        "price": 75,
+        "category": "Yan Ürün",
+        "is_available": true
+    },
+    {
+        "id": 8,
+        "restaurant_id": 2,
+        "name": "Kutu Kola",
+        "description": "330ml kutu",
+        "price": 45,
+        "category": "İçecek",
+        "is_available": true
+    },
+    {
+        "id": 9,
+        "restaurant_id": 3,
+        "name": "Pizza Margherita",
+        "description": "San Marzano domates sosu, manda mozzarella, taze fesleğen",
+        "price": 250,
+        "category": "Pizza",
+        "is_available": true
+    },
+    {
+        "id": 10,
+        "restaurant_id": 3,
+        "name": "Quattro Formaggi",
+        "description": "Mozzarella, gorgonzola, parmesan, ricotta",
+        "price": 295,
+        "category": "Pizza",
+        "is_available": true
+    },
+    {
+        "id": 11,
+        "restaurant_id": 3,
+        "name": "Pepperoni Passion",
+        "description": "İtalyan dana pepperoni, bol mozzarella",
+        "price": 310,
+        "category": "Pizza",
+        "is_available": true
+    },
+    {
+        "id": 12,
+        "restaurant_id": 3,
+        "name": "Tiramisu Klasik",
+        "description": "Mascarpone ve espresso ile taze hazırlanmış",
+        "price": 140,
+        "category": "Tatlı",
+        "is_available": true
+    },
+    {
+        "id": 13,
+        "restaurant_id": 4,
+        "name": "Kuzu Şiş Dürüm",
+        "description": "Marine edilmiş kuzu şiş",
+        "price": 230,
+        "category": "Dürüm",
+        "is_available": true
+    },
+    {
+        "id": 14,
+        "restaurant_id": 4,
+        "name": "Tavuk Döner Dürüm",
+        "description": "Özel soslu Hatay usulü döner",
+        "price": 140,
+        "category": "Dürüm",
+        "is_available": true
+    },
+    {
+        "id": 15,
+        "restaurant_id": 4,
+        "name": "Şalgam Suyu 330ml",
+        "description": "Acılı veya acısız Adana şalgamı",
+        "price": 35,
+        "category": "İçecek",
+        "is_available": true
+    },
+    {
+        "id": 16,
+        "restaurant_id": 5,
+        "name": "Kuru Fasulye & Pilav Menü",
+        "description": "İspir kuru fasulyesi, tereyağlı pirinç pilavı",
+        "price": 180,
+        "category": "Ev Yemeği",
+        "is_available": true
+    },
+    {
+        "id": 17,
+        "restaurant_id": 5,
+        "name": "Karnıyarık",
+        "description": "Kıymalı patlıcan karnıyarık",
+        "price": 170,
+        "category": "Ev Yemeği",
+        "is_available": true
+    },
+    {
+        "id": 18,
+        "restaurant_id": 5,
+        "name": "Mercimek Çorbası",
+        "description": "Limon ve tereyağ soslu süzme mercimek",
+        "price": 80,
+        "category": "Çorba",
+        "is_available": true
+    },
+    {
+        "id": 19,
+        "restaurant_id": 6,
+        "name": "California Roll (8 Parça)",
+        "description": "Yengeç, avokado, salatalık, tobiko",
+        "price": 290,
+        "category": "Sushi",
+        "is_available": true
+    },
+    {
+        "id": 20,
+        "restaurant_id": 6,
+        "name": "Tavuklu Noodle",
+        "description": "Sebzeli ve teriyaki soslu wok noodle",
+        "price": 210,
+        "category": "Wok",
+        "is_available": true
+    },
+    {
+        "id": 21,
+        "restaurant_id": 6,
+        "name": "Tatlı Ekşi Soslu Tavuk",
+        "description": "Biber, ananas ve çıtır tavuk parçaları",
+        "price": 240,
+        "category": "Ana Yemek",
+        "is_available": true
+    },
+    {
+        "id": 22,
+        "restaurant_id": 7,
+        "name": "San Sebastian Cheesecake",
+        "description": "Karamelize üst yüzey, akışkan çikolata sosu ile",
+        "price": 160,
+        "category": "Tatlı",
+        "is_available": true
+    },
+    {
+        "id": 23,
+        "restaurant_id": 7,
+        "name": "Profiterol Porsiyon",
+        "description": "Hakiki çikolata soslu mini şu hamurları",
+        "price": 135,
+        "category": "Tatlı",
+        "is_available": true
+    },
+    {
+        "id": 24,
+        "restaurant_id": 7,
+        "name": "Filtre Kahve",
+        "description": "Taze çekilmiş Guatemala çekirdeği",
+        "price": 70,
+        "category": "Kahve",
+        "is_available": true
+    }
+]

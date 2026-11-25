@@ -1,0 +1,134 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Storage;
+
+use RuntimeException;
+
+/**
+ * Aşama 2 Şartname Kuralı:
+ * "Eşzamanlı yazma ihtimali bulunan dosyalarda dosya kilidi (flock) kullanın.
+ *  Veriyi doğrudan asıl dosyaya yazmak yerine geçici dosyaya yazıp ardından
+ *  dosyayı güvenli biçimde (atomic rename) değiştirin."
+ */
+final class JsonStorageHelper
+{
+    /**
+     * JSON dosyasını paylaşımlı kilit (LOCK_SH) altında güvenle okur.
+     */
+    public static function read(string $filePath): array
+    {
+        $dir = dirname($filePath);
+        if (!is_dir($dir)) {
+            return [];
+        }
+
+        $lockFilePath = $filePath . '.lock';
+        $fp = fopen($lockFilePath, 'c+');
+        if ($fp === false) {
+            throw new RuntimeException("Kilit dosyası açılamadı: {$lockFilePath}");
+        }
+
+        flock($fp, LOCK_SH);
+
+        try {
+            if (!file_exists($filePath)) {
+                return [];
+            }
+
+            $readFp = fopen($filePath, 'rb');
+            if ($readFp === false) {
+                throw new RuntimeException("Dosya okumak için açılamadı: {$filePath}");
+            }
+
+            $contents = stream_get_contents($readFp);
+            fclose($readFp);
+
+            if ($contents === false || trim($contents) === '') {
+                return [];
+            }
+
+            $decoded = json_decode($contents, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new RuntimeException("JSON ayrıştırma hatası ({$filePath}): " . json_last_error_msg());
+            }
+
+            return is_array($decoded) ? $decoded : [];
+        } finally {
+            if (is_resource($fp)) {
+                flock($fp, LOCK_UN);
+                fclose($fp);
+            }
+        }
+    }
+
+    /**
+     * Şartname Planı Bölüm 3.D:
+     * flock(LOCK_EX) + tempnam + rename Atomik Yardımcı Metodu
+     */
+    public static function saveWithLock(string $filePath, array $data): bool
+    {
+        return self::write($filePath, $data);
+    }
+
+    /**
+     * JSON dosyasını özel kilit (LOCK_EX), tempnam ve atomik rename ile kaydeder.
+     */
+    public static function write(string $filePath, array $data): bool
+    {
+        $dir = dirname($filePath);
+        if (!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
+            throw new RuntimeException("Hedef klasör oluşturulamadı: {$dir}");
+        }
+
+        $lockFilePath = $filePath . '.lock';
+        $fp = fopen($lockFilePath, 'c+');
+        if ($fp === false) {
+            throw new RuntimeException("Kilit dosyası açılamadı: {$lockFilePath}");
+        }
+
+        // 1. Hedef/Kilit dosyasında özel kilit al (Exclusive Lock - LOCK_EX)
+        if (!flock($fp, LOCK_EX)) {
+            fclose($fp);
+            throw new RuntimeException("Dosya kilidi (flock LOCK_EX) alınamadı: {$lockFilePath}");
+        }
+
+        try {
+            $jsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+            // 2. Geçici dosyaya yaz (tempnam)
+            $tempFilePath = tempnam($dir, 'gst_');
+            if ($tempFilePath === false) {
+                throw new RuntimeException("Geçici dosya oluşturulamadı: {$dir}");
+            }
+
+            $tempFp = fopen($tempFilePath, 'wb');
+            if ($tempFp === false) {
+                @unlink($tempFilePath);
+                throw new RuntimeException("Geçici dosya açılamadı: {$tempFilePath}");
+            }
+
+            // 3. Yaz ve tamponu boşalt
+            fwrite($tempFp, $jsonString);
+            fflush($tempFp);
+            fclose($tempFp);
+
+            // 4. Atomik yeniden adlandırma (Atomic Rename)
+            // Windows üzerinde hedef dosya mevcutsa rename öncesi unlink yapılır (özel kilit altındayken)
+            if (DIRECTORY_SEPARATOR === '\\' && file_exists($filePath)) {
+                @unlink($filePath);
+            }
+
+            if (!rename($tempFilePath, $filePath)) {
+                @unlink($tempFilePath);
+                throw new RuntimeException("Atomik dosya değiştirme (rename) başarısız oldu: {$filePath}");
+            }
+
+            return true;
+        } finally {
+            // 5. Kilidi çöz ve kapat
+            flock($fp, LOCK_UN);
+            fclose($fp);
+        }
+    }
+}

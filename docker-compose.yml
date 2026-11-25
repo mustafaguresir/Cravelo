@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: cravelo_app
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+      # Persistent volume for JSON storage to guarantee zero data loss
+      - storage_data:/var/www/html/storage
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+
+volumes:
+  storage_data:
+    driver: local

@@ -1,0 +1,445 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Soft Contact Shadow on Fillings -->
+    <radialGradient id="bunTopCastShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0401" stop-opacity="0.65"/>
+      <stop offset="60%" stop-color="#0a0401" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#0a0401" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="briocheCrown" cx="48%" cy="26%" r="68%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="25%" stop-color="#d97706"/>
+      <stop offset="55%" stop-color="#b45309"/>
+      <stop offset="80%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </radialGradient>
+    <linearGradient id="eggWashGloss" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.7"/>
+      <stop offset="35%" stop-color="#fef3c7" stop-opacity="0.45"/>
+      <stop offset="65%" stop-color="#f59e0b" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#b45309" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="sesameBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#fef08a"/>
+      <stop offset="80%" stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+    <linearGradient id="crownRimDepth" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#301102"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Under-Bun Cast Shadow -->
+  <ellipse cx="400" cy="225" rx="285" ry="32" fill="url(#bunTopCastShadow)"/>
+
+  <!-- High-Dome Volumetric Brioche Crown Bun (Dome peak at y=55, rim at y=215) -->
+  <path d="M 105 215 
+           C 105 95, 215 55, 400 55 
+           C 585 55, 695 95, 695 215 
+           C 695 232, 650 242, 400 242 
+           C 150 242, 105 232, 105 215 Z" 
+        fill="url(#briocheCrown)"/>
+
+  <!-- Lower Cut Rim Depth Profile -->
+  <path d="M 115 215 
+           C 170 236, 630 236, 685 215 
+           C 650 238, 150 238, 115 215 Z" 
+        fill="url(#crownRimDepth)" opacity="0.85"/>
+
+  <!-- Large Organic 3D Specular Egg-Wash Gloss Reflection Arc across Crown Shoulder -->
+  <path d="M 145 185 
+           C 160 115, 245 75, 400 75 
+           C 490 75, 565 95, 610 130 
+           C 535 105, 455 92, 385 92 
+           C 260 92, 180 130, 145 185 Z" 
+        fill="url(#eggWashGloss)"/>
+
+  <!-- Secondary Lower Gloss Rim -->
+  <path d="M 130 210 
+           C 205 228, 595 228, 670 210 
+           C 595 220, 205 220, 130 210 Z" 
+        fill="#fde68a" opacity="0.45"/>
+
+  <!-- 47 Individually Shaded and Rotated 3D Sesame Seeds -->
+  <g id="sesame-seeds">
+    
+    <g transform="translate(240, 110) rotate(-25) scale(1.0)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(280, 95) rotate(-15) scale(1.05)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(325, 82) rotate(-8) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(370, 76) rotate(0) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(415, 76) rotate(5) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(460, 82) rotate(12) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(505, 95) rotate(20) scale(1.05)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(545, 110) rotate(30) scale(1.0)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(210, 140) rotate(-35) scale(0.95)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(255, 125) rotate(-20) scale(1.05)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(300, 112) rotate(-12) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(350, 105) rotate(-4) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(400, 100) rotate(2) scale(1.2)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(450, 105) rotate(8) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(500, 112) rotate(18) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(545, 125) rotate(26) scale(1.05)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(585, 140) rotate(38) scale(0.95)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(180, 170) rotate(-45) scale(0.9)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(225, 155) rotate(-30) scale(1.0)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(275, 142) rotate(-18) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(325, 134) rotate(-8) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(375, 130) rotate(0) scale(1.2)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(425, 130) rotate(6) scale(1.2)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(475, 134) rotate(15) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(525, 142) rotate(25) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(575, 155) rotate(35) scale(1.0)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(615, 170) rotate(48) scale(0.9)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(160, 198) rotate(-50) scale(0.85)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(205, 186) rotate(-35) scale(0.95)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(250, 174) rotate(-22) scale(1.05)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(300, 166) rotate(-10) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(350, 160) rotate(-2) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(400, 158) rotate(4) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(450, 160) rotate(10) scale(1.15)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(500, 166) rotate(20) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(550, 176) rotate(30) scale(1.05)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(595, 190) rotate(42) scale(0.95)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(635, 202) rotate(52) scale(0.85)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(280, 192) rotate(-15) scale(1.0)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(330, 184) rotate(-5) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(380, 180) rotate(0) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(430, 180) rotate(8) scale(1.1)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(480, 185) rotate(18) scale(1.05)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(530, 192) rotate(28) scale(1.0)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(360, 202) rotate(-2) scale(1.0)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(410, 200) rotate(5) scale(1.05)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+    <g transform="translate(460, 204) rotate(14) scale(1.0)">
+      <!-- Cast Shadow -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="#361503" opacity="0.65" transform="translate(1, 2)"/>
+      <!-- Body -->
+      <path d="M 0 -7 C 4 -7, 6 2, 0 7 C -6 2, -4 -7, 0 -7 Z" fill="url(#sesameBody)"/>
+      <!-- Highlight -->
+      <ellipse cx="-1" cy="-2" rx="1.2" ry="3.5" fill="#ffffff" opacity="0.85"/>
+    </g>
+  </g>
+</svg>

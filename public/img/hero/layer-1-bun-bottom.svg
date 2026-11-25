@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Base Contact Ambient Shadow (Vector Gradient, 0% CPU blur) -->
+    <radialGradient id="baseGroundShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0502" stop-opacity="0.65"/>
+      <stop offset="40%" stop-color="#0a0502" stop-opacity="0.40"/>
+      <stop offset="75%" stop-color="#0a0502" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0a0502" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="crustGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#3b1a04"/>
+      <stop offset="20%" stop-color="#5c2907"/>
+      <stop offset="45%" stop-color="#8a420b"/>
+      <stop offset="70%" stop-color="#bd6919"/>
+      <stop offset="90%" stop-color="#db862e"/>
+      <stop offset="100%" stop-color="#ebb05b"/>
+    </linearGradient>
+    <radialGradient id="crumbGlow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fff5dc" stop-opacity="0.95"/>
+      <stop offset="30%" stop-color="#fde0a8" stop-opacity="0.85"/>
+      <stop offset="70%" stop-color="#e3a050" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#99480d" stop-opacity="0.05"/>
+    </radialGradient>
+    <linearGradient id="butterGlaze" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="35%" stop-color="#ffe8a3" stop-opacity="0.35"/>
+      <stop offset="70%" stop-color="#ffb833" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="toastRing" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#542102" stop-opacity="0.9"/>
+      <stop offset="15%" stop-color="#99450c" stop-opacity="0.65"/>
+      <stop offset="50%" stop-color="#4a1c02" stop-opacity="0.88"/>
+      <stop offset="85%" stop-color="#99450c" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#542102" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="heelDepth" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#803e0b"/>
+      <stop offset="40%" stop-color="#522406"/>
+      <stop offset="100%" stop-color="#2d1303"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Ground Contact Shadow -->
+  <ellipse cx="400" cy="432" rx="300" ry="32" fill="url(#baseGroundShadow)"/>
+  <ellipse cx="400" cy="428" rx="260" ry="20" fill="url(#baseGroundShadow)" opacity="0.8"/>
+
+  <!-- Brioche Bun Heel Dome Body -->
+  <path d="M 115 340 
+           C 115 405, 205 440, 400 440 
+           C 595 440, 685 405, 685 340 
+           C 685 315, 635 298, 400 298 
+           C 165 298, 115 315, 115 340 Z" 
+        fill="url(#crustGrad)"/>
+
+  <!-- Rounded Bottom Crust Rim Depth -->
+  <path d="M 130 350 
+           C 145 410, 225 436, 400 436 
+           C 575 436, 655 410, 670 350 
+           C 685 385, 610 432, 400 432 
+           C 190 432, 115 385, 130 350 Z" 
+        fill="url(#heelDepth)" opacity="0.9"/>
+
+  <!-- Bread Crumb Interior Top Surface (Toasted Cut Face at ~18° perspective) -->
+  <ellipse cx="400" cy="336" rx="275" ry="48" fill="#d9822b"/>
+  <ellipse cx="400" cy="335" rx="268" ry="44" fill="#f0b467"/>
+  <ellipse cx="400" cy="333" rx="258" ry="39" fill="#fde3a7"/>
+  <ellipse cx="400" cy="331" rx="242" ry="33" fill="url(#crumbGlow)"/>
+
+  <!-- Golden Butter Sear Ring / Griddle Marks -->
+  <ellipse cx="400" cy="333" rx="226" ry="28" fill="none" stroke="url(#toastRing)" stroke-width="8" opacity="0.8"/>
+  <ellipse cx="400" cy="333" rx="165" ry="20" fill="none" stroke="#6b2b04" stroke-width="3.5" stroke-dasharray="16 12" opacity="0.65"/>
+  <ellipse cx="400" cy="333" rx="105" ry="12" fill="none" stroke="#7a3406" stroke-width="2.5" stroke-dasharray="10 8" opacity="0.5"/>
+
+  <!-- Specular Butter Glaze on Crust Rim -->
+  <path d="M 135 340 
+           C 220 405, 580 405, 665 340 
+           C 590 380, 210 380, 135 340 Z" 
+        fill="url(#butterGlaze)"/>
+
+  <!-- Subtle Crumb Flecks and Aeration -->
+  <g fill="#8a420b" opacity="0.55">
+    <circle cx="260" cy="330" r="3"/>
+    <circle cx="320" cy="336" r="3.5"/>
+    <circle cx="380" cy="326" r="2.5"/>
+    <circle cx="430" cy="329" r="2.8"/>
+    <circle cx="490" cy="334" r="3.5"/>
+    <circle cx="545" cy="330" r="2.8"/>
+    <circle cx="360" cy="342" r="2.2"/>
+    <circle cx="450" cy="341" r="3"/>
+    <circle cx="210" cy="335" r="2.5"/>
+    <circle cx="590" cy="332" r="2.5"/>
+  </g>
+</svg>

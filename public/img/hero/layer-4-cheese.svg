@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Soft Melted Cheese Shadow onto Patty -->
+    <radialGradient id="cheeseUnderShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3d1403" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#3d1403" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#3d1403" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cheddarMain" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffb703"/>
+      <stop offset="30%" stop-color="#fb8500"/>
+      <stop offset="70%" stop-color="#d96b00"/>
+      <stop offset="100%" stop-color="#a64600"/>
+    </linearGradient>
+    <radialGradient id="cheeseCenterGlow" cx="50%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fff0aa" stop-opacity="0.95"/>
+      <stop offset="45%" stop-color="#ffb703" stop-opacity="0.85"/>
+      <stop offset="85%" stop-color="#d96b00" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#b04a00" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="meltGloss" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="30%" stop-color="#fff1b8" stop-opacity="0.45"/>
+      <stop offset="70%" stop-color="#ffa200" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Under-Drip Shadow -->
+  <ellipse cx="400" cy="305" rx="275" ry="42" fill="url(#cheeseUnderShadow)"/>
+
+  <!-- Melted Cheddar Slice Draping Organically Over Patty Shoulders -->
+  <path d="M 115 240 
+           C 165 220, 255 230, 325 218 
+           C 405 205, 485 222, 565 212 
+           C 625 208, 675 232, 675 248 
+           C 685 278, 660 318, 640 348 
+           C 630 365, 615 358, 610 338 
+           C 600 298, 560 288, 530 312 
+           C 500 338, 480 395, 455 405 
+           C 440 410, 425 380, 420 348 
+           C 410 295, 370 285, 335 308 
+           C 305 335, 275 385, 250 395 
+           C 235 400, 225 365, 220 335 
+           C 210 285, 175 285, 145 305 
+           C 125 320, 115 300, 110 270 
+           C 105 250, 108 245, 115 240 Z" 
+        fill="url(#cheddarMain)"/>
+
+  <!-- Molten Top Surface Creamy Sheen -->
+  <path d="M 130 242 
+           C 235 225, 565 218, 665 245 
+           C 590 280, 210 280, 130 242 Z" 
+        fill="url(#cheeseCenterGlow)"/>
+
+  <!-- Liquid Gloss Highlight on Draping Folds -->
+  <path d="M 125 245 C 215 230, 435 220, 660 248" 
+        stroke="url(#meltGloss)" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Melted Drip Ridge Highlights -->
+  <path d="M 235 340 C 240 370, 245 385, 250 392" 
+        stroke="#fff3b0" stroke-width="4" stroke-linecap="round" opacity="0.85"/>
+  <path d="M 435 345 C 445 375, 450 395, 455 402" 
+        stroke="#fff3b0" stroke-width="4.5" stroke-linecap="round" opacity="0.9"/>
+  <path d="M 622 310 C 628 335, 634 350, 638 355" 
+        stroke="#fff3b0" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+
+  <!-- Warm Molten Cheddar Drops Detaching -->
+  <ellipse cx="456" cy="414" rx="5.5" ry="7" fill="#fb8500" opacity="0.95"/>
+  <ellipse cx="455" cy="412" rx="2" ry="2.5" fill="#fff9db"/>
+  <ellipse cx="251" cy="404" rx="4" ry="5.5" fill="#fb8500" opacity="0.9"/>
+  <ellipse cx="250" cy="403" rx="1.5" ry="2" fill="#fff9db"/>
+</svg>

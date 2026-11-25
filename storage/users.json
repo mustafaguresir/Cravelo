@@ -1,0 +1,102 @@
+[
+    {
+        "id": 1,
+        "username": "ahmet_musteri",
+        "email": "ahmet@ornek.com",
+        "password_hash": "$2y$10$vGlJd6uiSM9KgaJK4LZ5WO7hYq2PeJKWLh1nvTswM8P8e3QhHRMF.",
+        "full_name": "Ahmet Yılmaz",
+        "phone": "05551112233",
+        "role": "customer",
+        "created_at": "2026-10-20 10:00:00"
+    },
+    {
+        "id": 2,
+        "username": "ayse_musteri",
+        "email": "ayse@ornek.com",
+        "password_hash": "$2y$10$VV5lkTKBO1coUkje9wUIW.UDgqeT8NT6OcvB7tcX9W7M69lqhSMbC",
+        "full_name": "Ayşe Kaya",
+        "phone": "05552223344",
+        "role": "customer",
+        "created_at": "2026-10-20 10:05:00"
+    },
+    {
+        "id": 3,
+        "username": "mehmet_musteri",
+        "email": "mehmet@ornek.com",
+        "password_hash": "$2y$10$.d0RNjjh4TSbLXMOQJkcqO5hTKywWxqUmXWjy4sD\/zs.lQ7xkqR66",
+        "full_name": "Mehmet Demir",
+        "phone": "05553334455",
+        "role": "customer",
+        "created_at": "2026-10-20 10:10:00"
+    },
+    {
+        "id": 4,
+        "username": "restoran_lezzet",
+        "email": "lezzet@ornek.com",
+        "password_hash": "$2y$10$rJxMlkbkZji5jVTQtvFJb.TCbvfLfBXIR9OXzJQZUChQr91Sn8dbS",
+        "full_name": "Lezzet Kebap",
+        "phone": "02163334455",
+        "role": "restaurant",
+        "created_at": "2026-10-20 09:00:00"
+    },
+    {
+        "id": 5,
+        "username": "restoran_burger",
+        "email": "burger@ornek.com",
+        "password_hash": "$2y$10$gmBbHKnkdMobVL7lEpZVYeaNfn1qsiyw2fRuAXTg9.5fiPQ6Aj2X.",
+        "full_name": "Burger Lab",
+        "phone": "02164445566",
+        "role": "restaurant",
+        "created_at": "2026-10-20 09:10:00"
+    },
+    {
+        "id": 6,
+        "username": "restoran_pizza",
+        "email": "pizza@ornek.com",
+        "password_hash": "$2y$10$Xx1ksv.qK3pNIZo88rWc4OSZQyCCobNdeTUlu1uyEN6nagdIjmWga",
+        "full_name": "Pizza Roma",
+        "phone": "02165556677",
+        "role": "restaurant",
+        "created_at": "2026-10-20 09:20:00"
+    },
+    {
+        "id": 7,
+        "username": "kurye_ali",
+        "email": "ali.kurye@ornek.com",
+        "password_hash": "$2y$10$Sm7YbsHeZTcaSVQxSQ3COeCcQy0f9wWm715jProJ5Q2F9Kud6FanO",
+        "full_name": "Ali Kaya",
+        "phone": "05554445566",
+        "role": "courier",
+        "created_at": "2026-10-20 08:30:00"
+    },
+    {
+        "id": 8,
+        "username": "kurye_veli",
+        "email": "veli.kurye@ornek.com",
+        "password_hash": "$2y$10$jGQHEmLk6OsMv5lO89jxKuKQ3OcNuTDmO.dMtweSV7LfOcsIiCXuC",
+        "full_name": "Veli Demir",
+        "phone": "05555556677",
+        "role": "courier",
+        "created_at": "2026-10-20 08:35:00"
+    },
+    {
+        "id": 9,
+        "username": "kurye_can",
+        "email": "can.kurye@ornek.com",
+        "password_hash": "$2y$10$4PyQPu3AtLnGuXZ3ISpeYutNxHKb\/T632xMO2GmtCmIkPUYRD29v6",
+        "full_name": "Can Öz",
+        "phone": "05556667788",
+        "role": "courier",
+        "created_at": "2026-10-20 08:40:00"
+    },
+    {
+        "id": 10,
+        "username": "admin_mustafa",
+        "email": "mustafaguresir@gmail.com",
+        "password_hash": "$2y$10$vUsZYXFvDV8mbOSezpELG.k1jwKldfHcBfLa.qEQ6ZK2mgvNxu8eS",
+        "full_name": "Mustafa Güreşir",
+        "phone": "05557778899",
+        "role": "admin",
+        "created_at": "2026-10-20 08:00:00"
+    }
+]

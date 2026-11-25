@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Soft Patty Cast Shadow on Greens -->
+    <radialGradient id="pattyCastShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#080201" stop-opacity="0.7"/>
+      <stop offset="65%" stop-color="#080201" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#080201" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pattyBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#442111"/>
+      <stop offset="25%" stop-color="#2a1207"/>
+      <stop offset="60%" stop-color="#3d1b0d"/>
+      <stop offset="85%" stop-color="#240f06"/>
+      <stop offset="100%" stop-color="#140803"/>
+    </linearGradient>
+    <radialGradient id="pattyJuiceGlow" cx="48%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#7a3d1c" stop-opacity="0.95"/>
+      <stop offset="45%" stop-color="#451f0f" stop-opacity="0.8"/>
+      <stop offset="80%" stop-color="#240f06" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#140803" stop-opacity="0.1"/>
+    </radialGradient>
+    <linearGradient id="charMarkMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d0401" stop-opacity="0.96"/>
+      <stop offset="50%" stop-color="#1c0903" stop-opacity="0.88"/>
+      <stop offset="100%" stop-color="#0d0401" stop-opacity="0.96"/>
+    </linearGradient>
+    <linearGradient id="charMarkCross" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d0401" stop-opacity="0.92"/>
+      <stop offset="50%" stop-color="#1c0903" stop-opacity="0.84"/>
+      <stop offset="100%" stop-color="#0d0401" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="edgeCrust" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5a2a14"/>
+      <stop offset="50%" stop-color="#260e05"/>
+      <stop offset="100%" stop-color="#100502"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Shadow Under Patty -->
+  <ellipse cx="400" cy="342" rx="285" ry="34" fill="url(#pattyCastShadow)"/>
+
+  <!-- Thick Volumetric Beef Patty Body (from y=250 to y=348) -->
+  <path d="M 100 285 
+           C 100 230, 155 210, 400 210 
+           C 645 210, 700 230, 700 285 
+           C 705 315, 695 348, 655 365 
+           C 595 385, 485 378, 400 378 
+           C 315 378, 205 385, 145 365 
+           C 105 348, 95 315, 100 285 Z" 
+        fill="url(#pattyBodyGrad)"/>
+
+  <!-- Meat Cut Surface Volume Glow at ~18° perspective -->
+  <ellipse cx="400" cy="275" rx="280" ry="58" fill="url(#pattyJuiceGlow)"/>
+
+  <!-- Organic Coarse Edge Crust Crumbles and Meat Grain -->
+  <path d="M 98 275 Q 106 295 102 315 Q 114 335 110 355 Q 124 370 145 378
+           M 702 275 Q 694 295 698 315 Q 686 335 690 355 Q 676 370 655 378" 
+        stroke="url(#edgeCrust)" stroke-width="10" stroke-linecap="round" opacity="0.85"/>
+
+  <!-- Authentic Flame Grill Criss-Cross Diamond Char Marks -->
+  <!-- Diagonal Primary Slits (Top-Left to Bottom-Right) -->
+  <g stroke="url(#charMarkMain)" stroke-linecap="round">
+    <path d="M 195 240 L 285 330" stroke-width="14"/>
+    <path d="M 285 225 L 390 340" stroke-width="16"/>
+    <path d="M 380 220 L 495 340" stroke-width="17"/>
+    <path d="M 480 225 L 595 335" stroke-width="15"/>
+    <path d="M 585 240 L 665 325" stroke-width="13"/>
+  </g>
+
+  <!-- Diagonal Counter Cross-Marks (Top-Right to Bottom-Left, creating diamond lattice) -->
+  <g stroke="url(#charMarkCross)" stroke-linecap="round" opacity="0.75">
+    <path d="M 305 235 L 210 320" stroke-width="10"/>
+    <path d="M 410 220 L 295 335" stroke-width="12"/>
+    <path d="M 515 220 L 395 340" stroke-width="12"/>
+    <path d="M 610 225 L 490 335" stroke-width="11"/>
+    <path d="M 675 250 L 590 325" stroke-width="9"/>
+  </g>
+
+  <!-- Glowing Hot Heat Embers inside Char Crevices -->
+  <g stroke="#b94716" stroke-width="2.5" opacity="0.7" stroke-linecap="round">
+    <path d="M 205 248 L 278 320"/>
+    <path d="M 295 232 L 385 330"/>
+    <path d="M 390 228 L 488 330"/>
+    <path d="M 490 232 L 588 325"/>
+  </g>
+
+  <!-- Glistening Juices, Rendered Fat Sheen & Moisture Droplets -->
+  <g fill="#ffe0b2" opacity="0.8">
+    <ellipse cx="255" cy="260" rx="4.5" ry="2.8" transform="rotate(-20 255 260)"/>
+    <ellipse cx="335" cy="250" rx="5.5" ry="3.2" transform="rotate(15 335 250)"/>
+    <ellipse cx="440" cy="240" rx="6.5" ry="3.8" transform="rotate(-10 440 240)"/>
+    <ellipse cx="535" cy="255" rx="5.5" ry="3.2" transform="rotate(25 535 255)"/>
+    <ellipse cx="370" cy="295" rx="4.5" ry="2.8"/>
+    <ellipse cx="475" cy="290" rx="5.5" ry="3.2"/>
+    <ellipse cx="565" cy="285" rx="4" ry="2.2"/>
+    <ellipse cx="305" cy="285" rx="4" ry="2.2"/>
+    <ellipse cx="420" cy="315" rx="5" ry="2.8"/>
+    <ellipse cx="230" cy="295" rx="3.5" ry="2"/>
+    <ellipse cx="610" cy="275" rx="4" ry="2.2"/>
+  </g>
+</svg>

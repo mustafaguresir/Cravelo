@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Soft Leaf Shadow Cast on Bottom Bun -->
+    <radialGradient id="lettuceBaseShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a1a06" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#0a1a06" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#0a1a06" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lettuceMain" x1="0%" y1="0%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="#236e17"/>
+      <stop offset="25%" stop-color="#388e3c"/>
+      <stop offset="55%" stop-color="#4caf50"/>
+      <stop offset="80%" stop-color="#66bb6a"/>
+      <stop offset="100%" stop-color="#81c784"/>
+    </linearGradient>
+    <linearGradient id="lettuceDark" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#14420e"/>
+      <stop offset="50%" stop-color="#1b5e20"/>
+      <stop offset="100%" stop-color="#2e7d32"/>
+    </linearGradient>
+    <linearGradient id="veinGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#dcedc8" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#e8f5e9" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#a5d6a7" stop-opacity="0.25"/>
+    </linearGradient>
+    <linearGradient id="leafFrillGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8f5e9" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#81c784" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Contact Shadow Under Leaf Bed -->
+  <ellipse cx="400" cy="342" rx="285" ry="36" fill="url(#lettuceBaseShadow)"/>
+
+  <!-- Deep Back Layer Folds -->
+  <path d="M 90 325 
+           C 115 285, 175 300, 225 280 
+           C 285 255, 345 290, 415 270 
+           C 485 250, 565 285, 625 265 
+           C 675 250, 730 280, 725 325 
+           C 685 340, 605 315, 525 335 
+           C 445 350, 365 325, 295 345 
+           C 205 360, 135 335, 90 325 Z" 
+        fill="url(#lettuceDark)" opacity="0.9"/>
+
+  <!-- Main Crisp Undulating Leaf Front (Curling over bun rim) -->
+  <path d="M 80 328 
+           C 95 290, 140 310, 170 285 
+           C 200 260, 235 305, 280 275 
+           C 325 245, 370 290, 420 265 
+           C 470 240, 515 285, 570 255 
+           C 620 230, 665 280, 700 260 
+           C 735 245, 750 295, 730 335 
+           C 705 370, 655 345, 610 370 
+           C 560 395, 505 355, 445 380 
+           C 385 400, 335 360, 275 385 
+           C 215 405, 165 365, 120 380 
+           C 85 390, 70 360, 80 328 Z" 
+        fill="url(#lettuceMain)"/>
+
+  <!-- Secondary Front Fold Layer for Volume -->
+  <path d="M 140 340 
+           C 180 315, 220 335, 260 315 
+           C 310 290, 360 325, 410 305 
+           C 460 285, 510 320, 560 300 
+           C 610 280, 660 315, 680 335 
+           C 650 365, 590 340, 530 360 
+           C 470 375, 410 350, 350 368 
+           C 280 385, 210 355, 140 340 Z" 
+        fill="#43a047" opacity="0.92"/>
+
+  <!-- Translucent Rib Veins -->
+  <path d="M 230 350 Q 370 310 550 315" stroke="url(#veinGrad)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 290 335 Q 320 300 360 280" stroke="url(#veinGrad)" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 380 320 Q 430 295 470 270" stroke="url(#veinGrad)" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 460 318 Q 510 295 560 275" stroke="url(#veinGrad)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 340 330 Q 365 355 400 370" stroke="url(#veinGrad)" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M 470 322 Q 500 350 540 362" stroke="url(#veinGrad)" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- Crispy Curled Frill Edges (Highlights) -->
+  <path d="M 170 285 Q 200 260 235 305" stroke="#c8e6c9" stroke-width="3.5" opacity="0.85"/>
+  <path d="M 280 275 Q 325 245 370 290" stroke="#dcedc8" stroke-width="4" opacity="0.9"/>
+  <path d="M 420 265 Q 470 240 515 285" stroke="#c8e6c9" stroke-width="4" opacity="0.9"/>
+  <path d="M 570 255 Q 620 230 665 280" stroke="#dcedc8" stroke-width="3.5" opacity="0.85"/>
+  <path d="M 275 385 Q 335 360 385 400" stroke="#a5d6a7" stroke-width="3.2" opacity="0.8"/>
+  <path d="M 445 380 Q 505 355 560 395" stroke="#c8e6c9" stroke-width="3" opacity="0.8"/>
+
+  <!-- Crisp Dew Water Droplets (Realistic specular droplets) -->
+  <g fill="#ffffff" opacity="0.85">
+    <ellipse cx="255" cy="295" rx="5" ry="3.5" transform="rotate(-15 255 295)"/>
+    <ellipse cx="256" cy="294" rx="2" ry="1.5"/>
+    <ellipse cx="485" cy="280" rx="6" ry="4" transform="rotate(10 485 280)"/>
+    <ellipse cx="486" cy="279" rx="2.5" ry="1.5"/>
+    <ellipse cx="365" cy="355" rx="4.5" ry="3"/>
+    <ellipse cx="615" cy="290" rx="5" ry="3.5" transform="rotate(-20 615 290)"/>
+  </g>
+</svg>
