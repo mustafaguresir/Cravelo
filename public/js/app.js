@@ -113,19 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCartUI();
     updateOrderTrackerUI();
 
-    // Aktif sipariş varsa kurye animasyonunu sürdür
-    const activeOrder = GustoState.get().activeOrder;
-    if (activeOrder && activeOrder.status !== 'teslim_edildi') {
-        const r = GustoState.get().restaurants.find(x => x.id === activeOrder.rId);
-        const c = GustoState.get().couriers.find(x => x.id === activeOrder.courierId);
-        if (r && c) {
-            GustoMap.startCourierAnimation(c, r, GustoState.get().customerLocation);
-        }
-        if (GustoState.get().isSimulationEnabled) {
-            GustoState.startSimulation(handleSimulationStep);
-        }
-    }
-
     // Aktif Oturum ve Rolü doğrula/uygula (RBAC Arayüz İzolasyonu)
     // Sunucu PHP oturumu (window.ACTIVE_SESSION) her zaman eski localStorage oturumundan önceliklidir
     let activeRole = null;
@@ -187,6 +174,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     applyRoleIsolation(activeRole);
+
+    // Aktif sipariş varsa yalnızca müşteri ekranında kurye animasyonu & otomatik simülasyonu sürdür
+    // (Restoran KDS / Kurye / Yönetici ekranlarında sipariş operatör olmadan kendi kendine ilerlemez)
+    const activeOrder = GustoState.get().activeOrder;
+    if (activeRole === 'customer' && activeOrder && !['teslim_edildi', 'iptal'].includes(activeOrder.status)) {
+        if (activeOrder.deliveryMode !== 'takeaway') {
+            const r = GustoState.get().restaurants.find(x => x.id === activeOrder.rId);
+            const c = GustoState.get().couriers.find(x => x.id === activeOrder.courierId);
+            if (r && c) {
+                GustoMap.startCourierAnimation(c, r, GustoState.get().customerLocation);
+            }
+        }
+        if (GustoState.get().isSimulationEnabled) {
+            GustoState.startSimulation(handleSimulationStep);
+        }
+    }
 });
 
 // ==========================================
@@ -949,6 +952,24 @@ function addCustomizedItemToCart() {
 // ==========================================
 // SEPET YÖNETİMİ & GEL-AL (TAKEAWAY) ENTEGRASYONU
 // ==========================================
+function syncCheckoutDeliveryModeUI(isTakeaway) {
+    const notice = document.getElementById('checkout-del-mode-notice');
+    if (notice) notice.style.display = isTakeaway ? 'flex' : 'none';
+
+    const tipSec = document.getElementById('checkout-tip-section');
+    if (tipSec) tipSec.style.display = isTakeaway ? 'none' : 'block';
+
+    const instSec = document.getElementById('checkout-courier-inst-section');
+    if (instSec) instSec.style.display = isTakeaway ? 'none' : 'block';
+
+    const customNoteInput = document.getElementById('delivery-custom-note');
+    if (customNoteInput) {
+        customNoteInput.placeholder = isTakeaway
+            ? 'Restorana Gel-Al notu (örn: 15 dk içinde tezgahtan teslim alacağım)…'
+            : 'Kurye için ek adres veya kapı detayı (örn: Kat 4, Daire 8, Zil: Yılmaz)…';
+    }
+}
+
 function switchDeliveryMode(mode, silent = false) {
     GustoState.setDeliveryMode(mode);
     const isTakeaway = mode === 'takeaway';
@@ -965,8 +986,7 @@ function switchDeliveryMode(mode, silent = false) {
             : '<i class="fa-solid fa-motorcycle"></i> Adrese Teslim';
     }
 
-    const notice = document.getElementById('checkout-del-mode-notice');
-    if (notice) notice.style.display = isTakeaway ? 'flex' : 'none';
+    syncCheckoutDeliveryModeUI(isTakeaway);
 
     updateCartUI();
     renderRestaurantGrid(GustoState.get().activeCategory);
@@ -1294,8 +1314,7 @@ function openCheckoutModal() {
         return;
     }
 
-    const notice = document.getElementById('checkout-del-mode-notice');
-    if (notice) notice.style.display = (state.deliveryMode === 'takeaway') ? 'flex' : 'none';
+    syncCheckoutDeliveryModeUI(state.deliveryMode === 'takeaway');
 
     calcCheckoutTotal();
     const overlay = document.getElementById('checkout-overlay');
@@ -1472,7 +1491,7 @@ function confirmCheckoutAndPlaceOrder() {
         tip: isTakeaway ? 0 : selectedTip,
         payMethod: selectedPayMethod,
         deliveryMode: state.deliveryMode,
-        instruction: state.selectedInstruction || 'Zile Basma Bebek Uyuyor 👶',
+        instruction: isTakeaway ? 'Restorandan Gel-Al Teslimat 🚶' : (state.selectedInstruction || 'Zile Basma Bebek Uyuyor 👶'),
         customNote,
         scheduledTime: state.scheduledTime || 'Hemen Gelsin (~25 dk)',
         isEco: state.isEcoFriendly,
@@ -1507,7 +1526,7 @@ function confirmCheckoutAndPlaceOrder() {
     closeCheckoutModal();
     openOrdersTab();
 
-    if (state.isSimulationEnabled) {
+    if (state.isSimulationEnabled && state.currentRole === 'customer') {
         GustoState.startSimulation(handleSimulationStep);
     }
 
@@ -1556,7 +1575,7 @@ function toggleSimMode() {
         if (txt) txt.innerHTML = '<i class="fa-solid fa-circle-dot" style="color:var(--success);"></i> Canlı GPS Kurye Takibi Aktif';
         if (btn) btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Canlı Konum';
         showToast('📍', 'Kurye canlı GPS takibi aktif.', 'success');
-        if (state.activeOrder && state.activeOrder.status !== 'teslim_edildi') {
+        if (state.currentRole === 'customer' && state.activeOrder && state.activeOrder.status !== 'teslim_edildi') {
             GustoState.startSimulation(handleSimulationStep);
         }
     } else {
@@ -1651,19 +1670,27 @@ function updateOrderTrackerUI() {
     }
 
     const s = activeOrder.status;
+    const isTakeawayOrder = activeOrder.deliveryMode === 'takeaway';
+    const effectiveTx = isTakeawayOrder
+        ? {
+            ...tx,
+            hazir: { t: 'Gel-Al Paketiniz Hazır! 🛍️', s: 'Siparişinizi restorandan doğrudan teslim alabilirsiniz.' },
+            teslim_edildi: { t: 'Restorandan Teslim Alındı! 🎉', s: 'Afiyet olsun, Cravelo Gel-Al\'ı tercih ettiğiniz için teşekkürler.' }
+        }
+        : tx;
     const fill = document.getElementById('step-fill');
     if (fill) fill.style.width = fw[s] || '0%';
 
     const numBadge = document.getElementById('order-number-badge');
     if (numBadge) {
         numBadge.classList.remove('hidden');
-        numBadge.innerText = '#ORD-' + activeOrder.id + (activeOrder.deliveryMode === 'takeaway' ? ' (Gel-Al)' : '');
+        numBadge.innerText = '#ORD-' + activeOrder.id + (isTakeawayOrder ? ' (Gel-Al)' : '');
     }
 
     const trackerText = document.getElementById('tracker-text');
-    if (trackerText) trackerText.innerText = tx[s]?.t || s;
+    if (trackerText) trackerText.innerText = effectiveTx[s]?.t || s;
     const trackerSub = document.getElementById('tracker-sub');
-    if (trackerSub) trackerSub.innerText = tx[s]?.s || '';
+    if (trackerSub) trackerSub.innerText = effectiveTx[s]?.s || '';
 
     const idx = stepOrder.indexOf(s);
     stepOrder.forEach((step, i) => {
@@ -1740,7 +1767,13 @@ function updateOrderTrackerUI() {
             const mStatus = document.getElementById('menu-active-order-status');
             if (mStatus) mStatus.innerText = getStatusMeta(activeOrder.status).label.toUpperCase();
             const mCourier = document.getElementById('menu-active-order-courier');
-            if (mCourier) mCourier.innerText = `Kuryeniz (${activeOrder.courier || 'Veli Demir'}) siparişinizi ulaştırmak üzere rotada.`;
+            if (mCourier) {
+                mCourier.innerText = isTakeawayOrder
+                    ? (s === 'hazir'
+                        ? 'Gel-Al paketiniz restoranda hazır, tezgahtan teslim alabilirsiniz.'
+                        : 'Gel-Al siparişiniz restoranda hazırlanıyor — kurye atanmadı.')
+                    : `Kuryeniz (${activeOrder.courier || 'Veli Demir'}) siparişinizi ulaştırmak üzere rotada.`;
+            }
         } else {
             menuBanner.style.display = 'none';
         }
@@ -2402,18 +2435,24 @@ function renderAccountOrders() {
         activeOrder.courier = actCour;
 
         const s = activeOrder.status;
-        const stepOrder = ['alindi', 'hazirlaniyor', 'hazir', 'yolda', 'teslim_edildi'];
-        const fw = { alindi: '0%', hazirlaniyor: '25%', hazir: '50%', yolda: '75%', teslim_edildi: '100%', iptal: '0%' };
+        const isTakeaway = activeOrder.deliveryMode === 'takeaway';
+        const stepOrder = isTakeaway
+            ? ['alindi', 'hazirlaniyor', 'hazir', 'teslim_edildi']
+            : ['alindi', 'hazirlaniyor', 'hazir', 'yolda', 'teslim_edildi'];
+        const fw = isTakeaway
+            ? { alindi: '0%', hazirlaniyor: '33%', hazir: '67%', teslim_edildi: '100%', iptal: '0%' }
+            : { alindi: '0%', hazirlaniyor: '25%', hazir: '50%', yolda: '75%', teslim_edildi: '100%', iptal: '0%' };
         const statusMap = {
             alindi: { badge: 'Alındı', text: 'Siparişiniz Onaylandı', sub: 'Restoran siparişi mutfak ekranına (KDS) aktarıyor…', temp: '85°C', tempPct: '92%' },
             hazirlaniyor: { badge: 'Hazırlanıyor', text: 'Şefler Hazırlıyor', sub: 'Yemeğiniz özenle taze taze pişiriliyor.', temp: '88°C', tempPct: '96%' },
-            hazir: { badge: 'Hazır', text: 'Paket Hazırlandı', sub: 'Kurye termal çantayla paketi teslim alıyor.', temp: '82°C', tempPct: '88%' },
+            hazir: isTakeaway
+                ? { badge: 'Hazır (Gel-Al)', text: 'Gel-Al Paketiniz Tezgahta Hazır!', sub: 'Restorandan doğrudan teslim alabilirsiniz.', temp: '84°C', tempPct: '90%' }
+                : { badge: 'Hazır', text: 'Paket Hazırlandı', sub: 'Kurye termal çantayla paketi teslim alıyor.', temp: '82°C', tempPct: '88%' },
             yolda: { badge: 'Yolda', text: 'Kuryeniz Yolda!', sub: 'Siparişiniz Kadıköy rotasında kapınıza geliyor.', temp: '76°C', tempPct: '80%' },
-            teslim_edildi: { badge: 'Teslim Edildi', text: 'Teslim Edildi!', sub: 'Afiyet olsun!', temp: '70°C', tempPct: '72%' }
+            teslim_edildi: { badge: 'Teslim Edildi', text: isTakeaway ? 'Restorandan Teslim Alındı!' : 'Teslim Edildi!', sub: 'Afiyet olsun!', temp: '70°C', tempPct: '72%' }
         };
         const curInfo = statusMap[s] || { badge: s, text: s, sub: '', temp: '78°C', tempPct: '80%' };
         const idx = stepOrder.indexOf(s);
-        const isTakeaway = activeOrder.deliveryMode === 'takeaway';
 
         html += `
         <div class="tracker-card" style="background:var(--surface);border:1.5px solid rgba(255,107,53,0.45);border-radius:22px;padding:20px;margin-bottom:22px;box-shadow:0 12px 32px rgba(255,87,34,0.12);">
@@ -2438,15 +2477,17 @@ function renderAccountOrders() {
                 </div>
                 <div class="step ${idx > 2 ? 'done' : (idx === 2 ? 'active' : '')}">
                     <div class="step-dot"><i class="fa-solid fa-box-open"></i></div>
-                    <div class="step-label">Hazır</div>
+                    <div class="step-label">${isTakeaway ? 'Tezgahta Hazır' : 'Hazır'}</div>
                 </div>
+                ${!isTakeaway ? `
                 <div class="step ${idx > 3 ? 'done' : (idx === 3 ? 'active' : '')}">
                     <div class="step-dot"><i class="fa-solid fa-motorcycle"></i></div>
                     <div class="step-label">Yolda</div>
                 </div>
-                <div class="step ${idx >= 4 ? 'done active' : ''}">
+                ` : ''}
+                <div class="step ${idx >= (stepOrder.length - 1) ? 'done active' : ''}">
                     <div class="step-dot"><i class="fa-solid fa-circle-check"></i></div>
-                    <div class="step-label">Teslim</div>
+                    <div class="step-label">${isTakeaway ? 'Teslim Alındı' : 'Teslim'}</div>
                 </div>
             </div>
 
@@ -2807,6 +2848,11 @@ function applyRoleIsolation(role) {
 
     state.currentRole = role;
 
+    // Müşteri dışındaki rollerde (KDS / Kurye / Admin) otomatik sipariş simülasyonu çalışmamalıdır
+    if (role !== 'customer' && typeof GustoState.stopSimulation === 'function') {
+        GustoState.stopSimulation();
+    }
+
     if (mainContainer) {
         mainContainer.style.display = 'block';
     }
@@ -3095,13 +3141,20 @@ function renderResPanel() {
             b.innerHTML = matchingActive.map(o => {
                 const st = getStatusMeta(o.status);
                 const elapsedMin = o.createdTs ? Math.max(1, Math.round((Date.now() - o.createdTs) / 60000)) : 2;
+                const isOrderTakeaway = o.deliveryMode === 'takeaway';
                 let actionBtn = '';
                 if (o.status === 'alindi') {
                     actionBtn = `<button type="button" class="btn btn-sm btn-primary" onclick="vendorChangeStatus('hazirlaniyor')"><i class="fa-solid fa-fire"></i> Hazırlamaya Başla</button>`;
                 } else if (o.status === 'hazirlaniyor') {
-                    actionBtn = `<button type="button" class="btn btn-sm btn-success" onclick="vendorChangeStatus('hazir')"><i class="fa-solid fa-box-open"></i> Hazır (Kurye Çağır)</button>`;
+                    actionBtn = isOrderTakeaway
+                        ? `<button type="button" class="btn btn-sm btn-success" onclick="vendorChangeStatus('hazir')"><i class="fa-solid fa-bag-shopping"></i> Hazır (Gel-Al Tezgahı)</button>`
+                        : `<button type="button" class="btn btn-sm btn-success" onclick="vendorChangeStatus('hazir')"><i class="fa-solid fa-box-open"></i> Hazır (Kurye Çağır)</button>`;
+                } else if (o.status === 'hazir' && isOrderTakeaway) {
+                    actionBtn = `<button type="button" class="btn btn-sm btn-success" onclick="vendorChangeStatus('teslim_edildi')"><i class="fa-solid fa-circle-check"></i> Müşteriye Teslim Edildi</button>`;
                 } else {
-                    actionBtn = `<span class="badge badge-musait"><i class="fa-solid fa-motorcycle"></i> Kuryeye Teslim</span>`;
+                    actionBtn = isOrderTakeaway
+                        ? `<span class="badge badge-musait"><i class="fa-solid fa-person-walking"></i> Gel-Al Teslim Edildi</span>`
+                        : `<span class="badge badge-musait"><i class="fa-solid fa-motorcycle"></i> Kuryeye Teslim</span>`;
                 }
                 return `
                     <tr>
@@ -3137,13 +3190,20 @@ function renderResPanel() {
             b.innerHTML = matchingActive.map(o => {
                 const st = getStatusMeta(o.status);
                 const elapsedMin = o.createdTs ? Math.max(1, Math.round((Date.now() - o.createdTs) / 60000)) : 2;
+                const isOrderTakeaway = o.deliveryMode === 'takeaway';
                 let actionBtn = '';
                 if (o.status === 'alindi') {
                     actionBtn = `<button type="button" class="btn btn-primary" style="flex:1;" onclick="vendorChangeStatus('hazirlaniyor')"><i class="fa-solid fa-fire"></i> Hazırlamaya Başla</button>`;
                 } else if (o.status === 'hazirlaniyor') {
-                    actionBtn = `<button type="button" class="btn btn-success" style="flex:1;" onclick="vendorChangeStatus('hazir')"><i class="fa-solid fa-box-open"></i> Hazır — Kurye Çağır</button>`;
+                    actionBtn = isOrderTakeaway
+                        ? `<button type="button" class="btn btn-success" style="flex:1;" onclick="vendorChangeStatus('hazir')"><i class="fa-solid fa-bag-shopping"></i> Hazır — Gel-Al Tezgahı</button>`
+                        : `<button type="button" class="btn btn-success" style="flex:1;" onclick="vendorChangeStatus('hazir')"><i class="fa-solid fa-box-open"></i> Hazır — Kurye Çağır</button>`;
+                } else if (o.status === 'hazir' && isOrderTakeaway) {
+                    actionBtn = `<button type="button" class="btn btn-success" style="flex:1;" onclick="vendorChangeStatus('teslim_edildi')"><i class="fa-solid fa-circle-check"></i> Müşteriye Teslim Edildi</button>`;
                 } else {
-                    actionBtn = `<div style="flex:1;text-align:center;padding:10px;border-radius:12px;background:rgba(16,185,129,0.12);color:var(--success);font-weight:800;font-size:13px;"><i class="fa-solid fa-motorcycle"></i> Kuryeye Teslim Edildi (${escapeHtml(o.courier || 'Kurye')})</div>`;
+                    actionBtn = isOrderTakeaway
+                        ? `<div style="flex:1;text-align:center;padding:10px;border-radius:12px;background:rgba(16,185,129,0.12);color:var(--success);font-weight:800;font-size:13px;"><i class="fa-solid fa-person-walking"></i> Gel-Al Müşteriye Teslim Edildi</div>`
+                        : `<div style="flex:1;text-align:center;padding:10px;border-radius:12px;background:rgba(16,185,129,0.12);color:var(--success);font-weight:800;font-size:13px;"><i class="fa-solid fa-motorcycle"></i> Kuryeye Teslim Edildi (${escapeHtml(o.courier || 'Kurye')})</div>`;
                 }
                 return `
                     <div class="kds-card" style="border-top:3px solid ${st.color};">
@@ -3249,14 +3309,31 @@ function renderResPanel() {
 function vendorChangeStatus(targetStatus) {
     const state = GustoState.get();
     if (!state.activeOrder) return;
-    if (state.activeOrder.serverOrderId && typeof craveloSyncOrderTransition === 'function') {
-        craveloSyncOrderTransition(state.activeOrder.serverOrderId, targetStatus);
+    const targetOrderId = state.activeOrder.id;
+    const targetServerId = state.activeOrder.serverOrderId;
+    if (targetServerId && typeof craveloSyncOrderTransition === 'function') {
+        craveloSyncOrderTransition(targetServerId, targetStatus);
     }
     const r = state.restaurants.find(x => x.id === state.activeOrder.rId);
     const ok = GustoState.transitionOrderStatus(targetStatus, `${r ? r.name : 'Restoran'} (Mutfak)`, `Mutfak yetkilisi sipariş durumunu ${targetStatus} olarak güncelledi.`);
     if (ok) {
-        GustoAudio.play('status');
-        showToast('👨‍🍳', `Sipariş #ORD-${state.activeOrder.id} → ${getStatusMeta(targetStatus).label}`, 'success');
+        GustoAudio.play(targetStatus === 'teslim_edildi' ? 'deliver' : 'status');
+        showToast('👨‍🍳', `Sipariş #ORD-${targetOrderId} → ${getStatusMeta(targetStatus).label}`, 'success');
+
+        // Gel-Al siparişinde restoran teslimi tamamladığında siparişi geçmişe aktar
+        if (targetStatus === 'teslim_edildi' && state.activeOrder) {
+            GustoState.stopSimulation();
+            if (typeof GustoMap !== 'undefined' && GustoMap.stopCourierAnimation) {
+                GustoMap.stopCourierAnimation();
+            }
+            const finished = { ...state.activeOrder };
+            const alreadyInHist = state.orderHistory.some(o => o && (o.id === finished.id || (finished.serverOrderId && o.serverOrderId === finished.serverOrderId)));
+            if (!alreadyInHist) {
+                state.orderHistory.unshift(finished);
+            }
+            state.activeOrder = null;
+            GustoState.persist();
+        }
     }
     updateOrderTrackerUI();
     renderResPanel();
@@ -4227,11 +4304,27 @@ async function craveloPollServerPartialRefresh() {
             method: 'GET',
             silentError: true
         });
-        if (res && res.ok && res.data && res.data.order_status) {
-            if (state.activeOrder.status !== res.data.order_status) {
-                state.activeOrder.status = res.data.order_status;
-                if (res.data.courier && res.data.courier.name) {
+        if (res && res.ok && res.data && res.data.order_status && state.activeOrder) {
+            const statusRank = { alindi: 1, hazirlaniyor: 2, hazir: 3, yolda: 4, teslim_edildi: 5, iptal: 6 };
+            const serverStatus = String(res.data.order_status);
+            const localStatus = String(state.activeOrder.status || 'alindi');
+            const isForwardOrCancel = (serverStatus === 'iptal' && localStatus !== 'iptal')
+                || ((statusRank[serverStatus] || 0) > (statusRank[localStatus] || 0));
+
+            if (isForwardOrCancel) {
+                state.activeOrder.status = serverStatus;
+                if (state.activeOrder.deliveryMode !== 'takeaway' && res.data.courier && res.data.courier.name) {
                     state.activeOrder.courier = res.data.courier.name;
+                }
+                if (serverStatus === 'iptal' || serverStatus === 'teslim_edildi') {
+                    GustoState.stopSimulation();
+                    if (typeof GustoMap !== 'undefined' && GustoMap.stopCourierAnimation) {
+                        GustoMap.stopCourierAnimation();
+                    }
+                    const finished = { ...state.activeOrder };
+                    const exists = (state.orderHistory || []).some(o => o && (o.id === finished.id || (finished.serverOrderId && o.serverOrderId === finished.serverOrderId)));
+                    if (!exists) state.orderHistory.unshift(finished);
+                    state.activeOrder = null;
                 }
                 GustoState.persist();
                 updateOrderTrackerUI();

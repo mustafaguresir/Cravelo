@@ -327,6 +327,26 @@ final class OrderControllerTest extends TestCase
         $formatted = $service->getFormattedOrdersForUser(['id' => 1, 'role' => 'customer']);
         $this->assertSame('takeaway', $formatted[0]['deliveryMode']);
         $this->assertSame('Restorandan Gel-Al (Müşteri)', $formatted[0]['courier']);
+
+        // Restoran Gel-Al siparişini alindi -> hazirlaniyor -> hazir -> teslim_edildi yapabilir ('yolda' adımına geçilemez)
+        $orderId = (int)$res['order_id'];
+        $s1 = $service->transitionStatus($orderId, 'hazirlaniyor', 'restaurant', 4);
+        $this->assertSame('hazirlaniyor', $s1['current_status']);
+
+        $s2 = $service->transitionStatus($orderId, 'hazir', 'restaurant', 4);
+        $this->assertSame('hazir', $s2['current_status']);
+
+        // Gel-Al siparişinde 'yolda' (kurye) aşaması reddedilmelidir
+        try {
+            $service->transitionStatus($orderId, 'yolda', 'admin', 10);
+            $this->fail('Gel-Al siparişi yolda aşamasına geçememelidir.');
+        } catch (\App\Exception\InvalidOrderTransitionException) {
+            $this->assertTrue(true);
+        }
+
+        // Restoran doğrudan teslim_edildi olarak kapatabilir
+        $s3 = $service->transitionStatus($orderId, 'teslim_edildi', 'restaurant', 4);
+        $this->assertSame('teslim_edildi', $s3['current_status']);
     }
 
     public function testFleetScoresUseRealHaversineDistanceAndAtomicJsonUpdate(): void

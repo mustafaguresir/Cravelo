@@ -357,10 +357,11 @@ const GustoState = (function () {
     function transitionOrderStatus(newStatus, actor, comment) {
         if (!state.activeOrder) return false;
 
+        const isTakeaway = state.activeOrder.deliveryMode === 'takeaway';
         const allowedTransitions = {
             'alindi': ['hazirlaniyor', 'iptal'],
             'hazirlaniyor': ['hazir'],
-            'hazir': ['yolda'],
+            'hazir': isTakeaway ? ['teslim_edildi'] : ['yolda'],
             'yolda': ['teslim_edildi'],
             'teslim_edildi': [],
             'iptal': []
@@ -443,23 +444,32 @@ const GustoState = (function () {
     }
 
     /**
-     * Otomatik Simülasyonu Başlatır
+     * Otomatik Simülasyonu Başlatır (Yalnızca müşteri rolünde çalışır; Gel-Al'da kurye adımını atlar)
      */
     function startSimulation(onStepCallback) {
         if (simInterval) clearInterval(simInterval);
+        if (!state.activeOrder) return;
+        if (state.currentRole && state.currentRole !== 'customer') return;
 
-        const transitions = [
-            { next: 'hazirlaniyor', role: 'Restoran Mutfak', delay: 4200, comment: 'Restoran siparişi onayladı ve hazırlamaya başladı.' },
-            { next: 'hazir', role: 'Restoran Mutfak', delay: 4800, comment: 'Yemek hazırlandı ve paketlendi.' },
-            { next: 'yolda', role: 'Kurye', delay: 4200, comment: 'Kurye paketi teslim aldı ve yola çıktı.' },
-            { next: 'teslim_edildi', role: 'Kurye', delay: 4800, comment: 'Sipariş müşteriye başarıyla teslim edildi.' }
-        ];
+        const isTakeaway = state.activeOrder.deliveryMode === 'takeaway';
+        const transitions = isTakeaway
+            ? [
+                { next: 'hazirlaniyor', role: 'Restoran Mutfak', delay: 4200, comment: 'Restoran Gel-Al siparişinizi onayladı ve hazırlamaya başladı.' },
+                { next: 'hazir', role: 'Restoran Mutfak', delay: 4800, comment: 'Gel-Al paketiniz tezgahta hazır, restorandan teslim alabilirsiniz.' },
+                { next: 'teslim_edildi', role: 'Restoran Mutfak', delay: 4800, comment: 'Gel-Al siparişi müşteriye restorandan teslim edildi.' }
+            ]
+            : [
+                { next: 'hazirlaniyor', role: 'Restoran Mutfak', delay: 4200, comment: 'Restoran siparişi onayladı ve hazırlamaya başladı.' },
+                { next: 'hazir', role: 'Restoran Mutfak', delay: 4800, comment: 'Yemek hazırlandı ve paketlendi.' },
+                { next: 'yolda', role: 'Kurye', delay: 4200, comment: 'Kurye paketi teslim aldı ve yola çıktı.' },
+                { next: 'teslim_edildi', role: 'Kurye', delay: 4800, comment: 'Sipariş müşteriye başarıyla teslim edildi.' }
+            ];
 
         let stepIdx = transitions.findIndex(t => t.next === state.activeOrder?.status);
         let nextStep = stepIdx >= 0 ? stepIdx + 1 : 0;
 
         simInterval = setInterval(() => {
-            if (!state.activeOrder || !state.isSimulationEnabled || nextStep >= transitions.length) {
+            if (!state.activeOrder || !state.isSimulationEnabled || (state.currentRole && state.currentRole !== 'customer') || nextStep >= transitions.length) {
                 clearInterval(simInterval);
                 simInterval = null;
                 return;

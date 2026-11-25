@@ -463,7 +463,11 @@ final class OrderService
         }
 
         if ($role === 'restaurant') {
-            if (!in_array($targetStatus, [OrderStatus::HAZIRLANIYOR, OrderStatus::HAZIR], true)) {
+            $allowedForRestaurant = [OrderStatus::HAZIRLANIYOR, OrderStatus::HAZIR];
+            if ($order->deliveryMode === 'takeaway') {
+                $allowedForRestaurant[] = OrderStatus::TESLIM_EDILDI;
+            }
+            if (!in_array($targetStatus, $allowedForRestaurant, true)) {
                 throw new InvalidOrderTransitionException('Restoran sadece hazırlık aşamalarını yönetebilir!', 403);
             }
             if ($actorUserId !== null) {

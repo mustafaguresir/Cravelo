@@ -177,12 +177,14 @@
                 </div>
             </div>
 
-            <div class="custom-sec-title"><span>2. Kuryeye Bahşiş Ekle</span> <span style="font-size:11.5px;color:var(--text-3);font-weight:600;">%100 kuryeye aktarılır</span></div>
-            <div class="tip-pills">
-                <div class="tip-pill active" id="tip-0" onclick="setTip(0)">Yok (0 ₺)</div>
-                <div class="tip-pill" id="tip-10" onclick="setTip(10)">+10 ₺</div>
-                <div class="tip-pill" id="tip-20" onclick="setTip(20)">+20 ₺ ⭐</div>
-                <div class="tip-pill" id="tip-50" onclick="setTip(50)">+50 ₺ 🚀</div>
+            <div id="checkout-tip-section">
+                <div class="custom-sec-title"><span>2. Kuryeye Bahşiş Ekle</span> <span style="font-size:11.5px;color:var(--text-3);font-weight:600;">%100 kuryeye aktarılır</span></div>
+                <div class="tip-pills">
+                    <div class="tip-pill active" id="tip-0" onclick="setTip(0)">Yok (0 ₺)</div>
+                    <div class="tip-pill" id="tip-10" onclick="setTip(10)">+10 ₺</div>
+                    <div class="tip-pill" id="tip-20" onclick="setTip(20)">+20 ₺ ⭐</div>
+                    <div class="tip-pill" id="tip-50" onclick="setTip(50)">+50 ₺ 🚀</div>
+                </div>
             </div>
 
             <div class="custom-sec-title"><span>3. Teslimat Zamanı</span></div>
@@ -193,19 +195,21 @@
                 <div class="sched-pill" onclick="setScheduledTime('21:00 - 21:30', this)"><i class="fa-regular fa-clock"></i> 21:00 - 21:30</div>
             </div>
 
-            <div class="custom-sec-title"><span>4. Akıllı Teslimat Talimatları & Özel Not</span></div>
-            <div class="instruction-chips" id="instruction-chips">
-                <div class="inst-chip active" onclick="selectInstruction('Zile Basma Bebek Uyuyor 👶', this)">
-                    <i class="fa-solid fa-baby"></i> Zile Basma Bebek Uyuyor
-                </div>
-                <div class="inst-chip" onclick="selectInstruction('Kapıya As & Zile Bas 🚪', this)">
-                    <i class="fa-solid fa-door-open"></i> Kapıya As & Zile Bas
-                </div>
-                <div class="inst-chip" onclick="selectInstruction('Güvenliğe Bırak 🛡️', this)">
-                    <i class="fa-solid fa-shield"></i> Güvenliğe Bırak
-                </div>
-                <div class="inst-chip" onclick="selectInstruction('Gelince Ara / Kapıdayım De 📞', this)">
-                    <i class="fa-solid fa-phone"></i> Gelince Ara
+            <div id="checkout-courier-inst-section">
+                <div class="custom-sec-title"><span>4. Akıllı Teslimat Talimatları & Özel Not</span></div>
+                <div class="instruction-chips" id="instruction-chips">
+                    <div class="inst-chip active" onclick="selectInstruction('Zile Basma Bebek Uyuyor 👶', this)">
+                        <i class="fa-solid fa-baby"></i> Zile Basma Bebek Uyuyor
+                    </div>
+                    <div class="inst-chip" onclick="selectInstruction('Kapıya As & Zile Bas 🚪', this)">
+                        <i class="fa-solid fa-door-open"></i> Kapıya As & Zile Bas
+                    </div>
+                    <div class="inst-chip" onclick="selectInstruction('Güvenliğe Bırak 🛡️', this)">
+                        <i class="fa-solid fa-shield"></i> Güvenliğe Bırak
+                    </div>
+                    <div class="inst-chip" onclick="selectInstruction('Gelince Ara / Kapıdayım De 📞', this)">
+                        <i class="fa-solid fa-phone"></i> Gelince Ara
+                    </div>
                 </div>
             </div>
             <input type="text" class="form-input" id="delivery-custom-note" placeholder="Kurye için ek adres veya kapı detayı (örn: Kat 4, Daire 8, Zil: Yılmaz)…" style="margin-top:10px;">
