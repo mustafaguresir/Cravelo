@@ -124,12 +124,22 @@ final class ApiController extends Controller
 
             case 'register':
                 $body = $request->all();
+                $countryCode = trim((string)($body['country_code'] ?? '+90'));
+                if ($countryCode === '') {
+                    $countryCode = '+90';
+                }
+                $rawPhone = trim((string)($body['phone'] ?? ''));
+                $phoneCheck = AuthController::validateAndNormalizePhone($countryCode, $rawPhone);
+                if (!$phoneCheck['valid']) {
+                    Response::json(['status' => 'error', 'message' => $phoneCheck['error']], 400);
+                    return;
+                }
                 try {
                     $created = $this->authService->register(
                         (string)($body['username'] ?? ''),
                         (string)($body['password'] ?? ''),
                         (string)($body['full_name'] ?? ''),
-                        (string)($body['phone'] ?? ''),
+                        $phoneCheck['phone'],
                         UserRole::CUSTOMER
                     );
                     Response::json(['status' => 'success', 'message' => 'Kayıt oluşturuldu.', 'user_id' => $created->id], 201);

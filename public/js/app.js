@@ -851,10 +851,27 @@ function addCustomizedItemToCart() {
 
     const optionText = optionParts.filter(Boolean).join(' • ');
 
-    GustoState.get().selectedRestId = item.rId;
-    GustoState.get().cart.push({
+    const state = GustoState.get();
+    if (state.cart && state.cart.length > 0) {
+        const existingRestId = state.cart[0].rId || state.selectedRestId;
+        if (existingRestId && existingRestId !== item.rId) {
+            const oldRest = state.restaurants.find(r => r.id === existingRestId);
+            const newRest = state.restaurants.find(r => r.id === item.rId);
+            const msg = `Sepetinizde "${oldRest ? oldRest.name : 'başka bir restoran'}" restoranından ürünler var. Sepeti temizleyip "${newRest ? newRest.name : 'bu restoran'}" ürününü eklemek ister misiniz?`;
+            if (typeof confirm === 'function' && !confirm(msg)) {
+                closeCustomizer();
+                return;
+            }
+            state.cart = [];
+            state.activeCoupon = null;
+        }
+    }
+
+    state.selectedRestId = item.rId;
+    state.cart.push({
         id: item.id + '_' + Date.now(),
         itemId: item.id,
+        rId: item.rId,
         name: item.name,
         img: item.img || '',
         price: unit,
@@ -903,12 +920,17 @@ function switchDeliveryMode(mode, silent = false) {
 }
 
 function changeCartQty(cartId, delta) {
-    const cart = GustoState.get().cart;
+    const state = GustoState.get();
+    const cart = state.cart;
     const idx = cart.findIndex(c => c.id === cartId);
     if (idx < 0) return;
     cart[idx].qty += delta;
     if (cart[idx].qty <= 0) {
         cart.splice(idx, 1);
+    }
+    if (cart.length === 0) {
+        state.activeCoupon = null;
+        state.selectedRestId = null;
     }
     GustoState.persist();
     updateCartUI();
@@ -1344,6 +1366,26 @@ function confirmCheckoutAndPlaceOrder() {
 
     if (selectedPayMethod === 'wallet') {
         state.userPoints = Math.max(0, state.userPoints - Math.floor(walletDiscount * 10));
+        const navRole = document.getElementById('nav-role');
+        if (navRole && state.currentRole === 'customer') {
+            navRole.innerHTML = `<i class="fa-solid fa-coins"></i> ${state.userPoints} Puan`;
+        }
+        const accPts = document.getElementById('acc-points');
+        if (accPts) accPts.innerText = `${state.userPoints} Cravelo Puan (${(state.userPoints / 10).toFixed(2)} ₺)`;
+        const walletDisp = document.getElementById('acc-wallet-display');
+        if (walletDisp) walletDisp.innerText = `${state.userPoints} Puan (${(state.userPoints / 10).toFixed(2)} ₺)`;
+    }
+
+    // Mevcut bir aktif sipariş varsa ezilmemesi için geçmiş/sipariş listesine güvenle aktar
+    if (state.activeOrder) {
+        GustoState.stopSimulation();
+        if (typeof GustoMap !== 'undefined' && GustoMap.stopCourierAnimation) {
+            GustoMap.stopCourierAnimation();
+        }
+        const prevExists = state.orderHistory.some(o => o && o.id === state.activeOrder.id);
+        if (!prevExists) {
+            state.orderHistory.unshift({ ...state.activeOrder });
+        }
     }
 
     const customNote = document.getElementById('delivery-custom-note')?.value.trim() || '';
@@ -1351,6 +1393,7 @@ function confirmCheckoutAndPlaceOrder() {
     const restObj = r || state.restaurants[0] || { id: 1, name: 'Lezzet Kebap Salonu' };
     const restName = (restObj && restObj.name) ? restObj.name : 'Lezzet Kebap Salonu';
     const courierTitle = (bestCourier && bestCourier.name) ? bestCourier.name : 'Veli Demir';
+    const grossTotal = Math.max(0, sub - discount + del + (isTakeaway ? 0 : selectedTip));
 
     state.activeOrder = {
         id: state.orderCounter,
@@ -1358,12 +1401,14 @@ function confirmCheckoutAndPlaceOrder() {
         customerName: state.currentUser?.fullName || 'Ahmet Yılmaz',
         rId: restObj.id || 1,
         courier: courierTitle,
-        courierId: bestCourier.id || 1,
+        courierId: isTakeaway ? null : (bestCourier.id || 1),
         courierScore: bestCourier.score || 0,
         courierDistKm: bestCourier.distKm || 0,
         items: state.cart.map(c => ({ name: c.name || 'Menü Lezzeti', qty: c.qty || 1, price: c.price || 150, options: c.options || '' })),
         subtotal: sub,
         discount,
+        walletDiscount,
+        grossTotal,
         delFee: del,
         total: finalTot,
         tip: isTakeaway ? 0 : selectedTip,
@@ -1394,7 +1439,9 @@ function confirmCheckoutAndPlaceOrder() {
     updateCartUI();
     updateOrderTrackerUI();
 
-    GustoMap.startCourierAnimation(bestCourier, r, state.customerLocation);
+    if (!isTakeaway) {
+        GustoMap.startCourierAnimation(bestCourier, r, state.customerLocation);
+    }
 
     GustoAudio.play('order');
     showToast('🎉', `Sipariş #ORD-${state.orderCounter} alındı! ${isTakeaway ? 'Restorandan Gel-Al Hazırlanıyor' : 'Atanan Kurye: ' + bestCourier.name}`, 'success');
@@ -2791,9 +2838,32 @@ function handleUpdateProfile(e) {
     e.preventDefault();
     const state = GustoState.get();
     if (!state.currentUser) state.currentUser = {};
-    state.currentUser.fullName = document.getElementById('profile-fullname')?.value.trim() || 'Kullanıcı';
-    state.currentUser.phone = document.getElementById('profile-phone')?.value.trim() || '';
-    state.currentUser.email = document.getElementById('profile-email')?.value.trim() || '';
+    const newFullName = document.getElementById('profile-fullname')?.value.trim() || 'Kullanıcı';
+    const newPhone = document.getElementById('profile-phone')?.value.trim() || '';
+    const newEmail = document.getElementById('profile-email')?.value.trim() || '';
+
+    state.currentUser.fullName = newFullName;
+    state.currentUser.phone = newPhone;
+    state.currentUser.email = newEmail;
+
+    // Oturum nesnelerini de senkronize et ki profil modalı tekrar açılınca güncel değerler kalsın
+    if (typeof window !== 'undefined' && window.ACTIVE_SESSION) {
+        window.ACTIVE_SESSION.fullName = newFullName;
+        window.ACTIVE_SESSION.phone = newPhone;
+        window.ACTIVE_SESSION.email = newEmail;
+    }
+    try {
+        ['cravelo_session', 'kuryo_session', 'gustogo_session', 'tgo_session'].forEach(k => {
+            const raw = localStorage.getItem(k);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            parsed.fullName = newFullName;
+            parsed.phone = newPhone;
+            parsed.email = newEmail;
+            localStorage.setItem(k, JSON.stringify(parsed));
+        });
+    } catch (err) {}
+
     GustoState.persist();
 
     const nEl = document.getElementById('nav-name');
@@ -3259,14 +3329,31 @@ function renderCourierPanel() {
 function courierChangeStatus(targetStatus) {
     const state = GustoState.get();
     if (!state.activeOrder) return;
-    if (state.activeOrder.serverOrderId && typeof craveloSyncOrderTransition === 'function') {
-        craveloSyncOrderTransition(state.activeOrder.serverOrderId, targetStatus);
+    const targetOrderId = state.activeOrder.id;
+    const targetServerId = state.activeOrder.serverOrderId;
+    if (targetServerId && typeof craveloSyncOrderTransition === 'function') {
+        craveloSyncOrderTransition(targetServerId, targetStatus);
     }
     const curCourier = state.couriers.find(c => c.id === state.selectedCourierId) || state.couriers[0];
     const ok = GustoState.transitionOrderStatus(targetStatus, `${curCourier.name} (Kurye)`, `Kurye teslimat aşamasını ${targetStatus} olarak kaydetti.`);
     if (ok) {
         GustoAudio.play(targetStatus === 'teslim_edildi' ? 'deliver' : 'status');
-        showToast('🛵', `Sipariş #ORD-${state.activeOrder.id} → ${getStatusMeta(targetStatus).label}`, 'success');
+        showToast('🛵', `Sipariş #ORD-${targetOrderId} → ${getStatusMeta(targetStatus).label}`, 'success');
+
+        // Manuel teslimatta siparişi geçmişe taşı ve aktif görevden çıkar
+        if (targetStatus === 'teslim_edildi' && state.activeOrder) {
+            GustoState.stopSimulation();
+            if (typeof GustoMap !== 'undefined' && GustoMap.stopCourierAnimation) {
+                GustoMap.stopCourierAnimation();
+            }
+            const finished = { ...state.activeOrder };
+            const alreadyInHist = state.orderHistory.some(o => o && (o.id === finished.id || (finished.serverOrderId && o.serverOrderId === finished.serverOrderId)));
+            if (!alreadyInHist) {
+                state.orderHistory.unshift(finished);
+            }
+            state.activeOrder = null;
+            GustoState.persist();
+        }
     }
     updateOrderTrackerUI();
     renderCourierPanel();
@@ -3703,8 +3790,8 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
         }
     }
 
-    // Sunucu JSON deposundan (storage/orders.json) gelen gerçek müşteri siparişlerini birleştir
-    if (role === 'customer' && Array.isArray(serverOrdersList) && serverOrdersList.length > 0) {
+    // Sunucu JSON deposundan (storage/orders.json) gelen gerçek siparişleri (Müşteri, Restoran KDS, Kurye, Yönetici) birleştir
+    if (['customer', 'restaurant', 'courier', 'admin'].includes(role) && Array.isArray(serverOrdersList) && serverOrdersList.length > 0) {
         const statusRank = { alindi: 1, hazirlaniyor: 2, hazir: 3, yolda: 4, teslim_edildi: 5, iptal: 6 };
         const existingLocal = [];
         if (state.activeOrder) existingLocal.push(state.activeOrder);
@@ -3754,15 +3841,21 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
                 }))
                 : (localMatch && Array.isArray(localMatch.items) ? localMatch.items : []);
 
+            const resolvedCustomerName = so.customer_name
+                || (localMatch && localMatch.customerName)
+                || (role === 'customer'
+                    ? ((state.currentUser && state.currentUser.fullName) || (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.fullName) || 'Müşteri')
+                    : ('Müşteri #' + (so.customer_id || '')));
+
             const merged = {
                 ...(localMatch || {}),
                 id: localMatch ? localMatch.id : sid,
                 serverOrderId: sid,
                 rId: rId,
                 restaurant: (frontRest && frontRest.name) ? frontRest.name : (so.restaurant || (localMatch && localMatch.restaurant) || 'Lezzet Kebap Salonu'),
-                courierId: cId || (localMatch && localMatch.courierId) || 1,
-                courier: (frontCour && frontCour.name) ? frontCour.name : (so.courier || (localMatch && localMatch.courier) || 'Veli Demir'),
-                customerName: (state.currentUser && state.currentUser.fullName) || (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.fullName) || 'Müşteri',
+                courierId: cId || (localMatch && localMatch.courierId) || null,
+                courier: (frontCour && frontCour.name) ? frontCour.name : (so.courier || (localMatch && localMatch.courier) || 'Kurye Atanıyor'),
+                customerName: resolvedCustomerName,
                 status: finalStatus,
                 total: Number(so.total || so.total_amount || (localMatch && localMatch.total) || 0),
                 items: mappedItems,
@@ -3789,7 +3882,21 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
         // En yeni sipariş üstte olacak şekilde sırala
         mergedOrders.sort((a, b) => Number(b.serverOrderId || b.id || 0) - Number(a.serverOrderId || a.id || 0));
 
-        const nextActiveIdx = mergedOrders.findIndex(o => !['teslim_edildi', 'iptal'].includes(o.status));
+        let nextActiveIdx = -1;
+        if (role === 'courier') {
+            nextActiveIdx = mergedOrders.findIndex(o => o.courierId === state.selectedCourierId && ['hazir', 'yolda'].includes(o.status));
+            if (nextActiveIdx < 0) {
+                nextActiveIdx = mergedOrders.findIndex(o => o.courierId === state.selectedCourierId && !['teslim_edildi', 'iptal'].includes(o.status));
+            }
+        } else if (role === 'restaurant') {
+            nextActiveIdx = mergedOrders.findIndex(o => o.rId === state.selectedVendorRestId && !['teslim_edildi', 'iptal'].includes(o.status));
+            if (nextActiveIdx < 0) {
+                nextActiveIdx = mergedOrders.findIndex(o => !['teslim_edildi', 'iptal'].includes(o.status));
+            }
+        } else {
+            nextActiveIdx = mergedOrders.findIndex(o => !['teslim_edildi', 'iptal'].includes(o.status));
+        }
+
         if (nextActiveIdx >= 0) {
             state.activeOrder = mergedOrders[nextActiveIdx];
             state.orderHistory = mergedOrders.filter((_, idx) => idx !== nextActiveIdx);
@@ -3834,7 +3941,6 @@ async function craveloRefreshMyOrders() {
     if (!isCraveloHttpServer()) return null;
     if (typeof window === 'undefined' || !window.ACTIVE_SESSION || !window.ACTIVE_SESSION.id) return null;
     const role = GustoState.get().currentRole || window.ACTIVE_SESSION.role || 'customer';
-    if (role !== 'customer') return null;
 
     const res = await craveloApiFetch('/api?action=my_orders', { method: 'GET', silentError: true });
     if (res && res.ok && res.data && Array.isArray(res.data.orders)) {
@@ -3846,12 +3952,16 @@ async function craveloRefreshMyOrders() {
 
 async function craveloSyncCreateOrder(orderObj, customerLoc) {
     if (!isCraveloHttpServer() || !orderObj) return null;
+    // Cüzdan bakiyesi tutarın tamamını karşıladığında (total === 0) gerçek sipariş brüt tutarını sunucuya aktar
+    const serverAmount = (typeof orderObj.total === 'number' && orderObj.total > 0)
+        ? orderObj.total
+        : (Number(orderObj.grossTotal || orderObj.subtotal || 1));
     const reqPromise = craveloApiFetch('/api?action=create_order', {
         method: 'POST',
         silentError: true,
         body: JSON.stringify({
             restaurant_id: orderObj.rId || 1,
-            total_amount: orderObj.total || 100,
+            total_amount: serverAmount,
             del_x: customerLoc?.x ?? 18,
             del_y: customerLoc?.y ?? 14,
             delivery_latitude: customerLoc?.lat ?? 40.9850,
@@ -3924,8 +4034,10 @@ async function craveloPollServerPartialRefresh() {
         }
     } else if (role === 'restaurant') {
         await craveloApiFetch('/api/kds-orders', { method: 'GET', silentError: true });
+        await craveloRefreshMyOrders();
     } else if (role === 'courier') {
         await craveloApiFetch('/api/courier-tasks', { method: 'GET', silentError: true });
+        await craveloRefreshMyOrders();
     }
 }
 

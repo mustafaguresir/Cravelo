@@ -262,13 +262,17 @@ const GustoState = (function () {
     }
 
     /**
-     * Hedef restorana en uygun kuryeyi seçer (Haversine & İş Yükü Puanlaması)
+     * Hedef restorana en uygun kuryeyi seçer (Haversine & İş Yükü Puanlaması).
+     * Yalnızca müsait kuryeleri değerlendirir; eşit puanda aktif siparişi az olan kuryeyi seçer (tie-breaker).
      */
     function findBestCourier(restX, restY, restLat = null, restLon = null) {
         let bestCourier = null;
         let lowestScore = Infinity;
 
-        state.couriers.forEach(c => {
+        const available = state.couriers.filter(c => c.status !== 'mesgul');
+        const pool = available.length > 0 ? available : state.couriers;
+
+        pool.forEach(c => {
             let distKm = 0;
             if (restLat && restLon && c.lat && c.lon) {
                 distKm = calculateHaversine(c.lat, c.lon, restLat, restLon);
@@ -283,7 +287,14 @@ const GustoState = (function () {
             const manhattanDist = calculateManhattan(c.x, c.y, restX, restY);
             const score = calculateCourierScore(distKm, c.active);
 
-            if (score < lowestScore) {
+            const isBetter = score < lowestScore;
+            const isTieWithLowerLoad = (
+                bestCourier !== null &&
+                Math.abs(score - lowestScore) < 0.0001 &&
+                c.active < bestCourier.active
+            );
+
+            if (isBetter || isTieWithLowerLoad) {
                 lowestScore = score;
                 bestCourier = { ...c, dist: manhattanDist, distKm, score };
             }
@@ -336,7 +347,7 @@ const GustoState = (function () {
 
         logAudit(state.activeOrder.id, oldStatus, newStatus, actor, comment);
 
-        if (newStatus === 'teslim_edildi') {
+        if (newStatus === 'teslim_edildi' && state.activeOrder.deliveryMode !== 'takeaway' && state.activeOrder.courierId) {
             const cObj = state.couriers.find(c => c.id === state.activeOrder.courierId);
             if (cObj && cObj.active > 0) {
                 cObj.active--;
@@ -363,11 +374,14 @@ const GustoState = (function () {
         if (simInterval) clearInterval(simInterval);
         GustoMap.stopCourierAnimation();
 
-        const cObj = state.couriers.find(c => c.id === state.activeOrder.courierId);
-        if (cObj && cObj.active > 0) cObj.active--;
+        if (state.activeOrder.deliveryMode !== 'takeaway' && state.activeOrder.courierId) {
+            const cObj = state.couriers.find(c => c.id === state.activeOrder.courierId);
+            if (cObj && cObj.active > 0) cObj.active--;
+        }
 
+        const prevStatus = state.activeOrder.status;
         const cancelledOrder = { ...state.activeOrder, status: 'iptal' };
-        logAudit(cancelledOrder.id, cancelledOrder.status, 'iptal', actor || `${state.currentUser?.fullName || 'Müşteri'} (Müşteri)`, reason);
+        logAudit(cancelledOrder.id, prevStatus, 'iptal', actor || `${state.currentUser?.fullName || 'Müşteri'} (Müşteri)`, reason);
 
         state.orderHistory.unshift(cancelledOrder);
         state.activeOrder = null;

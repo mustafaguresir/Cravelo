@@ -255,6 +255,9 @@ final class JsonOrderRepository implements OrderRepositoryInterface
 
         foreach ($records as $row) {
             if ((int)$row['restaurant_id'] === $restaurantId) {
+                if ((string)($row['status'] ?? '') === OrderStatus::IPTAL->value) {
+                    continue;
+                }
                 $createdAt = (string)($row['created_at'] ?? '');
                 if (str_starts_with($createdAt, $date)) {
                     $count++;

@@ -149,9 +149,12 @@ final class OrderControllerTest extends TestCase
     {
         $this->controller->createOrder(1, 1, 220.50, 18, 14);
         $this->controller->createOrder(2, 1, 179.50, 16, 12);
+        $cancelled = $this->controller->createOrder(3, 1, 500.00, 14, 10);
+        $this->controller->cancelOrder((int)$cancelled['order_id']);
 
         $summary = $this->controller->dailySummary(1, date('Y-m-d'));
 
+        // İptal edilen sipariş günlük ciro ve sipariş adedine dahil edilmemelidir
         $this->assertSame(2, $summary['total_orders']);
         $this->assertEqualsWithDelta(400.0, (float)$summary['total_revenue'], 0.01);
     }

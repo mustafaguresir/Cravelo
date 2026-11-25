@@ -240,6 +240,10 @@ final class OrderService
         foreach ($couriersList as $c) {
             $courierNames[$c->id] = $c->name;
         }
+        $userNames = [];
+        foreach ($this->userRepo->findAll() as $u) {
+            $userNames[$u->id] = $u->fullName;
+        }
 
         usort($orders, static fn(Order $a, Order $b): int => $b->id <=> $a->id);
 
@@ -265,6 +269,7 @@ final class OrderService
                 'id' => $o->id,
                 'serverOrderId' => $o->id,
                 'customer_id' => $o->customerId,
+                'customer_name' => $userNames[$o->customerId] ?? ('Müşteri #' . $o->customerId),
                 'rId' => $o->restaurantId,
                 'restaurant_id' => $o->restaurantId,
                 'restaurant' => $restaurantNames[$o->restaurantId] ?? ('Restoran #' . $o->restaurantId),

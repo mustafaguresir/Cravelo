@@ -97,12 +97,15 @@ final class JsonOrderRepositoryTest extends TestCase
     {
         $o1 = new Order(0, 1, 1, 2, OrderStatus::TESLIM_EDILDI, 300.0, 40.9850, 29.0280, null, '2026-11-25 10:00:00');
         $o2 = new Order(0, 1, 1, 2, OrderStatus::TESLIM_EDILDI, 150.0, 40.9850, 29.0280, null, '2026-11-25 14:30:00');
+        $oCancelled = new Order(0, 1, 1, 2, OrderStatus::IPTAL, 999.0, 40.9850, 29.0280, null, '2026-11-25 15:00:00');
         $oOld = new Order(0, 1, 1, 2, OrderStatus::TESLIM_EDILDI, 500.0, 40.9850, 29.0280, null, '2026-11-20 11:00:00');
 
         $this->repo->save($o1);
         $this->repo->save($o2);
+        $this->repo->save($oCancelled);
         $this->repo->save($oOld);
 
+        // İptal edilen ve eski tarihli siparişler günlük ciroya dahil edilmemelidir
         $report = $this->repo->getDailyReport(1, '2026-11-25');
         $this->assertSame(2, $report['total_orders']);
         $this->assertEqualsWithDelta(450.0, (float)$report['total_revenue'], 0.01);

@@ -138,6 +138,13 @@ final class InMemoryOrderRepository implements OrderRepositoryInterface
         $totalRevenue = 0.0;
         foreach ($this->orders as $order) {
             if ($order->restaurantId === $restaurantId) {
+                if ($order->status === OrderStatus::IPTAL) {
+                    continue;
+                }
+                $createdAt = (string)($order->createdAt ?? '');
+                if ($createdAt !== '' && !str_starts_with($createdAt, $date)) {
+                    continue;
+                }
                 $count++;
                 $totalRevenue += $order->totalAmount;
             }
