@@ -216,7 +216,7 @@ const RATING_TAGS = [
 const ADDON_DEALS = [
     {
         id: 101,
-        rId: 6,
+        rId: 5,
         restName: "Tatlı Dünyası",
         name: "San Sebastian Cheesecake",
         price: 140,

@@ -66,6 +66,8 @@ final class Order
 
         $lat = (float)($data['delivery_latitude'] ?? $data['deliveryX'] ?? 40.9850);
         $lon = (float)($data['delivery_longitude'] ?? $data['deliveryY'] ?? 29.0280);
+        $delX = isset($data['delivery_x']) ? (int)$data['delivery_x'] : 18;
+        $delY = isset($data['delivery_y']) ? (int)$data['delivery_y'] : 14;
 
         return new self(
             id: (int)$data['id'],
@@ -78,7 +80,9 @@ final class Order
             deliveryLongitude: $lon,
             estimatedDeliveryTime: $data['estimated_delivery_time'] ?? null,
             createdAt: $data['created_at'] ?? null,
-            items: $items
+            items: $items,
+            deliveryX: $delX,
+            deliveryY: $delY
         );
     }
 }

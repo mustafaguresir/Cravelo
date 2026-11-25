@@ -308,11 +308,58 @@ function filterCategory(cat) {
     }
 }
 
+function getCartRestaurantId(state) {
+    const st = state || GustoState.get();
+    if (st.cart && st.cart.length > 0 && st.cart[0].rId) {
+        return st.cart[0].rId;
+    }
+    return st.selectedRestId || null;
+}
+
+function getEffectiveItemPrice(item) {
+    if (!item) return 0;
+    if (typeof FLASH_DEALS !== 'undefined' && Array.isArray(FLASH_DEALS)) {
+        const deal = FLASH_DEALS.find(d => d.id === item.id);
+        if (deal && typeof deal.newPrice === 'number') {
+            return deal.newPrice;
+        }
+    }
+    return Number(item.price || 0);
+}
+
+function calculateCouponDiscount(rawCode, sub) {
+    if (!rawCode) return { valid: false, discount: 0, code: '', coupon: null, reason: '' };
+    let normalized = String(rawCode).trim().toUpperCase();
+    if (['KURYO30', 'TGO30', 'GUSTO30'].includes(normalized)) {
+        normalized = 'CRAVELO30';
+    }
+    const list = (typeof PROMO_COUPONS !== 'undefined' && Array.isArray(PROMO_COUPONS)) ? PROMO_COUPONS : [];
+    const coupon = list.find(c => c.code.toUpperCase() === normalized);
+    if (!coupon) {
+        return { valid: false, discount: 0, code: normalized, coupon: null, reason: `"${normalized}" geçerli bir Cravelo kupon kodu değil.` };
+    }
+    const minOrder = Number(coupon.minOrder || 0);
+    if (sub < minOrder) {
+        return {
+            valid: false,
+            discount: 0,
+            code: coupon.code,
+            coupon,
+            reason: `${coupon.code} kuponu için minimum sepet tutarı ${minOrder} ₺ olmalıdır (mevcut: ${sub.toFixed(2)} ₺).`
+        };
+    }
+    const rawDisc = coupon.discountType === 'percent'
+        ? (sub * Number(coupon.val || 0))
+        : Number(coupon.val || 0);
+    const discount = Math.min(sub, Math.max(0, rawDisc));
+    return { valid: true, discount, code: coupon.code, coupon, reason: '' };
+}
+
 function buildRestaurantCardHTML(r, state) {
     const distKm = getRealDistanceKm(r, state.customerLocation);
     const isTakeaway = state.deliveryMode === 'takeaway';
     const delFee = isTakeaway ? 0 : Math.max(15, Math.round(distKm * 14));
-    const isFav = state.userFavorites && state.userFavorites.includes(r.id);
+    const isFav = Array.isArray(state.favoriteRestaurants) && state.favoriteRestaurants.includes(r.id);
     const locLabel = r.neighborhood || 'Moda, Kadıköy';
     const distPill = isTakeaway
         ? `<i class="fa-solid fa-person-walking"></i> ${distKm.toFixed(1)} km • Gel-Al 0 ₺`
@@ -387,15 +434,15 @@ function renderRestaurantGrid(categoryFilter) {
 
 function toggleRestFav(btn, rId) {
     const state = GustoState.get();
-    if (!state.userFavorites) state.userFavorites = [];
-    const idx = state.userFavorites.indexOf(rId);
+    if (!Array.isArray(state.favoriteRestaurants)) state.favoriteRestaurants = [];
+    const idx = state.favoriteRestaurants.indexOf(rId);
     if (idx > -1) {
-        state.userFavorites.splice(idx, 1);
+        state.favoriteRestaurants.splice(idx, 1);
         btn.classList.remove('active');
         btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
         showToast('💔', 'Restoran favorilerden çıkarıldı.');
     } else {
-        state.userFavorites.push(rId);
+        state.favoriteRestaurants.push(rId);
         btn.classList.add('active');
         btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
         showToast('❤️', 'Restoran favorilerinize eklendi!');
@@ -406,12 +453,16 @@ function toggleRestFav(btn, rId) {
 }
 
 function showRestaurants() {
-    const role = GustoState.get().currentRole || 'customer';
+    const state = GustoState.get();
+    const role = state.currentRole || 'customer';
     if (role !== 'customer') {
         applyRoleIsolation(role);
         return;
     }
-    GustoState.get().selectedRestId = null;
+    // Sepette ürün varsa restoran bağlantısını koru; yalnızca sepet boşsa sıfırla
+    state.selectedRestId = (state.cart && state.cart.length > 0)
+        ? (state.cart[0].rId || state.selectedRestId)
+        : null;
     const restSec = document.getElementById('rest-section');
     const flashSec = document.getElementById('flash-deals-section');
     const popSec = document.getElementById('popular-showcase-section');
@@ -456,12 +507,14 @@ function selectRestaurant(id) {
     grid.innerHTML = items.map(item => {
         const isFav = state.userFavorites.includes(item.id);
         const isAvail = item.available !== false;
+        const effectivePrice = getEffectiveItemPrice(item);
+        const hasFlashDeal = effectivePrice < item.price;
         return `
             <div class="food-card ${!isAvail ? 'is-soldout' : ''}" onclick="${isAvail ? `openCustomizer(${item.id})` : ''}">
                 <div class="food-img-wrap">
                     <img class="food-img" src="${item.img}" alt="${item.name}" loading="lazy" style="${!isAvail ? 'filter:grayscale(0.75);opacity:0.65;' : ''}">
                     <div class="food-badge-wrap">
-                        <span class="food-tag">${item.tag}</span>
+                        <span class="food-tag">${hasFlashDeal ? '⚡ Flaş İndirim' : item.tag}</span>
                         <button type="button" class="food-heart ${isFav ? 'active' : ''}" style="${isFav ? 'background:var(--primary);color:#fff;' : ''}" onclick="event.stopPropagation();toggleHeart(this, ${item.id})" title="Favori">
                             <i class="fa-${isFav ? 'solid' : 'regular'} fa-heart"></i>
                         </button>
@@ -472,7 +525,10 @@ function selectRestaurant(id) {
                     <div class="food-name">${item.name}</div>
                     <div class="food-desc">${item.desc}</div>
                     <div class="food-footer">
-                        <div class="food-price">${item.price.toFixed(2)} ₺</div>
+                        <div class="food-price">
+                            ${effectivePrice.toFixed(2)} ₺
+                            ${hasFlashDeal ? `<span style="font-size:12px;color:var(--text-3);text-decoration:line-through;margin-left:6px;font-weight:600;">${item.price.toFixed(2)} ₺</span>` : ''}
+                        </div>
                         <button type="button" class="btn-add" ${!isAvail ? 'disabled style="opacity:0.45;cursor:not-allowed;"' : ''} onclick="event.stopPropagation();openCustomizer(${item.id})">
                             <i class="fa-solid ${isAvail ? 'fa-plus' : 'fa-ban'}"></i> ${isAvail ? 'Ekle' : 'Tükendi'}
                         </button>
@@ -681,6 +737,9 @@ function openCustomizer(itemId) {
         return;
     }
 
+    const effectivePrice = getEffectiveItemPrice(item);
+    const hasFlashDeal = effectivePrice < item.price;
+
     const cImg = document.getElementById('cust-img');
     const cName = document.getElementById('cust-name');
     const cDesc = document.getElementById('cust-desc');
@@ -688,7 +747,11 @@ function openCustomizer(itemId) {
     if (cImg) cImg.src = item.img;
     if (cName) cName.innerText = item.name;
     if (cDesc) cDesc.innerText = item.desc;
-    if (cBase) cBase.innerText = item.price.toFixed(2) + ' ₺';
+    if (cBase) {
+        cBase.innerHTML = hasFlashDeal
+            ? `${effectivePrice.toFixed(2)} ₺ <span style="font-size:13px;color:var(--text-3);text-decoration:line-through;margin-left:6px;font-weight:600;">${item.price.toFixed(2)} ₺</span>`
+            : `${effectivePrice.toFixed(2)} ₺`;
+    }
 
     const profileKey = getItemCategoryProfile(item);
     currentCustomConfig = CATEGORY_CUSTOMIZATION_DEFS[profileKey] || CATEGORY_CUSTOMIZATION_DEFS.general;
@@ -799,7 +862,7 @@ function calcCustomTotal() {
     const item = GustoState.get().menuItems.find(m => m.id === customizingItemId);
     if (!item) return 0;
 
-    let unit = item.price + customPortionPrice;
+    let unit = getEffectiveItemPrice(item) + customPortionPrice;
     if (currentCustomConfig && currentCustomConfig.extras) {
         currentCustomConfig.extras.forEach(ext => {
             const el = document.getElementById(ext.id);
@@ -819,7 +882,7 @@ function addCustomizedItemToCart() {
     const item = GustoState.get().menuItems.find(m => m.id === customizingItemId);
     if (!item) return;
 
-    let unit = item.price + customPortionPrice;
+    let unit = getEffectiveItemPrice(item) + customPortionPrice;
     const extras = [];
     if (currentCustomConfig && currentCustomConfig.extras) {
         currentCustomConfig.extras.forEach(ext => {
@@ -940,17 +1003,14 @@ function changeCartQty(cartId, delta) {
 function updateCartUI() {
     const state = GustoState.get();
     const cart = state.cart;
-    const r = state.selectedRestId ? state.restaurants.find(x => x.id === state.selectedRestId) : null;
+    const cartRestId = getCartRestaurantId(state);
+    const r = cartRestId ? state.restaurants.find(x => x.id === cartRestId) : null;
     const tot = cart.reduce((s, c) => s + c.qty, 0);
     const sub = cart.reduce((s, c) => s + c.price * c.qty, 0);
 
-    let discount = 0;
-    let discCode = state.activeCoupon || '';
-
-    if (state.activeCoupon === 'CRAVELO30' || state.activeCoupon === 'KURYO30' || state.activeCoupon === 'TGO30' || state.activeCoupon === 'GUSTO30') discount = sub * 0.30;
-    else if (state.activeCoupon === 'PIZZA50' && cart.some(c => c.price > 180)) discount = 50.0;
-    else if (state.activeCoupon === 'BURGERFEST') discount = 35.0;
-    else if (state.activeCoupon === 'HEMEN10') discount = 10.0;
+    const couponEval = calculateCouponDiscount(state.activeCoupon, sub);
+    let discount = couponEval.valid ? couponEval.discount : 0;
+    let discCode = couponEval.valid ? couponEval.code : '';
 
     // Gel-Al Modu Kontrolü: 0 ₺ Teslimat + Otomatik %20 İndirim
     const isTakeaway = state.deliveryMode === 'takeaway';
@@ -1299,17 +1359,15 @@ function toggleEcoFriendly(checked) {
 
 function calcCheckoutTotal() {
     const state = GustoState.get();
-    const r = state.restaurants.find(x => x.id === (state.selectedRestId || 1)) || state.restaurants[0];
+    const cartRestId = getCartRestaurantId(state) || 1;
+    const r = state.restaurants.find(x => x.id === cartRestId) || state.restaurants[0];
     const sub = state.cart.reduce((s, c) => s + c.price * c.qty, 0);
     const distKm = getRealDistanceKm(r, state.customerLocation);
     const isTakeaway = state.deliveryMode === 'takeaway';
     const del = isTakeaway ? 0 : Math.max(15, Math.round(distKm * 14));
 
-    let discount = 0;
-    if (state.activeCoupon === 'CRAVELO30' || state.activeCoupon === 'KURYO30' || state.activeCoupon === 'TGO30' || state.activeCoupon === 'GUSTO30') discount = sub * 0.30;
-    else if (state.activeCoupon === 'PIZZA50' && state.cart.some(c => c.price > 180)) discount = 50.0;
-    else if (state.activeCoupon === 'BURGERFEST') discount = 35.0;
-    else if (state.activeCoupon === 'HEMEN10') discount = 10.0;
+    const couponEval = calculateCouponDiscount(state.activeCoupon, sub);
+    let discount = couponEval.valid ? couponEval.discount : 0;
 
     if (isTakeaway) {
         const takeawayDisc = sub * 0.20;
@@ -1349,7 +1407,9 @@ function confirmCheckoutAndPlaceOrder() {
     const state = GustoState.get();
     state.orderCounter++;
 
-    const r = state.restaurants.find(x => x.id === (state.selectedRestId || 1)) || state.restaurants[0];
+    const cartRestId = getCartRestaurantId(state) || 1;
+    state.selectedRestId = cartRestId;
+    const r = state.restaurants.find(x => x.id === cartRestId) || state.restaurants[0];
     const { sub, discount, del, walletDiscount, finalTot, isTakeaway } = calcCheckoutTotal();
 
     // AKILLI HAVERSINE + İŞ YÜKÜ KURYE ATAMASI (Gel-Al değilse)
@@ -2500,29 +2560,34 @@ function renderAccountOrders() {
 }
 
 function reorderItems(orderId) {
-    const all = [...(GustoState.get().activeOrder ? [GustoState.get().activeOrder] : []), ...GustoState.get().orderHistory];
+    const state = GustoState.get();
+    const all = [...(state.activeOrder ? [state.activeOrder] : []), ...state.orderHistory];
     const order = all.find(o => o.id === orderId);
     if (!order) return;
 
-    GustoState.get().selectedRestId = order.rId;
-    GustoState.get().cart = [];
-    order.items.forEach(it => {
-        const fullItem = GustoState.get().menuItems.find(m => m.name === it.name) || { id: 1, name: it.name, price: it.price || 150 };
-        GustoState.get().cart.push({ ...fullItem, id: fullItem.id + '_' + Date.now(), qty: it.qty, options: it.options || '' });
+    const targetRestId = order.rId || 1;
+    state.selectedRestId = targetRestId;
+    state.cart = [];
+    const baseTs = Date.now();
+    (order.items || []).forEach((it, idx) => {
+        const fullItem = state.menuItems.find(m => m.name === it.name && m.rId === targetRestId)
+            || state.menuItems.find(m => m.name === it.name)
+            || { id: idx + 1, rId: targetRestId, name: it.name, price: it.price || 150 };
+        const priceVal = fullItem.rId === targetRestId ? getEffectiveItemPrice(fullItem) : Number(it.price || fullItem.price || 150);
+        state.cart.push({
+            ...fullItem,
+            id: `${fullItem.id}_${baseTs}_${idx}`,
+            itemId: fullItem.id,
+            rId: targetRestId,
+            price: priceVal,
+            qty: Number(it.qty || 1),
+            options: it.options || ''
+        });
     });
 
     GustoState.persist();
-    updateCartUI();
     closeAccountModal();
-
-    const restSec = document.getElementById('rest-section');
-    const flashSec = document.getElementById('flash-deals-section');
-    const popSec = document.getElementById('popular-showcase-section');
-    const menuSec = document.getElementById('menu-section');
-    if (restSec) restSec.style.display = 'none';
-    if (flashSec) flashSec.style.display = 'none';
-    if (popSec) popSec.style.display = 'none';
-    if (menuSec) menuSec.style.display = 'grid';
+    selectRestaurant(targetRestId);
 
     GustoAudio.play('add');
     showToast('🛒', 'Geçmiş sipariş ürünleri sepetinize eklendi!', 'success');
@@ -2609,12 +2674,33 @@ function toggleHeart(el, itemId) {
 }
 
 function applyCouponCode(code) {
-    GustoState.get().activeCoupon = code.toUpperCase();
+    const state = GustoState.get();
+    const sub = (state.cart || []).reduce((s, c) => s + (c.price * c.qty), 0);
+    const evalRes = calculateCouponDiscount(code, sub);
+
+    if (!evalRes.coupon) {
+        GustoAudio.play('cancel');
+        showToast('🚫', evalRes.reason || 'Geçersiz kupon kodu!', 'danger');
+        return;
+    }
+
+    if (sub > 0 && !evalRes.valid) {
+        GustoAudio.play('cancel');
+        showToast('⚠️', evalRes.reason, 'warn');
+        return;
+    }
+
+    state.activeCoupon = evalRes.code;
     GustoState.persist();
     closeAccountModal();
     updateCartUI();
     GustoAudio.play('add');
-    showToast('🎁', `"${GustoState.get().activeCoupon}" kuponu sepetinize uygulandı!`, 'success');
+
+    if (sub === 0) {
+        showToast('🎁', `"${evalRes.code}" kuponu kaydedildi (Min. sepet: ${evalRes.coupon.minOrder} ₺).`, 'success');
+    } else {
+        showToast('🎁', `"${evalRes.code}" kuponu uygulandı (-${evalRes.discount.toFixed(2)} ₺)!`, 'success');
+    }
 }
 
 function applyCartCouponInput() {
@@ -3784,6 +3870,7 @@ function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
             if (Array.isArray(vault.savedAddresses) && vault.savedAddresses.length > 0) state.savedAddresses = vault.savedAddresses;
             if (vault.customerLocation) state.customerLocation = vault.customerLocation;
             if (Array.isArray(vault.userFavorites)) state.userFavorites = vault.userFavorites;
+            if (Array.isArray(vault.favoriteRestaurants)) state.favoriteRestaurants = vault.favoriteRestaurants;
             if (typeof vault.orderCounter === 'number' && vault.orderCounter > state.orderCounter) {
                 state.orderCounter = vault.orderCounter;
             }

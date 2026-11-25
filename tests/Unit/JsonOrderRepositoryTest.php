@@ -69,10 +69,17 @@ final class JsonOrderRepositoryTest extends TestCase
             deliveryLatitude: 40.9860,
             deliveryLongitude: 29.0290,
             estimatedDeliveryTime: '25 dk',
-            createdAt: '2026-11-25 12:00:00'
+            createdAt: '2026-11-25 12:00:00',
+            deliveryX: 24,
+            deliveryY: 9
         );
 
         $orderId = $this->repo->saveWithTransaction($order, [$item]);
+        $reloaded = $this->repo->findById($orderId);
+        $this->assertNotNull($reloaded);
+        $this->assertSame(24, $reloaded->deliveryX);
+        $this->assertSame(9, $reloaded->deliveryY);
+
         $details = $this->repo->getOrderWithDetails($orderId);
 
         $this->assertNotNull($details);

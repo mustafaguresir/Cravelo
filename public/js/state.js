@@ -12,6 +12,7 @@ const GustoState = (function () {
         customerLocation: { x: 18, y: 14, name: "Evim (Moda)" },
         savedAddresses: [...INITIAL_ADDRESSES],
         userFavorites: [1, 6, 10],
+        favoriteRestaurants: [1, 2],
         userPoints: 145,
         activeCoupon: null,
 
@@ -114,6 +115,7 @@ const GustoState = (function () {
                 if (parsed.savedAddresses) state.savedAddresses = parsed.savedAddresses;
                 if (parsed.customerLocation) state.customerLocation = parsed.customerLocation;
                 if (parsed.userFavorites) state.userFavorites = parsed.userFavorites;
+                if (Array.isArray(parsed.favoriteRestaurants)) state.favoriteRestaurants = parsed.favoriteRestaurants;
                 if (typeof parsed.userPoints === 'number') state.userPoints = parsed.userPoints;
                 if (parsed.cart) state.cart = parsed.cart;
                 
@@ -166,6 +168,7 @@ const GustoState = (function () {
                 savedAddresses: state.savedAddresses,
                 customerLocation: state.customerLocation,
                 userFavorites: state.userFavorites,
+                favoriteRestaurants: state.favoriteRestaurants,
                 userPoints: state.userPoints,
                 activeOrder: state.activeOrder,
                 orderHistory: state.orderHistory,
@@ -211,6 +214,7 @@ const GustoState = (function () {
                 savedAddresses: state.savedAddresses,
                 customerLocation: state.customerLocation,
                 userFavorites: state.userFavorites,
+                favoriteRestaurants: state.favoriteRestaurants,
                 userPoints: state.userPoints,
                 cart: state.cart,
                 activeOrder: state.activeOrder,
