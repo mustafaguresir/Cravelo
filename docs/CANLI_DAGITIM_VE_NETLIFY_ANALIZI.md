@@ -81,19 +81,16 @@ Netlify; modern web için geliştirilmiş, **Jamstack (JavaScript, APIs, Pre-ren
 Bu seçenek, sunucu yönetimiyle (sysadmin/DevOps) uğraşmadan, Git deposuna `git push` yapıldığı anda otomatik olarak derlenen ve kalıcı disk üzerinde çalışan en modern yöntemdir.
 
 #### 1. Proje Kök Dizinindeki Hazır `Dockerfile`
-Proje kök dizininde yer alan `Dockerfile`, PHP 8.2 Apache resmi imajını kullanır, `mod_rewrite` modülünü açar ve `public/` klasörünü DocumentRoot yapar:
+Proje kök dizininde yer alan `Dockerfile`, PHP 8.2 Apache resmi imajını kullanır; `mod_rewrite` + `AllowOverride All` (Front Controller `.htaccess`), Render'ın dinamik `$PORT` değişkeni, güvenli PHP üretim ayarları ve boş diskte otomatik `bin/seed.php` başlatıcısı ile doğrudan Render.com üzerinde çalışmaya hazırdır:
 ```dockerfile
 FROM php:8.2-apache
-RUN apt-get update && apt-get install -y libzip-dev zip unzip && docker-php-ext-install opcache && rm -rf /var/lib/apt/lists/*
-RUN a2enmod rewrite
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN docker-php-ext-install opcache && a2enmod rewrite
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-WORKDIR /var/www/html
-COPY . /var/www/html/
-RUN mkdir -p /var/www/html/storage && chown -R www-data:www-data /var/www/html/storage /var/www/html/public && chmod -R 775 /var/www/html/storage
+# <Directory /var/www/html/public> içinde AllowOverride All + DirectoryIndex index.php
+# Başlatıcı (/usr/local/bin/docker-entrypoint.sh): $PORT bağlama + eksikse php bin/seed.php + www-data 775 izinleri
 EXPOSE 80
-CMD ["apache2-foreground"]
+CMD ["/usr/local/bin/docker-entrypoint.sh"]
 ```
 
 #### 2. Render.com Üzerinde Adım Adım Canlıya Alma

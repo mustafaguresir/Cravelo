@@ -1,0 +1,31 @@
+# Cravelo — Docker build bağlamı dışında tutulacak yerel/geliştirme dosyaları
+.git/
+.github/
+.phpunit.cache/
+.env
+.DS_Store
+
+# Yerel Windows PHP ikili dosyaları, Composer cache ve geliştirme bağımlılıkları
+# (public/index.php dahili PSR-4 yükleyiciye sahiptir; üretimde vendor/ gerekmez)
+php/
+vendor/
+composer.phar
+*.exe
+*.zip
+*.bat
+
+# Sunum, test çıktıları, ekran görüntüleri ve Python yardımcı önbellekleri
+*.pptx
+__pycache__/
+tests/
+docs/
+build_full_presentation.py
+server.py
+debug.log
+UI_UX_ARCHITECTURE_PLAN.md
+GEMINI.md
+
+# Geçici kilit ve log dosyaları
+storage/*.lock
+storage/*.log
+storage/*.tmp
