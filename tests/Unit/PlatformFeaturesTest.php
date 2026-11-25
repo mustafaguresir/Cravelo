@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace App\Tests\Unit;
 
 use App\Enum\CourierStatus;
 use App\Enum\OrderStatus;

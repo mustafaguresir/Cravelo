@@ -461,8 +461,19 @@ assertTest(
 console.log('\n--- 5. BACKEND PHP MVC / KÖK ROTA (/) İZOLASYON DOĞRULAMASI ---');
 
 try {
-    const phpExecutable = path.resolve(__dirname, '../php/php.exe');
-    if (fs.existsSync(phpExecutable)) {
+    const bundledPhp = path.resolve(__dirname, '../php/php.exe');
+    let phpExecutable = null;
+    if (fs.existsSync(bundledPhp)) {
+        phpExecutable = bundledPhp;
+    } else {
+        try {
+            execSync('php -v', { stdio: 'ignore' });
+            phpExecutable = 'php';
+        } catch (e) {
+            phpExecutable = null;
+        }
+    }
+    if (phpExecutable) {
         function runPhpControllerIndex(sessionUser = null) {
             const runnerScript = path.join(__dirname, 'temp_php_check_' + Math.random().toString(36).substring(7) + '.php');
             const userExport = sessionUser ? JSON.stringify(sessionUser) : 'null';

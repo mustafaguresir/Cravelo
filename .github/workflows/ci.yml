@@ -1,0 +1,65 @@
+name: Cravelo CI — 360 Tests & PHPStan Level 5
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: PHP 8.2, PHPStan L5, PHPUnit, Node & Python Suites
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup PHP 8.2 & Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Seed JSON storage
+        run: php bin/seed.php
+
+      - name: Run PHPStan (Level 5)
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Run PHPUnit 11 (54 Tests)
+        run: vendor/bin/phpunit
+
+      - name: Run Standalone PHP Suites (32 Tests)
+        run: |
+          php tests/run_tests.php
+          php tests/test_architectural_flows.php
+
+      - name: Run Python Architectural & Spec Suites (59 Tests)
+        run: |
+          python3 tests/test_architectural_flows.py
+          python3 tests/run_all_cmd_tests.py
+          python3 tests/verify_system.py
+
+      - name: Run Node.js UI, RBAC & Feature Suites (215 Tests)
+        run: |
+          node tests/test_address_and_restaurant.js
+          node tests/test_comprehensive_improvements.js
+          node tests/test_login_and_registration.js
+          node tests/test_landing_and_auth_gate.js
+          node tests/test_burger_hero_scrollytelling.js
+          node tests/test_deep_audit_fixes.js
+          node tests/test_platform_features.js
