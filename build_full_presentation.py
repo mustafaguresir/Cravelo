@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Cravelo — Aşama 2: Veritabanısız Çalışan Prototip & Yazılım Mimarisi Savunması
-21 Slaytlık Akademik Jüri Savunma Sunumu Üreticisi (16:9 Widescreen) — Bireysel Sunum: Mustafa Güreşir
+22 Slaytlık Akademik Jüri Savunma Sunumu Üreticisi (16:9 Widescreen) — Bireysel Sunum: Mustafa Güreşir
 
 Kullanım:
     python build_full_presentation.py
@@ -79,7 +79,7 @@ C_MUTED = RGBColor(0x94, 0xA3, 0xB8)       # Muted Slate 400
 
 FONT_MAIN = "Segoe UI"
 FONT_MONO = "Consolas"
-TOTAL_SLIDES = 21
+TOTAL_SLIDES = 22
 
 # Safe Layout Constants (16:9 -> 13.333" x 7.5")
 SLIDE_W = 13.333
@@ -1186,7 +1186,7 @@ def build_presentation():
         ("GitHub Deposu & Dal Yapısı:", "github.com/mustafaguresir/Cravelo — Korumalı main dalı, feat/* & fix/* geliştirme dalları ve Pull Request inceleme akışı."),
         ("Hafta 5–6 (Veri & Çekirdek):", "storage/*.json + flock() atomik yazım, 4 Repository arayüzü + Json* depoları ve bin/seed.php tohumlama."),
         ("Hafta 7–8 (Güvenlik & Test):", "Front Controller, OrderService, PRG + CSRF, IDOR 403, 54 PHPUnit testi, InMemory depolar ve PHPStan L5 (0 hata)."),
-        ("Hafta 9 (Arayüz & Savunma):", "XAMPP/WAMP BasePath, KDS CRUD, kurye vardiya, yönetici analitiği, canlı sohbet/yorumlar ve 21 slaytlık savunma sunumu."),
+        ("Hafta 9 (Arayüz & Savunma):", "XAMPP/WAMP BasePath, KDS CRUD, kurye vardiya, yönetici analitiği, canlı sohbet/yorumlar ve 22 slaytlık savunma sunumu."),
     ]
     for lead, body in git_pts:
         add_rich_bullet(tf, lead, body, lead_color=C_WHITE, body_color=C_TEXT, font_size=9.8, space_after=6)
@@ -1267,10 +1267,101 @@ def build_presentation():
 • Önemli UX ve güvenlik detayı: .customer-only-ui sınıfımız sayesinde kurye veya restoran giriş yaptığında üst barda sepet ya da müşteri adres seçicisi görünmez; her aktör yalnızca kendi iş akışına odaklanır.""")
 
     # =========================================================================
-    # SLAYT 15: YENİ MODERN ARAYÜZ VİTRİNİ 1 (GERÇEK EKRAN GÖRÜNTÜLERİ!)
+    # SLAYT 15 (YENİ): DETAYLI USE CASE & TÜM ROLLERİN KULLANIM SENARYOLARI
+    # =========================================================================
+    s_uc = prs.slides.add_slide(blank)
+    add_chrome(s_uc, 15, "14. Use Case Analizi & Aktör Yetkinlik Haritası",
+               "Detaylı Use Case ve Tüm Rollerin Yaptığı İşlemler (UC-01 .. UC-24)",
+               "Ziyaretçi, Müşteri, Restoran (KDS), Kurye ve Yönetici rollerinin sistem sınırındaki tüm kullanım senaryoları ve UML ilişkileri.")
+
+    # Top Strip: Shared Auth & Security Use Cases (UC-01 .. UC-04)
+    add_card(s_uc, MARGIN_X, CONTENT_TOP, CONTENT_W, 0.62, bg_color=C_CARD_HI, border_color=C_PURPLE, accent_color=C_PURPLE, accent_pos="left")
+    uc_top_pills = [
+        ("👤 Ziyaretçi: UC-01 Kayıt (PRG)", C_CYAN),
+        ("🔐 Ortak: UC-02 Giriş & UC-03 POST /logout", C_GOLD),
+        ("🛡️ <<include>> UC-04 RBAC & IDOR (403)", C_RED),
+        ("✨ <<extend>> Gel-Al %20 • Yorum +25P", C_EMERALD),
+    ]
+    up_gap = 0.12
+    up_w = (CONTENT_W - 0.36 - up_gap * 3) / 4.0
+    for idx, (ptxt, pcol) in enumerate(uc_top_pills):
+        ux = MARGIN_X + 0.18 + idx * (up_w + up_gap)
+        add_pill(s_uc, ux, CONTENT_TOP + 0.13, up_w, 0.36, ptxt, C_BG, pcol, border_color=pcol, font_size=8.4)
+
+    # Main 4-Column Actor Use Case Cards
+    uc_actors = [
+        ("🛍️ MÜŞTERİ (UC-05 .. UC-13)", C_CYAN, [
+            ("UC-05 Keşfet:", "7 restoran/27 ürün, kategori & akıllı sıralama."),
+            ("UC-06 Özelleştir:", "Kategori duyarlı opsiyon & sepet yönetimi."),
+            ("UC-07 Kupon/Gel-Al:", "Kupon kodu & Gel-Al (%20) <<extend>>."),
+            ("UC-08 Sipariş:", "Sunucu fiyat/stok/kupon doğrulamalı oluştur."),
+            ("UC-09 Canlı Takip:", "5-adımlı stepper & 5 sn kısmi AJAX yenileme."),
+            ("UC-10 İptal:", "Yalnız 'alindi' iken; 'hazirlaniyor' kilitli."),
+            ("UC-11 Profil/Adres:", "Sunucu kalıcı profil & Kadıköy adres defteri."),
+            ("UC-12 Yorum:", "3 kırılımlı puanlama (+25 Puan) <<extend>>."),
+            ("UC-13 Sohbet:", "Kurye ile çift yönlü canlı sunucu sohbeti."),
+        ]),
+        ("👨‍🍳 RESTORAN KDS (UC-14 .. UC-18)", C_CORAL, [
+            ("UC-14 Mutfak Akışı:", "Alındı ➔ Hazırlanıyor ➔ Hazır ilerletme."),
+            ("UC-14b KDS Zili:", "Yeni siparişte otomatik zil & mutfak fişi."),
+            ("UC-15 Kurye Atama:", "Hazır'da Haversine + 2×Yük <<include>>."),
+            ("UC-15b Gel-Al:", "Tezgâhtan müşteriye teslimi tamamlama."),
+            ("UC-16 Menü CRUD:", "+ Yeni Ürün Ekle, Düzenle & anlık stok."),
+            ("UC-17 Şube Aç/Kapa:", "Kapalı şube yeni siparişleri 400 ile reddeder."),
+            ("UC-18 Satış Raporu:", "Tarih filtreli sunucu ciro raporu & CSV."),
+            ("Sahiplik Kilidi:", "Yalnızca kendi şubelerinde işlem (RBAC)."),
+        ]),
+        ("🛵 KURYE (UC-19 .. UC-21)", C_EMERALD, [
+            ("UC-19 Çoklu Görev:", "Atanmış tüm teslimat görevlerini listeleme."),
+            ("UC-19b Rota & Skor:", "Restoran/müşteri km dökümü & atama skoru."),
+            ("UC-20 Teslim Akışı:", "Paketi Al (Yolda) ➔ Teslim Et (Tamamla)."),
+            ("State Kilidi:", "Yoldaki paket geriye mutfağa dönemez."),
+            ("UC-21 Saha Bölgesi:", "Sabit Kadıköy bölgelerini sunucuya kaydet."),
+            ("UC-21b Vardiya:", "Müsait / Mola (meşgul atamadan çıkarılır)."),
+            ("UC-13 Canlı Sohbet:", "Müşteriyle IDOR korumalı anlık mesajlaşma."),
+            ("Kazanç & Bahşiş:", "Günlük kazanç ve %100 kurye bahşiş özeti."),
+        ]),
+        ("👑 YÖNETİCİ (UC-22 .. UC-24)", C_GOLD, [
+            ("UC-22 Ciro Analitiği:", "Restoran bazlı canlı gelir bar grafiği & CSV."),
+            ("Tarih & Mod Analizi:", "Tarih filtresi, ort. sepet & Kurye/Gel-Al."),
+            ("UC-23 Sipariş Yönet:", "Tüm siparişleri filtrele, ilerlet veya iptal et."),
+            ("UC-23b Manuel Atama:", "Atomik yük dengelemeli kurye yeniden atama."),
+            ("UC-17 Şube Kontrol:", "7 partner restoran şubesini tek tık aç/kapa."),
+            ("UC-24 Şehir Radarı:", "Kadıköy haritası & kurye iş yükü skor tablosu."),
+            ("Audit Log Denetimi:", "audit_logs.json zaman damgalı sistem izi."),
+            ("4-Rol Önizleme:", "Tek yetkili admin_mustafa canlı rol geçişi."),
+        ]),
+    ]
+
+    uc_gap = 0.15
+    uc_w = (CONTENT_W - uc_gap * 3) / 4.0
+    uc_y = CONTENT_TOP + 0.74
+    uc_h = 3.92
+    for idx, (atitle, acol, items) in enumerate(uc_actors):
+        ax = MARGIN_X + idx * (uc_w + uc_gap)
+        add_card(s_uc, ax, uc_y, uc_w, uc_h, bg_color=C_CARD, border_color=acol, accent_color=acol, accent_pos="top")
+        tb_u = add_textbox(s_uc, ax + 0.12, uc_y + 0.12, uc_w - 0.24, uc_h - 0.20)
+        tf = tb_u.text_frame
+        add_para(tf, atitle, font_size=9.8, color=acol, bold=True, space_after=5, first=True)
+        for lead, body in items:
+            add_rich_bullet(tf, lead, body, lead_color=C_WHITE, body_color=C_TEXT, font_size=8.1, space_after=2.5)
+
+    # Bottom UML Include/Extend Summary Bar
+    add_card(s_uc, MARGIN_X, uc_y + uc_h + 0.12, CONTENT_W, 0.52, bg_color=C_CARD_ALT, border_color=C_BORDER, radius=0.12)
+    add_textbox(s_uc, MARGIN_X + 0.18, uc_y + uc_h + 0.15, CONTENT_W - 0.36, 0.46,
+                "📐  UML İLİŞKİLERİ:   <<include>> UC-08/09/10/13/14/20/23 ➔ UC-04 (RBAC/IDOR 403)   |   <<include>> UC-14 (Hazır) ➔ UC-15 (Haversine + 2×Aktif)   |   <<extend>> UC-07 (Kupon/Gel-Al) ➔ UC-06  •  UC-12 (Yorum/+25 Puan) ➔ UC-09",
+                font_size=8.7, color=C_CYAN, bold=True, v_anchor=MSO_ANCHOR.MIDDLE)
+
+    set_notes(s_uc, """[Detaylı Use Case & Tüm Rollerin Kullanım Senaryoları — UC-01 .. UC-24]
+• Bu slaytta Cravelo sistemindeki 5 aktörün (Ziyaretçi, Müşteri, Restoran KDS, Kurye ve Yönetici) gerçekleştirdiği 24 kullanım senaryosunun tamamını tek bakışta görüyoruz.
+• Üst şeritte tüm rollerin ortak kullandığı Kimlik Doğrulama (Bcrypt, CSRF, HTTP 303 PRG, POST /logout) ve her korumalı işlemde zorunlu çalışan <<include>> UC-04 RBAC/IDOR yetki kontrolü yer alır.
+• Müşteri tarafında keşiften özelleştirmeye, Gel-Al %20 indirimden 5 saniyelik kısmi AJAX takibe, değerlendirme (+25 Puan) ve canlı sohbete kadar tam akış; Restoran KDS'te mutfak geçişleri, otomatik zil, tam menü CRUD, şube aç/kapa ve günlük satış raporu/CSV; Kurye'de çoklu görev, Müsait/Mola vardiyası, sabit Kadıköy saha bölgesi ve müşteri sohbeti; Yönetici'de ise canlı ciro grafiği, manuel kurye atama, 7 şube yönetimi ve denetim günlüğü bulunur.""")
+
+    # =========================================================================
+    # SLAYT 16: YENİ MODERN ARAYÜZ VİTRİNİ 1 (GERÇEK EKRAN GÖRÜNTÜLERİ!)
     # =========================================================================
     s14 = prs.slides.add_slide(blank)
-    add_chrome(s14, 15, "14. Modern FoodTech Arayüz Vitrini — Bölüm 1",
+    add_chrome(s14, 16, "15. Modern FoodTech Arayüz Vitrini — Bölüm 1",
                "Yeni Cravelo Arayüzü: Karşılama, Giriş/Kayıt ve Müşteri Portalı",
                "DoorDash / Uber Eats / Wolt standardında yenilenen, Açık & Koyu Mod destekli canlı uygulama ekran görüntüleri.")
 
@@ -1329,10 +1420,10 @@ def build_presentation():
   4) Müşteri Portalı Açık Mod (Pure Pearl) — her iki temada da sıfır kontrast sorunu, ham koordinat gizli ve gerçek Kadıköy mahalle isimleri görünüyor.""")
 
     # =========================================================================
-    # SLAYT 16: YENİ MODERN ARAYÜZ VİTRİNİ 2 (KDS, KURYE, YÖNETİCİ)
+    # SLAYT 17: YENİ MODERN ARAYÜZ VİTRİNİ 2 (KDS, KURYE, YÖNETİCİ)
     # =========================================================================
     s15 = prs.slides.add_slide(blank)
-    add_chrome(s15, 16, "15. Modern FoodTech Arayüz Vitrini — Bölüm 2",
+    add_chrome(s15, 17, "16. Modern FoodTech Arayüz Vitrini — Bölüm 2",
                "Operasyonel Paneller: Restoran KDS, Kurye Kokpiti ve Yönetici Merkezi",
                "Üç operasyon rolü için özel tasarlanmış canlı ekranlar — tüm haritalar 0 ücretli API ile sabit Kadıköy koordinatlarını çizer.")
 
@@ -1381,10 +1472,10 @@ def build_presentation():
   3) Yönetici Merkezi (Mustafa Güreşir): Bento KPI'lar, 4-rol önizleme çubuğu, şehir radar haritası, kurye iş yükü ilerleme çubukları ve denetim günlüğü.""")
 
     # =========================================================================
-    # SLAYT 17: ETKİLEŞİMLİ MODALLAR (11), AKILLI ÖZELLEŞTİRİCİ & KISMİ AJAX
+    # SLAYT 18: ETKİLEŞİMLİ MODALLAR (11), AKILLI ÖZELLEŞTİRİCİ & KISMİ AJAX
     # =========================================================================
     s16 = prs.slides.add_slide(blank)
-    add_chrome(s16, 17, "16. Etkileşim & Reaktif Senkronizasyon",
+    add_chrome(s16, 18, "17. Etkileşim & Reaktif Senkronizasyon",
                "11 Etkileşimli Modal, Akıllı Özelleştirici ve Kısmi AJAX Yenileme",
                "Hibrit mimari: Auth/formlarda HTTP 303 PRG güvenliği, canlı sipariş ve KDS akışlarında F5'siz kısmi AJAX hızı.")
 
@@ -1443,10 +1534,10 @@ def build_presentation():
 • Görünürlük duyarlı (document.hidden) kısmi AJAX yenileme ile restoran veya kurye aksiyonları F5 gerekmeden anında yansır.""")
 
     # =========================================================================
-    # SLAYT 18: HOCANIN 3 RESMİ DOĞRULAMA KANITI & MUTASYON TESTİ DENEYİ
+    # SLAYT 19: HOCANIN 3 RESMİ DOĞRULAMA KANITI & MUTASYON TESTİ DENEYİ
     # =========================================================================
     s17 = prs.slides.add_slide(blank)
-    add_chrome(s17, 18, "17. Resmi Şartname Kanıtları & Mutasyon Laboratuvarı",
+    add_chrome(s17, 19, "18. Resmi Şartname Kanıtları & Mutasyon Laboratuvarı",
                "Hocanın 3 Resmi Doğrulama Kanıtı ve Mutasyon Testi Deneyleri",
                "Şartnamede sözlü sınav kanıtı olarak istenen 3 deney + testlerin gerçekten kuralı ölçtüğünü ispatlayan 2 mutasyon.")
 
@@ -1512,10 +1603,10 @@ def build_presentation():
 • Bu deneyler testlerimizin sahte yeşil olmadığını kesin biçimde kanıtlar.""")
 
     # =========================================================================
-    # SLAYT 19: OTOMATİK TEST PAKETİ (312 TEST), PHPUNIT 11 & PHPSTAN L5
+    # SLAYT 20: OTOMATİK TEST PAKETİ (360 TEST), PHPUNIT 11 & PHPSTAN L5
     # =========================================================================
     s18 = prs.slides.add_slide(blank)
-    add_chrome(s18, 19, "18. Kalite Güvencesi, PHPUnit, PHPStan & İzlenebilirlik",
+    add_chrome(s18, 20, "19. Kalite Güvencesi, PHPUnit, PHPStan & İzlenebilirlik",
                f"Otomatik Test Paketi ({TEST_STATS['total']} Test) ve PHPStan Seviye 5 (0 Hata)",
                "Hocanın 'en az 10 test' beklentisinin 31 kat üzerinde; gerçek vendor/bin/phpunit ve vendor/bin/phpstan doğrulamalı altyapı.")
 
@@ -1589,10 +1680,10 @@ def build_presentation():
 • docs/izlenebilirlik.md belgemizde Aşama 1'deki FR-01..FR-16 ve NFR-01/02 gereksinimleri test metotlarıyla birebir eşleştirilmiştir.""")
 
     # =========================================================================
-    # SLAYT 20: 15 DAKİKALIK TAHTADA CANLI DEMO AKIŞI (7 ADIM & ZAMAN DAĞILIMI)
+    # SLAYT 21: 15 DAKİKALIK TAHTADA CANLI DEMO AKIŞI (7 ADIM & ZAMAN DAĞILIMI)
     # =========================================================================
     s19 = prs.slides.add_slide(blank)
-    add_chrome(s19, 20, "19. Canlı Savunma Koreografisi",
+    add_chrome(s19, 21, "20. Canlı Savunma Koreografisi",
                "15 Dakikalık Tahtada Canlı Demo Akışı (Hocanın İstediği 7 Adım)",
                "Ders yönergesi Madde 9 sırasına birebir uygun 7 canlı demo adımı ve Mustafa Güreşir bireysel sunum zaman planı.")
 
@@ -1659,10 +1750,10 @@ def build_presentation():
   7) PreparingState::canCancel() mutasyon kanıtı + docs/izlenebilirlik.md, docs/ai-gunlugu.md ve docs/surec-raporu.md.""")
 
     # =========================================================================
-    # SLAYT 21: KAPANIŞ, BİREYSEL KOD SAVUNMASI & JÜRİ TUZAK SORU-CEVAP
+    # SLAYT 22: KAPANIŞ, BİREYSEL KOD SAVUNMASI & JÜRİ TUZAK SORU-CEVAP
     # =========================================================================
     s20 = prs.slides.add_slide(blank)
-    add_chrome(s20, 21, "20. Bireysel Savunma & Jüri Rehberi",
+    add_chrome(s20, 22, "21. Bireysel Savunma & Jüri Rehberi",
                "Bireysel Kod Satırı Savunması ve Jüri Tuzak Soru-Cevap Rehberi",
                "Cravelo — Aşama 2 Bireysel Savunması (Mustafa Güreşir). Sorularınız ve canlı kod incelemesi için hazırım!")
 
