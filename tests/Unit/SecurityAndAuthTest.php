@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use App\Controller\AuthController;
 use App\Model\User;
 use App\Enum\UserRole;
 use App\Service\AuthService;
@@ -121,6 +122,42 @@ final class SecurityAndAuthTest extends TestCase
         $this->expectExceptionMessage("Dışarıdan yalnızca müşteri (customer) hesabı açılabilir");
 
         $this->authService->register('yeni_kurye', 'sifre123456', 'Sahte Kurye', '05551112233', UserRole::COURIER);
+    }
+
+    public function testCountryAwarePhoneValidationAcceptsValidNumbers(): void
+    {
+        $trFormatted = AuthController::validateAndNormalizePhone('+90', '555 123 45 67');
+        $this->assertTrue($trFormatted['valid']);
+        $this->assertSame('+90 5551234567', $trFormatted['phone']);
+
+        $trWithZero = AuthController::validateAndNormalizePhone('+90', '05551234567');
+        $this->assertTrue($trWithZero['valid']);
+        $this->assertSame('+90 5551234567', $trWithZero['phone']);
+
+        $deMobile = AuthController::validateAndNormalizePhone('+49', '0151 2345 6789');
+        $this->assertTrue($deMobile['valid']);
+        $this->assertSame('+49 15123456789', $deMobile['phone']);
+
+        $azMobile = AuthController::validateAndNormalizePhone('+994', '50 123 45 67');
+        $this->assertTrue($azMobile['valid']);
+        $this->assertSame('+994 501234567', $azMobile['phone']);
+    }
+
+    public function testCountryAwarePhoneValidationRejectsInvalidLengthsAndCodes(): void
+    {
+        $tooLongTr = AuthController::validateAndNormalizePhone('+90', '555123456789999');
+        $this->assertFalse($tooLongTr['valid']);
+        $this->assertStringContainsString('10 haneli', $tooLongTr['error']);
+
+        $tooShortTr = AuthController::validateAndNormalizePhone('+90', '55512');
+        $this->assertFalse($tooShortTr['valid']);
+
+        $tooLongAz = AuthController::validateAndNormalizePhone('+994', '5012345678');
+        $this->assertFalse($tooLongAz['valid']);
+        $this->assertStringContainsString('9 haneli', $tooLongAz['error']);
+
+        $invalidCode = AuthController::validateAndNormalizePhone('+999', '1234567890');
+        $this->assertFalse($invalidCode['valid']);
     }
 }
 

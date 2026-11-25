@@ -4,6 +4,7 @@
 **Proje Adı:** Cravelo — Yemek Sipariş ve Akıllı Kurye Atama Sistemi  
 **Proje Sahibi ve Tek Geliştirici (Bireysel Sunum):**  
 * **Mustafa Güreşir** (Proje Yöneticisi & Full-Stack Geliştirici — `mustafaguresir@gmail.com`)  
+**GitHub Deposu:** `https://github.com/mustafaguresir/Cravelo`  
 **Proje Aşaması:** Aşama 2 (Veritabanısız Çalışan Prototip)  
 **Doküman Sürümü:** 2.2 (PHPUnit 11 + PHPStan Seviye 5 + Saf MVC & Cravelo Arayüz Sürümü)
 
@@ -125,7 +126,7 @@ Yapay zekâdan alınan desteklerde Mustafa Güreşir tarafından eleştirel dene
 
 ## 8. Geliştirici Katkıları (Bireysel Proje — Mustafa Güreşir)
 
-Proje **Mustafa Güreşir** (`@mustafaguresir`) tarafından bireysel olarak geliştirilmiş ve savunulmaktadır:
+Proje **Mustafa Güreşir** (`https://github.com/mustafaguresir/Cravelo`) tarafından bireysel olarak geliştirilmiş ve savunulmaktadır:
 * **Mimari & Arka Plan:** Tek giriş noktalı Front Controller (`public/index.php`), dinamik Router (`src/Core/*`), PRG + CSRF akışı, Controller sınıfları (`AuthController`, `OrderController`, `HomeController`, `ApiController`), `OrderService` iş katmanı, `InvalidOrderTransitionException` / `NoAvailableCourierException`, `bin/seed.php` tohumlayıcı, `JsonStorageHelper` (`flock` + `.tmp` atomik takas), State Pattern & Haversine/Strategy kurye atama motoru, Repository arayüzleri ve `Json*` / `InMemory*` depoları.
 * **Kalite, Arayüz & Dokümantasyon:** 31 PHPUnit 11 testi (91 assertion), PHPStan Seviye 5 (0 hata), 281 ek Python/Node/PHP otomasyon testi, gerçek `fetch()` AJAX kısmi yenileme (`craveloApiFetch`), modern Cravelo Açık/Koyu arayüzü, `docs/izlenebilirlik.md`, `docs/ai-gunlugu.md`, `docs/surec-raporu.md` ve `Cravelo_Asama2_Sunum.pptx`.
 * **Git İş Akışı:** Geliştirmeler `main` dalı korunarak özellik dalları (`feat/*`, `fix/*`, `docs/*`) ve Pull Request akışıyla yönetilir.

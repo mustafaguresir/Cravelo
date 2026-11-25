@@ -96,8 +96,8 @@ const GustoMap = (function () {
         return 0.9;
     }
 
-    // Google Haritalar Karo Sunucusu
-    const GOOGLE_MAPS_TILES = 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+    // Google Haritalar Karo Sunucusu (Türkçe cadde ve mekan etiketleri)
+    const GOOGLE_MAPS_TILES = 'https://mt{s}.google.com/vt/lyrs=m&hl=tr&x={x}&y={y}&z={z}';
 
     // Leaflet Harita Referansları
     const leafletMaps = {
@@ -115,7 +115,9 @@ const GustoMap = (function () {
         courierPolylineGlow: null,
         adminMarkers: [],
         customerMarkers: [],
-        customerPolyline: null
+        customerPolyline: null,
+        customerPolylineGlow: null,
+        customerCourierMarker: null
     };
 
     // Tek seferlik Leaflet & Marker CSS Enjeksiyonu (Theme-Aware & Glassmorphic)
@@ -439,8 +441,20 @@ const GustoMap = (function () {
     function drawMap(canvasId) {
         drawMapCanvas(canvasId);
 
+        const leafletIdMap = {
+            'admin-map-canvas': 'admin-map-leaflet',
+            'courier-map-canvas': 'courier-map-leaflet',
+            'customer-map-canvas': 'customer-map-leaflet'
+        };
+        const canvasEl = document.getElementById(canvasId);
+        const leafletEl = leafletIdMap[canvasId] ? document.getElementById(leafletIdMap[canvasId]) : null;
+
         if (typeof L !== 'undefined') {
             ensureMapOverlayStyles();
+            if (canvasEl && leafletEl) {
+                canvasEl.style.display = 'none';
+                leafletEl.style.display = 'block';
+            }
             if (canvasId === 'admin-map-canvas') {
                 initAdminMapLeaflet();
             } else if (canvasId === 'courier-map-canvas') {
@@ -448,6 +462,10 @@ const GustoMap = (function () {
             } else if (canvasId === 'customer-map-canvas') {
                 initCustomerMapLeaflet();
             }
+        } else if (canvasEl && leafletEl) {
+            // Çevrimdışı ortam yedeği: Leaflet yoksa Canvas görünür kalır
+            leafletEl.style.display = 'none';
+            canvasEl.style.display = 'block';
         }
     }
 
@@ -997,8 +1015,22 @@ const GustoMap = (function () {
         if (!container) return;
         ensureMapOverlayStyles();
 
+        // Modal içeriği innerHTML ile yeniden oluşturulduysa eski Leaflet örneğini temizle
+        if (leafletMaps.customer) {
+            const prevContainer = leafletMaps.customer.getContainer ? leafletMaps.customer.getContainer() : null;
+            const isDetached = !prevContainer || prevContainer !== container || (typeof document !== 'undefined' && document.body && !document.body.contains(prevContainer));
+            if (isDetached) {
+                try { leafletMaps.customer.remove(); } catch (e) { }
+                leafletMaps.customer = null;
+                leafletLayers.customerMarkers = [];
+                leafletLayers.customerPolyline = null;
+                leafletLayers.customerPolylineGlow = null;
+                leafletLayers.customerCourierMarker = null;
+            }
+        }
+
         if (!leafletMaps.customer) {
-            const map = L.map('customer-map-leaflet', {
+            const map = L.map(container, {
                 center: [40.9850, 29.0280],
                 zoom: 15,
                 zoomControl: true,
@@ -1015,37 +1047,125 @@ const GustoMap = (function () {
         const activeOrder = state.activeOrder;
         if (!activeOrder) return;
 
-        leafletLayers.customerMarkers.forEach(m => leafletMaps.customer.removeLayer(m));
+        leafletLayers.customerMarkers.forEach(m => {
+            try { leafletMaps.customer.removeLayer(m); } catch (e) { }
+        });
         leafletLayers.customerMarkers = [];
+        leafletLayers.customerCourierMarker = null;
+
         if (leafletLayers.customerPolyline) {
-            leafletMaps.customer.removeLayer(leafletLayers.customerPolyline);
+            try { leafletMaps.customer.removeLayer(leafletLayers.customerPolyline); } catch (e) { }
             leafletLayers.customerPolyline = null;
         }
+        if (leafletLayers.customerPolylineGlow) {
+            try { leafletMaps.customer.removeLayer(leafletLayers.customerPolylineGlow); } catch (e) { }
+            leafletLayers.customerPolylineGlow = null;
+        }
 
-        const r = (state.restaurants || []).find(x => x.id === activeOrder.rId) || (state.restaurants || [])[0];
+        const restaurants = state.restaurants || [];
+        const couriers = state.couriers || [];
+        const r = restaurants.find(x => x.id === activeOrder.rId) || restaurants[0] || { name: activeOrder.restaurant || 'Restoran', x: 12, y: 8, lat: 40.9850, lon: 29.0280, neighborhood: 'Moda, Kadıköy' };
         const custLoc = state.customerLocation || { x: 18, y: 14, name: 'Evim (Moda)' };
+        const assignedCourier = couriers.find(c => c.id === activeOrder.courierId) || couriers[0];
+
         const restPos = (r && r.lat && r.lon) ? [r.lat, r.lon] : gridToGps(r?.x ?? 12, r?.y ?? 8);
         const custPos = (custLoc.lat && custLoc.lon) ? [custLoc.lat, custLoc.lon] : gridToGps(custLoc.x, custLoc.y);
-        const curGps = gridToGps(currentAnimPos.x, currentAnimPos.y);
 
-        const rM = L.marker(restPos, { icon: createPinIcon('restaurant', 32, false) }).addTo(leafletMaps.customer);
-        const cM = L.marker(custPos, { icon: createPinIcon('customer', 32, false) }).addTo(leafletMaps.customer);
-        const kM = L.marker(curGps, { icon: createPinIcon('courier', 36, true) }).addTo(leafletMaps.customer);
-        leafletLayers.customerMarkers.push(rM, cM, kM);
+        // Animasyon aktifse anlık pozisyonu, değilse atanan kuryenin GPS koordinatını kullan
+        const curGps = courierAnimInterval
+            ? gridToGps(currentAnimPos.x, currentAnimPos.y)
+            : ((assignedCourier && assignedCourier.lat && assignedCourier.lon)
+                ? [assignedCourier.lat, assignedCourier.lon]
+                : gridToGps(assignedCourier?.x ?? currentAnimPos.x, assignedCourier?.y ?? currentAnimPos.y));
 
-        leafletLayers.customerPolyline = L.polyline([restPos, custPos], {
-            color: '#FF5722',
-            weight: 4,
-            dashArray: '8, 8',
-            opacity: 0.9
+        const isTakeaway = activeOrder.deliveryMode === 'takeaway';
+        const routeColor = isTakeaway ? '#10B981' : '#FF5722';
+
+        // Restoran Marker + Popup
+        const rPopup = `
+            <strong style="font-size:13px;">🍽️ ${r.name || activeOrder.restaurant}</strong>
+            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${getStreetLabelForCoords(r.x, r.y, r.lat, r.lon, r.neighborhood)}</div>
+            <div style="font-size:11px;color:#FF6B35;font-weight:700;margin-top:4px;">Sipariş Restoranı</div>
+        `;
+        const rM = L.marker(restPos, { icon: createPinIcon('restaurant', 34, false) })
+            .addTo(leafletMaps.customer)
+            .bindPopup(rPopup, { className: 'cravelo-leaflet-popup' });
+
+        // Müşteri Teslimat Noktası Marker + Popup
+        const cPopup = `
+            <strong style="font-size:13px;">🏠 ${custLoc.name || 'Teslimat Adresiniz'}</strong>
+            <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${getStreetLabelForCoords(custLoc.x, custLoc.y, custLoc.lat, custLoc.lon, 'Moda, Kadıköy')}</div>
+            <div style="font-size:11px;color:#10B981;font-weight:700;margin-top:4px;">Teslimat Adresiniz</div>
+        `;
+        const cM = L.marker(custPos, { icon: createPinIcon('customer', 34, false) })
+            .addTo(leafletMaps.customer)
+            .bindPopup(cPopup, { className: 'cravelo-leaflet-popup' });
+
+        leafletLayers.customerMarkers.push(rM, cM);
+
+        // Rota noktaları (ara durak / ek lezzet varsa 3 noktalı rota)
+        const boundsPoints = [restPos, custPos];
+        let routePoints;
+        if (!isTakeaway && activeOrder.addon) {
+            const addonR = restaurants.find(x => x.id === activeOrder.addon.rId);
+            if (addonR) {
+                const addonPos = (addonR.lat && addonR.lon) ? [addonR.lat, addonR.lon] : gridToGps(addonR.x, addonR.y);
+                const aM = L.marker(addonPos, { icon: createPinIcon('restaurant', 30, false) })
+                    .addTo(leafletMaps.customer)
+                    .bindPopup(`<strong style="font-size:13px;">🍰 Ara Durak: ${addonR.name}</strong>`, { className: 'cravelo-leaflet-popup' });
+                leafletLayers.customerMarkers.push(aM);
+                boundsPoints.push(addonPos);
+                routePoints = [restPos, addonPos, custPos];
+            }
+        }
+        if (!routePoints) {
+            const midLat = (restPos[0] + custPos[0]) / 2 + 0.0006;
+            const midLon = (restPos[1] + custPos[1]) / 2 - 0.0004;
+            routePoints = [restPos, [midLat, midLon], custPos];
+        }
+
+        // Parlak Alt Gölge + Kesikli Ana Google Haritalar Rotası
+        leafletLayers.customerPolylineGlow = L.polyline(routePoints, {
+            color: routeColor,
+            weight: 9,
+            opacity: 0.22,
+            lineCap: 'round'
         }).addTo(leafletMaps.customer);
 
-        setTimeout(() => {
+        leafletLayers.customerPolyline = L.polyline(routePoints, {
+            color: routeColor,
+            weight: 4,
+            dashArray: '8, 8',
+            opacity: 0.92,
+            lineCap: 'round'
+        }).addTo(leafletMaps.customer);
+
+        // Canlı Kurye Marker (Gel-Al değilse)
+        if (!isTakeaway) {
+            const cName = (typeof activeOrder.courier === 'string')
+                ? activeOrder.courier
+                : (assignedCourier?.name || 'Siparişinizin Kuryesi');
+            const kPopup = `
+                <strong style="font-size:13px;">🛵 ${cName}</strong>
+                <div style="font-size:11.5px;color:var(--text-2, #94A3B8);margin-top:4px;">${assignedCourier?.vehicle || 'Motor Kurye'} • Canlı GPS</div>
+                <div style="font-size:11px;color:#38BDF8;font-weight:700;margin-top:4px;">Siparişinizin Kuryesi</div>
+            `;
+            const kM = L.marker(curGps, { icon: createPinIcon('courier', 38, true) })
+                .addTo(leafletMaps.customer)
+                .bindPopup(kPopup, { className: 'cravelo-leaflet-popup' });
+            leafletLayers.customerCourierMarker = kM;
+            leafletLayers.customerMarkers.push(kM);
+            boundsPoints.push(curGps);
+        }
+
+        const fitCustomerMap = () => {
             if (leafletMaps.customer) {
                 leafletMaps.customer.invalidateSize();
-                leafletMaps.customer.fitBounds([restPos, custPos, curGps], { padding: [32, 32], maxZoom: 15 });
+                leafletMaps.customer.fitBounds(boundsPoints, { padding: [36, 36], maxZoom: 16 });
             }
-        }, 80);
+        };
+        setTimeout(fitCustomerMap, 90);
+        setTimeout(fitCustomerMap, 280);
     }
 
     function startCourierAnimation(courier, restaurant, customer) {
@@ -1093,10 +1213,13 @@ const GustoMap = (function () {
             drawMapCanvas('admin-map-canvas');
             drawMapCanvas('courier-map-canvas');
 
-            // Leaflet Kurye Markerını da güncelle
+            // Leaflet Kurye Markerlarını da (Kurye & Müşteri Google Haritaları) senkron güncelle
+            const curGps = gridToGps(currentAnimPos.x, currentAnimPos.y);
             if (leafletLayers.courierMarker) {
-                const curGps = gridToGps(currentAnimPos.x, currentAnimPos.y);
                 leafletLayers.courierMarker.setLatLng(curGps);
+            }
+            if (leafletLayers.customerCourierMarker) {
+                leafletLayers.customerCourierMarker.setLatLng(curGps);
             }
         }, 120);
     }

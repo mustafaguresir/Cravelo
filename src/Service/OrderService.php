@@ -216,6 +216,91 @@ final class OrderService
     }
 
     /**
+     * Sunucudaki Order modellerini ön yüzün (window.SERVER_ORDERS & /api?action=my_orders)
+     * doğrudan tüketebileceği temiz, en yeniden eskiye sıralı diziye dönüştürür.
+     *
+     * @param array<int, Order> $orders
+     * @param array<int, Restaurant>|null $restaurants
+     * @param array<int, Courier>|null $couriers
+     * @return array<int, array<string, mixed>>
+     */
+    public function formatOrdersForFrontend(
+        array $orders,
+        ?array $restaurants = null,
+        ?array $couriers = null
+    ): array {
+        $restaurantsList = $restaurants ?? $this->restaurantRepo->findAll();
+        $couriersList = $couriers ?? $this->courierRepo->findAll();
+
+        $restaurantNames = [];
+        foreach ($restaurantsList as $r) {
+            $restaurantNames[$r->id] = $r->name;
+        }
+        $courierNames = [];
+        foreach ($couriersList as $c) {
+            $courierNames[$c->id] = $c->name;
+        }
+
+        usort($orders, static fn(Order $a, Order $b): int => $b->id <=> $a->id);
+
+        $formatted = [];
+        foreach ($orders as $o) {
+            $createdRaw = $o->createdAt ?? date('Y-m-d H:i:s');
+            $timePart = strlen($createdRaw) >= 16 ? substr($createdRaw, 11, 5) : $createdRaw;
+            $datePart = strlen($createdRaw) >= 10 ? substr($createdRaw, 0, 10) : date('Y-m-d');
+
+            $items = [];
+            foreach ($o->items as $it) {
+                $items[] = [
+                    'name' => $it->name,
+                    'qty' => $it->quantity,
+                    'quantity' => $it->quantity,
+                    'price' => $it->unitPrice,
+                    'unit_price' => $it->unitPrice,
+                    'subtotal' => $it->subtotal,
+                ];
+            }
+
+            $formatted[] = [
+                'id' => $o->id,
+                'serverOrderId' => $o->id,
+                'customer_id' => $o->customerId,
+                'rId' => $o->restaurantId,
+                'restaurant_id' => $o->restaurantId,
+                'restaurant' => $restaurantNames[$o->restaurantId] ?? ('Restoran #' . $o->restaurantId),
+                'courierId' => $o->courierId,
+                'courier_id' => $o->courierId,
+                'courier' => ($o->courierId !== null && isset($courierNames[$o->courierId]))
+                    ? $courierNames[$o->courierId]
+                    : 'Kurye Atanıyor',
+                'status' => $o->status->value,
+                'total' => $o->totalAmount,
+                'total_amount' => $o->totalAmount,
+                'delivery_latitude' => $o->deliveryLatitude,
+                'delivery_longitude' => $o->deliveryLongitude,
+                'created_at' => $createdRaw,
+                'createdAt' => $timePart,
+                'dateStr' => $datePart,
+                'items' => $items,
+            ];
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Oturum açmış kullanıcının sahip olduğu siparişleri ön yüz formatında döner (IDOR güvenli).
+     *
+     * @param array<string, mixed> $sessionUser
+     * @return array<int, array<string, mixed>>
+     */
+    public function getFormattedOrdersForUser(array $sessionUser): array
+    {
+        $data = $this->getDashboardDataForUser($sessionUser);
+        return $this->formatOrdersForFrontend($data['orders'], $data['restaurants'], $data['couriers']);
+    }
+
+    /**
      * Sahiplik (IDOR) doğrulamasıyla sipariş durumunu ve kurye özetini döner.
      *
      * @param array<string, mixed> $sessionUser

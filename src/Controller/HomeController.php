@@ -59,12 +59,19 @@ final class HomeController extends Controller
         ];
         $targetView = $viewMap[$role] ?? 'dashboard/customer';
 
+        $serializedOrders = $this->orderService->formatOrdersForFrontend(
+            $dashboardData['orders'],
+            $dashboardData['restaurants'],
+            $dashboardData['couriers']
+        );
+
         $this->render($targetView, [
             'pageTitle' => 'Cravelo — ' . ucfirst($role) . ' Paneli',
             'user' => $user,
             'restaurants' => $dashboardData['restaurants'],
             'couriers' => $dashboardData['couriers'],
-            'orders' => $dashboardData['orders']
+            'orders' => $dashboardData['orders'],
+            'serializedOrders' => $serializedOrders
         ], 'layouts/main');
     }
 }

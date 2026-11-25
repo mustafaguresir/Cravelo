@@ -149,11 +149,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!GustoState.get().currentUser) {
                 GustoState.get().currentUser = { role: window.ACTIVE_SESSION.role };
             }
+            if (window.ACTIVE_SESSION.id) {
+                GustoState.get().currentUser.id = window.ACTIVE_SESSION.id;
+            }
             if (window.ACTIVE_SESSION.fullName) {
                 GustoState.get().currentUser.fullName = window.ACTIVE_SESSION.fullName;
             }
             if (window.ACTIVE_SESSION.username) {
                 GustoState.get().currentUser.username = window.ACTIVE_SESSION.username;
+            }
+            if (window.ACTIVE_SESSION.phone) {
+                GustoState.get().currentUser.phone = window.ACTIVE_SESSION.phone;
             }
             if (window.ACTIVE_SESSION.role === 'restaurant') {
                 if (window.ACTIVE_SESSION.username === 'restoran_burger') {
@@ -177,6 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } catch (e) {
         activeRole = GustoState.get().currentRole || null;
+    }
+
+    // Çıkış yapıp yeniden giriş yapan veya başka cihazdan bağlanan kullanıcının siparişlerini geri yükle
+    if (activeRole && typeof hydrateOrdersForActiveUser === 'function') {
+        const serverOrders = (typeof window !== 'undefined' && Array.isArray(window.SERVER_ORDERS)) ? window.SERVER_ORDERS : null;
+        hydrateOrdersForActiveUser(serverOrders, activeRole);
     }
 
     applyRoleIsolation(activeRole);
@@ -1110,37 +1122,64 @@ function clearCartConfirm() {
 function logoutUser(e) {
     if (e && e.preventDefault) e.preventDefault();
 
+    // Çıkış öncesi kullanıcının kişisel sipariş kasasını (username bazlı) güvenli sakla
+    try {
+        const st = (typeof GustoState !== 'undefined' && GustoState.get) ? GustoState.get() : null;
+        const sess = (typeof getSessionObject === 'function') ? getSessionObject() : null;
+        const uname = (window.ACTIVE_SESSION && window.ACTIVE_SESSION.username)
+            || (sess && sess.username)
+            || (st && st.currentUser && st.currentUser.username)
+            || (st && st.ownerUsername);
+        if (uname && typeof GustoState !== 'undefined' && typeof GustoState.saveUserVault === 'function') {
+            GustoState.saveUserVault(uname);
+        }
+    } catch (err) {}
+
     if (window.GustoState && GustoState.logout) {
         GustoState.logout();
     }
-    try {
-        localStorage.removeItem('cravelo_session');
-        localStorage.removeItem('cravelo_state_v2');
-        localStorage.removeItem('kuryo_session');
-        localStorage.removeItem('kuryo_state_v2');
-        localStorage.removeItem('gustogo_session');
-        localStorage.removeItem('gustogo_state_v2');
-        localStorage.removeItem('tgo_session');
-        localStorage.removeItem('tgo_state_v2');
-        sessionStorage.clear();
-    } catch (err) {}
 
-    const base = window.BASE_PATH || '';
-    if (typeof fetch === 'function') {
-        fetch(base + '/api?action=logout', { method: 'POST' }).catch(() => {});
-    }
+    const finalizeLogout = () => {
+        try {
+            localStorage.removeItem('cravelo_session');
+            localStorage.removeItem('cravelo_state_v2');
+            localStorage.removeItem('kuryo_session');
+            localStorage.removeItem('kuryo_state_v2');
+            localStorage.removeItem('gustogo_session');
+            localStorage.removeItem('gustogo_state_v2');
+            localStorage.removeItem('tgo_session');
+            localStorage.removeItem('tgo_state_v2');
+            sessionStorage.clear();
+        } catch (err) {}
 
-    const isStaticHtml = (typeof window !== 'undefined' && window.location && (
-        window.location.protocol === 'file:' ||
-        (window.location.pathname && window.location.pathname.endsWith('.html'))
-    ));
+        const base = window.BASE_PATH || '';
+        const isStaticHtml = (typeof window !== 'undefined' && window.location && (
+            window.location.protocol === 'file:' ||
+            (window.location.pathname && window.location.pathname.endsWith('.html'))
+        ));
 
-    if (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) {
-        window.location.href = base + '/logout';
-    } else if (isStaticHtml) {
-        window.location.href = 'login.html';
+        if (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) {
+            window.location.href = base + '/logout';
+        } else {
+            if (typeof fetch === 'function') {
+                fetch(base + '/api?action=logout', { method: 'POST' }).catch(() => {});
+            }
+            if (isStaticHtml) {
+                window.location.href = 'login.html';
+            } else {
+                window.location.href = base + '/login';
+            }
+        }
+    };
+
+    // Eğer saniyeler önce verilen bir siparişin sunucuya (orders.json) kaydı sürüyorsa tamamlanmasını bekle
+    if (typeof craveloPendingOrderSync !== 'undefined' && craveloPendingOrderSync) {
+        Promise.race([
+            craveloPendingOrderSync,
+            new Promise(resolve => setTimeout(resolve, 900))
+        ]).finally(finalizeLogout);
     } else {
-        window.location.href = base + '/login';
+        finalizeLogout();
     }
 }
 
@@ -2120,7 +2159,7 @@ function openAccountModal() {
     const sess = getSessionObject() || {};
     const fullName = sess.fullName || window.ACTIVE_SESSION?.fullName || user.fullName || 'Ahmet Yılmaz';
     const email = sess.email || window.ACTIVE_SESSION?.email || user.email || 'ahmet@ornek.com';
-    const phone = sess.phone || user.phone || '0555 123 45 67';
+    const phone = sess.phone || window.ACTIVE_SESSION?.phone || user.phone || '0555 123 45 67';
     const points = (typeof state.userPoints === 'number' && !isNaN(state.userPoints)) ? state.userPoints : 145;
 
     const nameEl = document.getElementById('acc-header-name');
@@ -2171,6 +2210,9 @@ function switchAccountTab(tab) {
     });
     if (tab === 'orders') {
         renderAccountOrders();
+        if (typeof craveloRefreshMyOrders === 'function') {
+            craveloRefreshMyOrders();
+        }
     }
 }
 
@@ -2320,17 +2362,20 @@ function renderAccountOrders() {
                 </div>
             </div>
 
-            <!-- Canlı Müşteri Haritası -->
+            <!-- Canlı Müşteri Haritası (Google Haritalar) -->
             <div style="border-radius:16px;overflow:hidden;border:1px solid var(--border);position:relative;">
                 <div style="padding:9px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:700;color:var(--text-2);flex-wrap:wrap;gap:8px;">
-                    <span><i class="fa-solid fa-map-location-dot" style="color:var(--primary);margin-right:4px;"></i> Canlı Kadıköy Teslimat Rotası</span>
+                    <span><i class="fa-solid fa-map-location-dot" style="color:var(--primary);margin-right:4px;"></i> Canlı Kadıköy Teslimat Rotası <span style="opacity:0.75;font-weight:600;">• Google Haritalar</span></span>
                     <div style="display:flex;gap:12px;align-items:center;">
                         <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FF5722;margin-right:4px;"></span>Restoran</span>
                         <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3B82F6;margin-right:4px;"></span>Kuryeniz</span>
                         <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10B981;margin-right:4px;"></span>Adresiniz</span>
                     </div>
                 </div>
-                <canvas id="customer-map-canvas" class="map-canvas" width="600" height="220" style="width:100%;height:205px;display:block;background:var(--bg);"></canvas>
+                <div id="customer-map-frame" style="position:relative;width:100%;height:240px;background:var(--bg);">
+                    <div id="customer-map-leaflet" style="width:100%;height:240px;z-index:2;"></div>
+                    <canvas id="customer-map-canvas" class="map-canvas" width="600" height="240" style="position:absolute;top:0;left:0;width:100%;height:240px;display:none;background:var(--bg);z-index:1;"></canvas>
+                </div>
             </div>
         </div>
         `;
@@ -3613,9 +3658,195 @@ async function craveloApiFetch(endpoint, options = {}) {
     }
 }
 
+let craveloPendingOrderSync = null;
+
+function getOrdersSignature(st) {
+    const a = st.activeOrder ? `${st.activeOrder.serverOrderId || st.activeOrder.id}:${st.activeOrder.status}` : 'none';
+    const h = (st.orderHistory || []).map(o => `${o.serverOrderId || o.id}:${o.status}`).join(',');
+    return a + '|' + h;
+}
+
+function hydrateOrdersForActiveUser(serverOrdersList, activeRole) {
+    const state = GustoState.get();
+    const beforeSig = getOrdersSignature(state);
+    const sess = (typeof getSessionObject === 'function') ? getSessionObject() : null;
+    const rawUsername = (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.username)
+        || (sess && sess.username)
+        || (state.currentUser && state.currentUser.username)
+        || '';
+    const normUser = String(rawUsername).trim().toLowerCase();
+    const role = activeRole || state.currentRole || (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || 'customer';
+
+    // Farklı bir kullanıcıya geçildiyse önceki kullanıcının yerel siparişlerini temizle (hesap izolasyonu)
+    if (normUser && state.ownerUsername && state.ownerUsername !== normUser) {
+        state.activeOrder = null;
+        state.orderHistory = [];
+        state.cart = [];
+    }
+    if (normUser) {
+        state.ownerUsername = normUser;
+    }
+
+    // Yerel durum boşsa (çıkış yapıp tekrar giriş sonrası) bu kullanıcının kişisel kasasından geri yükle
+    if (normUser && !state.activeOrder && (!state.orderHistory || state.orderHistory.length === 0) && typeof GustoState.loadUserVault === 'function') {
+        const vault = GustoState.loadUserVault(normUser);
+        if (vault) {
+            if (vault.activeOrder) state.activeOrder = vault.activeOrder;
+            if (Array.isArray(vault.orderHistory)) state.orderHistory = vault.orderHistory;
+            if (typeof vault.userPoints === 'number') state.userPoints = vault.userPoints;
+            if (Array.isArray(vault.savedAddresses) && vault.savedAddresses.length > 0) state.savedAddresses = vault.savedAddresses;
+            if (vault.customerLocation) state.customerLocation = vault.customerLocation;
+            if (Array.isArray(vault.userFavorites)) state.userFavorites = vault.userFavorites;
+            if (typeof vault.orderCounter === 'number' && vault.orderCounter > state.orderCounter) {
+                state.orderCounter = vault.orderCounter;
+            }
+        }
+    }
+
+    // Sunucu JSON deposundan (storage/orders.json) gelen gerçek müşteri siparişlerini birleştir
+    if (role === 'customer' && Array.isArray(serverOrdersList) && serverOrdersList.length > 0) {
+        const statusRank = { alindi: 1, hazirlaniyor: 2, hazir: 3, yolda: 4, teslim_edildi: 5, iptal: 6 };
+        const existingLocal = [];
+        if (state.activeOrder) existingLocal.push(state.activeOrder);
+        if (Array.isArray(state.orderHistory)) {
+            state.orderHistory.forEach(o => { if (o) existingLocal.push(o); });
+        }
+
+        const localByServerId = new Map();
+        const unmatchedLocal = [];
+        existingLocal.forEach(o => {
+            const sid = Number(o.serverOrderId || 0);
+            if (sid > 0) {
+                localByServerId.set(sid, o);
+            } else {
+                unmatchedLocal.push(o);
+            }
+        });
+
+        const mergedOrders = [];
+        const seenKeys = new Set();
+
+        serverOrdersList.forEach(so => {
+            if (!so || !so.id) return;
+            const sid = Number(so.id);
+            const rId = Number(so.rId || so.restaurant_id || 1);
+            const cId = Number(so.courierId || so.courier_id || 0);
+            const frontRest = (state.restaurants || []).find(r => r.id === rId);
+            const frontCour = (state.couriers || []).find(c => c.id === cId);
+
+            const localMatch = localByServerId.get(sid);
+            const serverStatus = String(so.status || 'alindi');
+            let finalStatus = serverStatus;
+            if (localMatch && localMatch.status) {
+                if (serverStatus === 'iptal') {
+                    finalStatus = 'iptal';
+                } else if ((statusRank[localMatch.status] || 0) > (statusRank[serverStatus] || 0)) {
+                    finalStatus = localMatch.status;
+                }
+            }
+
+            const mappedItems = (Array.isArray(so.items) && so.items.length > 0)
+                ? so.items.map(it => ({
+                    name: it.name || 'Menü Lezzeti',
+                    qty: Number(it.qty || it.quantity || 1),
+                    price: Number(it.price || it.unit_price || 0),
+                    options: it.options || ''
+                }))
+                : (localMatch && Array.isArray(localMatch.items) ? localMatch.items : []);
+
+            const merged = {
+                ...(localMatch || {}),
+                id: localMatch ? localMatch.id : sid,
+                serverOrderId: sid,
+                rId: rId,
+                restaurant: (frontRest && frontRest.name) ? frontRest.name : (so.restaurant || (localMatch && localMatch.restaurant) || 'Lezzet Kebap Salonu'),
+                courierId: cId || (localMatch && localMatch.courierId) || 1,
+                courier: (frontCour && frontCour.name) ? frontCour.name : (so.courier || (localMatch && localMatch.courier) || 'Veli Demir'),
+                customerName: (state.currentUser && state.currentUser.fullName) || (typeof window !== 'undefined' && window.ACTIVE_SESSION && window.ACTIVE_SESSION.fullName) || 'Müşteri',
+                status: finalStatus,
+                total: Number(so.total || so.total_amount || (localMatch && localMatch.total) || 0),
+                items: mappedItems,
+                createdAt: (localMatch && localMatch.createdAt) || so.createdAt || 'Bugün',
+                dateStr: (localMatch && localMatch.dateStr) || so.dateStr || '',
+                deliveryMode: (localMatch && localMatch.deliveryMode) || 'courier'
+            };
+
+            const key = 'srv_' + sid;
+            if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                mergedOrders.push(merged);
+            }
+        });
+
+        unmatchedLocal.forEach(lo => {
+            const key = 'loc_' + lo.id;
+            if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                mergedOrders.push(lo);
+            }
+        });
+
+        // En yeni sipariş üstte olacak şekilde sırala
+        mergedOrders.sort((a, b) => Number(b.serverOrderId || b.id || 0) - Number(a.serverOrderId || a.id || 0));
+
+        const nextActiveIdx = mergedOrders.findIndex(o => !['teslim_edildi', 'iptal'].includes(o.status));
+        if (nextActiveIdx >= 0) {
+            state.activeOrder = mergedOrders[nextActiveIdx];
+            state.orderHistory = mergedOrders.filter((_, idx) => idx !== nextActiveIdx);
+        } else {
+            state.activeOrder = null;
+            state.orderHistory = mergedOrders;
+        }
+    }
+
+    const afterSig = getOrdersSignature(state);
+    const changed = beforeSig !== afterSig;
+
+    GustoState.persist();
+    if (changed) {
+        updateOrderTrackerUI();
+    }
+
+    // Geri yüklenen aktif sipariş varsa harita kurye animasyonunu başlat
+    if (changed && state.activeOrder && !['teslim_edildi', 'iptal'].includes(state.activeOrder.status)) {
+        const rObj = (state.restaurants || []).find(x => x.id === state.activeOrder.rId);
+        const cObj = (state.couriers || []).find(x => x.id === state.activeOrder.courierId) || (state.couriers || [])[0];
+        if (rObj && cObj && typeof GustoMap !== 'undefined' && typeof GustoMap.startCourierAnimation === 'function') {
+            GustoMap.startCourierAnimation(cObj, rObj, state.customerLocation);
+        }
+    }
+
+    // Hesap modalı açıksa toplam sipariş sayısını ve (değişiklik varsa) listeyi anında tazele
+    const accCountEl = document.getElementById('acc-order-count');
+    if (accCountEl) {
+        const unique = new Set();
+        if (state.activeOrder && state.activeOrder.id) unique.add(state.activeOrder.id);
+        (state.orderHistory || []).forEach(o => { if (o && o.id) unique.add(o.id); });
+        accCountEl.innerText = unique.size;
+    }
+    const overlay = document.getElementById('account-overlay');
+    if (changed && overlay && overlay.style.display === 'flex' && typeof renderAccountOrders === 'function') {
+        renderAccountOrders();
+    }
+}
+
+async function craveloRefreshMyOrders() {
+    if (!isCraveloHttpServer()) return null;
+    if (typeof window === 'undefined' || !window.ACTIVE_SESSION || !window.ACTIVE_SESSION.id) return null;
+    const role = GustoState.get().currentRole || window.ACTIVE_SESSION.role || 'customer';
+    if (role !== 'customer') return null;
+
+    const res = await craveloApiFetch('/api?action=my_orders', { method: 'GET', silentError: true });
+    if (res && res.ok && res.data && Array.isArray(res.data.orders)) {
+        window.SERVER_ORDERS = res.data.orders;
+        hydrateOrdersForActiveUser(res.data.orders, role);
+    }
+    return res;
+}
+
 async function craveloSyncCreateOrder(orderObj, customerLoc) {
     if (!isCraveloHttpServer() || !orderObj) return null;
-    const result = await craveloApiFetch('/api?action=create_order', {
+    const reqPromise = craveloApiFetch('/api?action=create_order', {
         method: 'POST',
         silentError: true,
         body: JSON.stringify({
@@ -3627,12 +3858,30 @@ async function craveloSyncCreateOrder(orderObj, customerLoc) {
             delivery_longitude: customerLoc?.lon ?? 29.0280,
             items: (orderObj.items || []).map(i => ({ name: i.name, quantity: i.qty || 1, price: i.price || 100 }))
         })
+    }).then(result => {
+        if (result && result.ok && result.data && result.data.order_id) {
+            const sid = Number(result.data.order_id);
+            orderObj.serverOrderId = sid;
+            const st = GustoState.get();
+            if (st.activeOrder && st.activeOrder.id === orderObj.id) {
+                st.activeOrder.serverOrderId = sid;
+            }
+            if (Array.isArray(st.orderHistory)) {
+                st.orderHistory.forEach(o => {
+                    if (o && o.id === orderObj.id) o.serverOrderId = sid;
+                });
+            }
+            GustoState.persist();
+        }
+        return result;
+    }).finally(() => {
+        if (craveloPendingOrderSync === reqPromise) {
+            craveloPendingOrderSync = null;
+        }
     });
-    if (result && result.ok && result.data && result.data.order_id) {
-        orderObj.serverOrderId = result.data.order_id;
-        GustoState.persist();
-    }
-    return result;
+
+    craveloPendingOrderSync = reqPromise;
+    return reqPromise;
 }
 
 async function craveloSyncOrderTransition(serverOrderId, targetStatus) {

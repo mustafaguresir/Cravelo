@@ -764,6 +764,79 @@
             color: var(--crv-text);
         }
 
+        /* Country-Code Aware Phone Field */
+        .crv-phone-group {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .crv-country-select {
+            flex: 0 0 128px;
+            width: 128px;
+            min-width: 118px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--crv-text);
+            background-color: var(--crv-input-bg);
+            border: 1.5px solid var(--crv-border-strong);
+            border-radius: 13px;
+            padding: 10px 9px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .crv-country-select:focus {
+            border-color: var(--crv-primary);
+            box-shadow: 0 0 0 3.5px var(--crv-primary-soft);
+            background-color: var(--crv-input-focus);
+        }
+
+        .crv-country-select option {
+            background-color: #111827;
+            color: #F8FAFC;
+        }
+
+        :root[data-theme="light"] .crv-country-select option {
+            background-color: #FFFFFF;
+            color: #0F172A;
+        }
+
+        .crv-phone-group .crv-input-wrap {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .crv-phone-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--crv-text-3);
+        }
+
+        .crv-phone-counter {
+            font-variant-numeric: tabular-nums;
+            font-weight: 800;
+            padding: 1px 8px;
+            border-radius: 999px;
+            background: var(--crv-surface-2);
+            border: 1px solid var(--crv-border);
+            color: var(--crv-text-2);
+        }
+
+        .crv-phone-counter.is-valid {
+            background: rgba(16, 185, 129, 0.14);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: #10B981;
+        }
+
         @media (max-width: 920px) {
             .auth-split {
                 grid-template-columns: 1fr;
@@ -947,19 +1020,39 @@
                             </div>
                         </div>
                         <div>
-                            <label class="form-label" for="reg-phone">Telefon Numarası</label>
+                            <label class="form-label" for="reg-email">E-Posta Adresi</label>
                             <div class="crv-input-wrap">
-                                <i class="fa-solid fa-phone crv-input-icon"></i>
-                                <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="0555 123 45 67" required>
+                                <i class="fa-solid fa-envelope crv-input-icon"></i>
+                                <input type="email" id="reg-email" name="email" class="form-control" placeholder="zeynep@ornek.com" required>
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label" for="reg-email">E-Posta Adresi</label>
-                        <div class="crv-input-wrap">
-                            <i class="fa-solid fa-envelope crv-input-icon"></i>
-                            <input type="email" id="reg-email" name="email" class="form-control" placeholder="Örn: zeynep@ornek.com" required>
+                        <label class="form-label" for="reg-phone">Telefon Numarası <span style="color: var(--crv-text-3); font-weight: 500;">(Ülke koduna göre)</span></label>
+                        <div class="crv-phone-group">
+                            <select id="reg-country-code" name="country_code" class="crv-country-select" aria-label="Ülke Telefon Kodu" onchange="syncStaticPhoneInput()">
+                                <option value="+90" selected>🇹🇷 +90</option>
+                                <option value="+49">🇩🇪 +49</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+994">🇦🇿 +994</option>
+                                <option value="+33">🇫🇷 +33</option>
+                                <option value="+31">🇳🇱 +31</option>
+                                <option value="+39">🇮🇹 +39</option>
+                                <option value="+34">🇪🇸 +34</option>
+                                <option value="+971">🇦🇪 +971</option>
+                                <option value="+966">🇸🇦 +966</option>
+                                <option value="+7">🇷🇺 +7</option>
+                            </select>
+                            <div class="crv-input-wrap">
+                                <i class="fa-solid fa-phone crv-input-icon"></i>
+                                <input type="tel" id="reg-phone" name="phone" class="form-control" inputmode="numeric" maxlength="13" placeholder="555 123 45 67" oninput="syncStaticPhoneInput()" required>
+                            </div>
+                        </div>
+                        <div class="crv-phone-meta">
+                            <span id="reg-phone-hint">Türkiye (+90): Başında 0 olmadan 10 hane</span>
+                            <span id="reg-phone-counter" class="crv-phone-counter">0 / 10</span>
                         </div>
                     </div>
 
@@ -1291,6 +1384,67 @@
             }, 300);
         }
 
+        // Ülke Kodlarına Göre Telefon Numarası Kuralları
+        const COUNTRY_PHONE_RULES = {
+            '+90':  { name: 'Türkiye', min: 10, max: 10, stripZero: true, placeholder: '555 123 45 67', groups: [3, 3, 2, 2], hint: 'Türkiye (+90): Başında 0 olmadan 10 hane' },
+            '+49':  { name: 'Almanya', min: 10, max: 11, stripZero: true, placeholder: '151 2345 6789', groups: [3, 4, 4], hint: 'Almanya (+49): 10-11 hane' },
+            '+44':  { name: 'Birleşik Krallık', min: 10, max: 10, stripZero: true, placeholder: '7700 900123', groups: [4, 6], hint: 'Birleşik Krallık (+44): 10 hane' },
+            '+1':   { name: 'ABD / Kanada', min: 10, max: 10, stripZero: false, placeholder: '202 555 0143', groups: [3, 3, 4], hint: 'ABD / Kanada (+1): 10 hane' },
+            '+994': { name: 'Azerbaycan', min: 9, max: 9, stripZero: true, placeholder: '50 123 45 67', groups: [2, 3, 2, 2], hint: 'Azerbaycan (+994): 9 hane' },
+            '+33':  { name: 'Fransa', min: 9, max: 9, stripZero: true, placeholder: '6 12 34 56 78', groups: [1, 2, 2, 2, 2], hint: 'Fransa (+33): 9 hane' },
+            '+31':  { name: 'Hollanda', min: 9, max: 9, stripZero: true, placeholder: '6 1234 5678', groups: [1, 4, 4], hint: 'Hollanda (+31): 9 hane' },
+            '+39':  { name: 'İtalya', min: 9, max: 10, stripZero: false, placeholder: '312 345 6789', groups: [3, 3, 4], hint: 'İtalya (+39): 9-10 hane' },
+            '+34':  { name: 'İspanya', min: 9, max: 9, stripZero: false, placeholder: '612 34 56 78', groups: [3, 2, 2, 2], hint: 'İspanya (+34): 9 hane' },
+            '+971': { name: 'BAE', min: 9, max: 9, stripZero: true, placeholder: '50 123 4567', groups: [2, 3, 4], hint: 'BAE (+971): 9 hane' },
+            '+966': { name: 'Suudi Arabistan', min: 9, max: 9, stripZero: true, placeholder: '50 123 4567', groups: [2, 3, 4], hint: 'Suudi Arabistan (+966): 9 hane' },
+            '+7':   { name: 'Rusya', min: 10, max: 10, stripZero: false, placeholder: '912 345 67 89', groups: [3, 3, 2, 2], hint: 'Rusya (+7): 10 hane' }
+        };
+
+        function formatPhoneByGroups(digits, groups) {
+            const parts = [];
+            let pos = 0;
+            for (let i = 0; i < groups.length && pos < digits.length; i++) {
+                parts.push(digits.slice(pos, pos + groups[i]));
+                pos += groups[i];
+            }
+            if (pos < digits.length) parts.push(digits.slice(pos));
+            return parts.join(' ');
+        }
+
+        function sanitizePhoneForCountry(countryCode, rawPhone) {
+            const rule = COUNTRY_PHONE_RULES[countryCode] || COUNTRY_PHONE_RULES['+90'];
+            const codeDigits = countryCode.replace('+', '');
+            let digits = String(rawPhone || '').replace(/\D/g, '');
+            if (digits.startsWith(codeDigits) && digits.length > rule.max) {
+                digits = digits.slice(codeDigits.length);
+            }
+            if (rule.stripZero && digits.startsWith('0')) {
+                digits = digits.replace(/^0+/, '');
+            }
+            return { digits, rule };
+        }
+
+        function syncStaticPhoneInput() {
+            const selectEl = document.getElementById('reg-country-code');
+            const inputEl = document.getElementById('reg-phone');
+            if (!inputEl) return;
+            const code = (selectEl && selectEl.value) ? selectEl.value : '+90';
+            const parsed = sanitizePhoneForCountry(code, inputEl.value);
+            const capped = parsed.digits.slice(0, parsed.rule.max);
+            inputEl.value = formatPhoneByGroups(capped, parsed.rule.groups);
+            inputEl.placeholder = parsed.rule.placeholder;
+            inputEl.maxLength = parsed.rule.max + (parsed.rule.groups.length - 1);
+
+            const isValid = capped.length >= parsed.rule.min && capped.length <= parsed.rule.max;
+            const hintEl = document.getElementById('reg-phone-hint');
+            const counterEl = document.getElementById('reg-phone-counter');
+            if (hintEl) hintEl.textContent = parsed.rule.hint;
+            if (counterEl) {
+                counterEl.textContent = capped.length + ' / ' + parsed.rule.max + (isValid ? ' ✓' : '');
+                if (counterEl.classList) counterEl.classList.toggle('is-valid', isValid);
+            }
+        }
+
         // Yeni Müşteri Kayıt İşlemi (FR-15 & FR-16)
         function handleRegister(e) {
             e.preventDefault();
@@ -1299,16 +1453,31 @@
             const fullName = document.getElementById('reg-fullname').value.trim();
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
+            const countryCodeEl = document.getElementById('reg-country-code');
+            const countryCode = (countryCodeEl && countryCodeEl.value) ? countryCodeEl.value.trim() : '+90';
+            const rawPhone = document.getElementById('reg-phone').value.trim();
             const password = document.getElementById('reg-password').value;
             const passwordConfirm = document.getElementById('reg-password-confirm').value;
 
-            if (!fullName || !username || !email || !phone || !password || !passwordConfirm) {
+            if (!fullName || !username || !email || !rawPhone || !password || !passwordConfirm) {
                 alertEl.className = 'alert alert-danger py-2 small';
                 alertEl.innerHTML = '<i class="fa-solid fa-circle-xmark me-1"></i> Lütfen tüm alanları eksiksiz doldurun.';
                 alertEl.classList.remove('d-none');
                 return;
             }
+
+            // Ülke koduna göre telefon numarası hane sınırı kontrolü
+            const phoneCheck = sanitizePhoneForCountry(countryCode, rawPhone);
+            if (phoneCheck.digits.length < phoneCheck.rule.min || phoneCheck.digits.length > phoneCheck.rule.max) {
+                const rangeLabel = (phoneCheck.rule.min === phoneCheck.rule.max)
+                    ? String(phoneCheck.rule.max)
+                    : (phoneCheck.rule.min + '-' + phoneCheck.rule.max);
+                alertEl.className = 'alert alert-danger py-2 small';
+                alertEl.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i> ${phoneCheck.rule.name} (${countryCode}) için telefon numarası ${rangeLabel} haneli olmalıdır (Örn: ${phoneCheck.rule.placeholder}).`;
+                alertEl.classList.remove('d-none');
+                return;
+            }
+            const phone = `${countryCode} ${formatPhoneByGroups(phoneCheck.digits, phoneCheck.rule.groups)}`;
 
             // FR-16: Kullanıcı adı en az 3 karakter olmalıdır
             if (username.length < 3) {

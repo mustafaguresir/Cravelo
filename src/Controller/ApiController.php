@@ -147,6 +147,13 @@ final class ApiController extends Controller
                 Response::json(['status' => 'authenticated', 'user' => $user]);
                 return;
 
+            case 'my_orders':
+                Response::json([
+                    'status' => 'success',
+                    'orders' => $this->orderService->getFormattedOrdersForUser($user)
+                ]);
+                return;
+
             case 'get_order':
             case 'get_order_status':
                 $this->getOrderStatus($request, $user);

@@ -552,7 +552,7 @@ Sistem için hazırlanan 5 adet detaylı ekran çizimi `docs/wireframes/` klasö
 ## 8. Proje Planı, GitHub Projects ve Kilometre Taşları
 
 ### Backlog ve Proje Panosu
-- **GitHub Projects Panosu:** `GitHub Projects — Cravelo Backlog` (`@mustafaguresir`)
+- **GitHub Deposu & Backlog:** `https://github.com/mustafaguresir/Cravelo` (`@mustafaguresir`)
 - **İş Akışı Sütunları:** `[Backlog]` → `[Bu Hafta]` → `[Devam Ediyor]` → `[İncelemede (PR)]` → `[Bitti]`
 
 #### Proje Panosundaki Backlog Görevleri (User Stories & Tasks)

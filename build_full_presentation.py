@@ -386,7 +386,7 @@ def build_presentation():
     tf = tb_lead.text_frame
     add_para(tf, "BİREYSEL PROJE GELİŞTİRİCİSİ & SUNUM SAHİBİ", font_size=9.5, color=C_CORAL, bold=True, space_after=4, first=True)
     add_para(tf, "Mustafa Güreşir", font_size=21, color=C_WHITE, bold=True, space_after=2)
-    add_para(tf, "mustafaguresir@gmail.com  •  admin_mustafa (Tek Yetkili Yönetici)  •  Bireysel Savunma", font_size=10.2, color=C_CYAN, bold=True, space_after=10)
+    add_para(tf, "mustafaguresir@gmail.com  •  github.com/mustafaguresir/Cravelo  •  Bireysel Savunma", font_size=10.0, color=C_CYAN, bold=True, space_after=10)
     add_para(tf, "Kapsam: Tek giriş noktalı saf PHP 8.2 MVC, OrderService + State & Strategy desenleri, Haversine + iş yükü kurye atama, flock(LOCK_EX) atomik JSON depolama, Bcrypt + CSRF + IDOR güvenliği, 31 PHPUnit + PHPStan L5 (0 hata) ve Cravelo 4-rol UI.",
              font_size=10.2, color=C_TEXT, space_after=0)
 
@@ -818,11 +818,11 @@ def build_presentation():
             add_rich_bullet(tf, lead, body, lead_color=C_WHITE, body_color=C_TEXT, font_size=10.2, space_after=6)
 
     set_notes(s7, """[Çekirdek Problem 2 — State Pattern Durum Makinesi]
-• PHP 8.1 Backed Enum (OrderStatus) ve State Pattern kullanarak 6 somut durum sınıfı oluşturduk.
+• PHP 8.2 Backed Enum (OrderStatus) ve State Pattern kullanarak 6 somut durum sınıfı oluşturdum.
 • OrderStateMachineService, PHP 8 match() ifadesiyle aktif duruma karşılık gelen State nesnesini döndürür.
 • Üç hayati kural nesne düzeyinde korunur:
   1. Pişen yemek iptal edilemez (PreparingState::canCancel() false döner).
-  2. Yoldaki sipariş geriye mutfağa dönemez (OnWayState reddeder).
+  2. Yoldaki sipariş geriye mutfağa dönemez (OnWayState InvalidOrderTransitionException ile reddeder).
   3. Sırasız durum atlaması yapılamaz.""")
 
     # =========================================================================
@@ -890,10 +890,10 @@ def build_presentation():
         add_rich_bullet(tf, lead, body, lead_color=C_WHITE, body_color=C_TEXT, font_size=9.8, space_after=4)
 
     set_notes(s8, """[JSON Depolama, flock() & Aşama 3 MySQL Geçişi]
-• Aşama 2'de veritabanı olmadan eşzamanlı yazma çakışmasını JsonStorageHelper sınıfımızla çözdük:
-  1) flock(LOCK_EX) ile OS kilidi alıyoruz,
-  2) Doğrudan hedef dosyaya değil geçici .tmp dosyasına yazıp fflush() ediyoruz,
-  3) Atomik rename() ile tek adımda takas ediyoruz.
+• Aşama 2'de veritabanı olmadan eşzamanlı yazma çakışmasını JsonStorageHelper sınıfıyla çözdüm:
+  1) flock(LOCK_EX) ile OS kilidi alınıyor,
+  2) Doğrudan hedef dosyaya değil geçici .tmp dosyasına yazıp fflush() ediliyor,
+  3) Atomik rename() ile tek adımda takas ediliyor.
 • Bu davranış JsonStorageFlockTest içinde gerçek LOCK_EX | LOCK_NB çakışma testiyle doğrulandı.
 • Aşama 3'te MySQL'e geçerken yalnız Repository sınıfları değişecek: flock yerine FOR UPDATE, .tmp yerine PDO Transaction gelecek.""")
 
@@ -1137,10 +1137,10 @@ def build_presentation():
                     lead_color=C_GOLD, body_color=C_TEXT, font_size=9.8, space_after=0)
 
     set_notes(s12, """[Risk Matrisi & Zorunlu AI Hata Vakası]
-• 6 kritik mimari ve operasyonel riski (Race Condition, geçersiz durum, haksız iptal, kurye tükenmesi, katman ihlali, AJAX yükü) somut yazılımsal önlemlerle eşleştirdik.
-• Hocamızın özellikle sorduğu 'Yapay zekâ nerede yanıldı, siz nasıl düzelttiniz?' sorusunun somut cevabı docs/ai-gunlugu.md belgemizde kayıtlı:
-  - AI, Aşama 2 için SQLite kurmayı ve SQL yazmayı önerdi; biz şartnameyi gözeterek reddettik ve flock() destekli Json*Repository sınıflarını geliştirdik.
-  - Ayrıca XAMPP alt klasör 404 hatasını detectBasePath() ile, Öklid mesafe hatasını Haversine ile düzelttik.""")
+• 6 kritik mimari ve operasyonel riski (Race Condition, geçersiz durum, haksız iptal, kurye tükenmesi, katman ihlali, AJAX yükü) somut yazılımsal önlemlerle eşleştirdim.
+• Hocamızın özellikle sorduğu 'Yapay zekâ nerede yanıldı, nasıl düzelttiniz?' sorusunun somut cevabı docs/ai-gunlugu.md belgesinde kayıtlı:
+  - AI, Aşama 2 için SQLite kurmayı ve SQL yazmayı önerdi; şartnameyi gözeterek reddettim ve flock() destekli Json*Repository sınıflarını geliştirdim.
+  - Ayrıca XAMPP alt klasör 404 hatasını detectBasePath() ile, Öklid mesafe hatasını Haversine ile düzelttim.""")
 
     # =========================================================================
     # SLAYT 13 (YENİ): ELEŞTİRMEN GERİ BİLDİRİMLERİ & GİT / SÜREÇ YÖNETİMİ
@@ -1183,7 +1183,7 @@ def build_presentation():
     add_para(tf, "🌿  Git İş Akışı & Bireysel Süreç (Mustafa Güreşir)", font_size=12.5, color=C_GOLD, bold=True, space_after=8, first=True)
     git_pts = [
         ("Tek Geliştirici Sorumluluğu:", "Mimari, backend (PHP 8.2), frontend (Cravelo UI), 312 test ve tüm belgeler Mustafa Güreşir tarafından uçtan uca geliştirildi."),
-        ("GitHub Deposu & Dal Yapısı:", "GitHub (@mustafaguresir / Cravelo) — Korumalı main dalı, feat/* & fix/* geliştirme dalları ve Pull Request inceleme akışı."),
+        ("GitHub Deposu & Dal Yapısı:", "github.com/mustafaguresir/Cravelo — Korumalı main dalı, feat/* & fix/* geliştirme dalları ve Pull Request inceleme akışı."),
         ("Hafta 5–6 (Veri & Çekirdek):", "storage/*.json + flock() atomik yazım, 4 Repository arayüzü + Json* depoları ve bin/seed.php tohumlama."),
         ("Hafta 7–8 (Güvenlik & Test):", "Front Controller, OrderService, PRG + CSRF, IDOR 403, 31 PHPUnit testi, InMemory depolar ve PHPStan L5 (0 hata)."),
         ("Hafta 9 (Arayüz & Savunma):", "XAMPP/WAMP BasePath, gerçek fetch() AJAX kısmi yenileme, Cravelo Açık/Koyu UI ve 21 slaytlık savunma sunumu."),
@@ -1195,10 +1195,10 @@ def build_presentation():
              "docs/surec-raporu.md • docs/ai-gunlugu.md • docs/izlenebilirlik.md", C_CARD_ALT, C_CYAN, border_color=C_CYAN, font_size=8.6)
 
     set_notes(s13_rev, """[Eleştirmen Geri Bildirimleri & Geliştirme Süreci]
-• Bu slayt ders yönergesindeki Eleştirmen Grup geri bildirimleri ve Git/süreç raporu özetini sunar.
-• 2 teknik öneriyi kabul edip kodla doğruladık: (1) Eşit kurye puanında düşük aktif görev önceliği (tie-breaker), (2) Bcrypt password_hash + CSRF token koruması.
-• 1 öneriyi gerekçeli reddettik: Canlı ücretli GPS harita API isteği, şartname Kapsam Sınırı gereği kapsam dışı bırakıldı.
-• Tüm proje Mustafa Güreşir tarafından bireysel olarak geliştirildi; main dalı korunarak özellik dalları ve Pull Request akışıyla yönetildi.""")
+• Bu slayt ders yönergesindeki Eleştirmen geri bildirimleri ve Git/süreç raporu özetini sunar.
+• 2 teknik öneriyi kabul edip kodla doğruladım: (1) Eşit kurye puanında düşük aktif görev önceliği (tie-breaker), (2) Bcrypt password_hash + CSRF token koruması.
+• 1 öneriyi gerekçeli reddettim: Canlı ücretli GPS harita API isteği, şartname Kapsam Sınırı gereği kapsam dışı bırakıldı.
+• Tüm proje Mustafa Güreşir tarafından bireysel olarak geliştirildi ve github.com/mustafaguresir/Cravelo üzerinde yürütülmektedir.""")
 
     # =========================================================================
     # SLAYT 14: 10 KULLANICI, RBAC YETKİ MATRİSİ & ROL İZOLASYONU
@@ -1712,14 +1712,14 @@ def build_presentation():
         add_para(tf, qtxt, font_size=10.8, color=C_GOLD, bold=True, space_after=8, first=True)
         add_rich_bullet(tf, "Cevap:", atxt, lead_color=qcol, body_color=C_WHITE, font_size=9.8, space_after=0, bullet="💡 ")
 
-    set_notes(s20, """[13:00 - 15:00 | Kapanış & Bireysel Kod Satırı Savunması]
-• Hocamız ekrandan rastgele bir kod satırı sorduğunda üstteki 5 kritik dosya ve satırı özgüvenle açıklayabiliriz:
+    set_notes(s20, """[13:00 - 15:00 | Kapanış & Bireysel Kod Satırı Savunması — Mustafa Güreşir]
+• Hocamız ekrandan rastgele bir kod satırı sorduğunda üstteki 5 kritik dosya ve satırı özgüvenle açıklayabilirim:
   - flock + rename (JsonStorageHelper)
   - canCancel() => false (PreparingState)
-  - DomainException (OnWayState)
+  - InvalidOrderTransitionException (OnWayState)
   - distKm + 2.0 * active (ScoreBasedAssignmentStrategy)
-  - assertCanAccessOrder (AuthService)
-• Dinlediğiniz için teşekkür ederiz Hocam; canlı demo ve sorularınız için hazırız!""")
+  - assertSessionUserCanAccessOrder (OrderService)
+• Dinlediğiniz için teşekkür ederim Hocam; canlı demo ve sorularınız için hazırım!""")
 
     # =========================================================================
     # KAYDETME

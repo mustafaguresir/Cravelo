@@ -139,6 +139,7 @@ const GustoState = (function () {
                 if (parsed.orderCounter) state.orderCounter = parsed.orderCounter;
                 if (parsed.currentUser) state.currentUser = parsed.currentUser;
                 if (parsed.currentRole) state.currentRole = parsed.currentRole;
+                if (parsed.ownerUsername) state.ownerUsername = parsed.ownerUsername;
                 if (parsed.deliveryMode) state.deliveryMode = parsed.deliveryMode;
                 if (typeof parsed.isEcoFriendly === 'boolean') state.isEcoFriendly = parsed.isEcoFriendly;
 
@@ -150,12 +151,63 @@ const GustoState = (function () {
         }
     }
 
+    function getUserVaultKey(username) {
+        if (!username) return null;
+        return 'cravelo_user_vault_' + String(username).trim().toLowerCase();
+    }
+
+    function saveUserVault(explicitUsername) {
+        try {
+            const uname = explicitUsername || state.ownerUsername || (state.currentUser && state.currentUser.username);
+            const key = getUserVaultKey(uname);
+            if (!key) return;
+            const snapshot = {
+                ownerUsername: String(uname).trim().toLowerCase(),
+                savedAddresses: state.savedAddresses,
+                customerLocation: state.customerLocation,
+                userFavorites: state.userFavorites,
+                userPoints: state.userPoints,
+                activeOrder: state.activeOrder,
+                orderHistory: state.orderHistory,
+                orderCounter: state.orderCounter,
+                updatedAt: Date.now()
+            };
+            localStorage.setItem(key, JSON.stringify(snapshot));
+        } catch (e) {}
+    }
+
+    function loadUserVault(username) {
+        try {
+            const key = getUserVaultKey(username);
+            if (!key) return null;
+            const raw = localStorage.getItem(key);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (parsed.activeOrder) {
+                parsed.activeOrder = sanitizeOrderRecord(parsed.activeOrder, 1050);
+            }
+            if (Array.isArray(parsed.orderHistory)) {
+                parsed.orderHistory = parsed.orderHistory
+                    .map((o, idx) => sanitizeOrderRecord(o, 1049 - idx))
+                    .filter(Boolean);
+            }
+            return parsed;
+        } catch (e) {
+            return null;
+        }
+    }
+
     /**
      * Durumu LocalStorage'a Kaydeder
      */
     function persist() {
         try {
+            const ownerUsername = state.ownerUsername || (state.currentUser && state.currentUser.username) || null;
+            if (ownerUsername) {
+                state.ownerUsername = String(ownerUsername).trim().toLowerCase();
+            }
             const dataToSave = {
+                ownerUsername: state.ownerUsername || null,
                 savedAddresses: state.savedAddresses,
                 customerLocation: state.customerLocation,
                 userFavorites: state.userFavorites,
@@ -172,6 +224,9 @@ const GustoState = (function () {
             localStorage.setItem('cravelo_state_v2', JSON.stringify(dataToSave));
             localStorage.setItem('kuryo_state_v2', JSON.stringify(dataToSave));
             localStorage.setItem('tgo_state_v2', JSON.stringify(dataToSave));
+            if (state.ownerUsername) {
+                saveUserVault(state.ownerUsername);
+            }
         } catch (e) {
             // QuotaExceededError vb. durumlarda sessizce geç
         }
@@ -402,6 +457,8 @@ const GustoState = (function () {
         get: () => state,
         loadPersistedState,
         persist,
+        saveUserVault,
+        loadUserVault,
         calculateHaversine,
         calculateManhattan,
         calculateCourierScore,

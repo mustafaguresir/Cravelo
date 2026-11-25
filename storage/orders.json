@@ -9,7 +9,7 @@
         "delivery_latitude": 40.986,
         "delivery_longitude": 29.029,
         "estimated_delivery_time": "30 dk",
-        "created_at": "2026-11-25 12:20:54",
+        "created_at": "2026-11-25 13:20:01",
         "items": [
             {
                 "id": 1,
@@ -32,7 +32,7 @@
         "delivery_latitude": 40.989,
         "delivery_longitude": 29.027,
         "estimated_delivery_time": "25 dk",
-        "created_at": "2026-11-25 12:25:54",
+        "created_at": "2026-11-25 13:25:01",
         "items": [
             {
                 "id": 2,
@@ -64,7 +64,7 @@
         "delivery_latitude": 40.985,
         "delivery_longitude": 29.028,
         "estimated_delivery_time": "10 dk",
-        "created_at": "2026-11-25 12:05:54",
+        "created_at": "2026-11-25 13:05:01",
         "items": [
             {
                 "id": 4,
@@ -87,7 +87,7 @@
         "delivery_latitude": 40.984,
         "delivery_longitude": 29.03,
         "estimated_delivery_time": "Tamamlandı",
-        "created_at": "2026-11-25 10:35:54",
+        "created_at": "2026-11-25 11:35:01",
         "items": [
             {
                 "id": 5,

@@ -566,6 +566,74 @@ $isSplitAuth = str_contains($content ?? '', 'auth-split');
             background: var(--crv-surface-2);
         }
 
+        /* Country-Code Aware Phone Field */
+        .crv-phone-group {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .crv-country-select {
+            flex: 0 0 132px;
+            width: 132px;
+            min-width: 122px;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--crv-text);
+            background-color: var(--crv-input-bg);
+            border: 1.5px solid var(--crv-border-strong);
+            border-radius: 13px;
+            padding: 11px 10px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .crv-country-select:focus {
+            border-color: var(--crv-primary);
+            box-shadow: 0 0 0 3.5px var(--crv-primary-soft);
+            background-color: var(--crv-input-focus);
+        }
+
+        .crv-country-select option {
+            background-color: var(--crv-surface-solid);
+            color: var(--crv-text);
+        }
+
+        .crv-phone-group .crv-input-wrap {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .crv-phone-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--crv-text-3);
+        }
+
+        .crv-phone-counter {
+            font-variant-numeric: tabular-nums;
+            font-weight: 800;
+            padding: 1px 8px;
+            border-radius: 999px;
+            background: var(--crv-surface-2);
+            border: 1px solid var(--crv-border);
+            color: var(--crv-text-2);
+        }
+
+        .crv-phone-counter.is-valid {
+            background: var(--crv-emerald-soft);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: var(--crv-emerald);
+        }
+
         /* Primary Brand Buttons */
         .btn-brand {
             background: linear-gradient(135deg, #FF6B35, #FA4A0C);

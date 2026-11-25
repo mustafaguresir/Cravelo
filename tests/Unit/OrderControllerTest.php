@@ -5,6 +5,7 @@ namespace App\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use App\Controller\OrderController;
+use App\Service\OrderService;
 use App\Service\OrderStateMachineService;
 use App\Service\CourierAssignmentService;
 use App\Repository\InMemory\InMemoryOrderRepository;
@@ -153,5 +154,46 @@ final class OrderControllerTest extends TestCase
 
         $this->assertSame(2, $summary['total_orders']);
         $this->assertEqualsWithDelta(400.0, (float)$summary['total_revenue'], 0.01);
+    }
+
+    public function testCustomerPersistedOrdersAreReturnedScopedToOwner(): void
+    {
+        $service = new OrderService(
+            orderRepo: $this->orderRepo,
+            restaurantRepo: $this->restaurantRepo,
+            courierRepo: $this->courierRepo,
+            stateMachine: $this->stateMachine
+        );
+
+        $service->createOrder(
+            customerId: 1,
+            restaurantId: 1,
+            totalAmount: 195.0,
+            delX: 18,
+            delY: 14,
+            items: [['name' => 'Adana Kebap Dürüm', 'quantity' => 1, 'price' => 195.0]]
+        );
+        $service->createOrder(
+            customerId: 2,
+            restaurantId: 1,
+            totalAmount: 260.0,
+            delX: 16,
+            delY: 12,
+            items: [['name' => 'Urfa Kebap', 'quantity' => 1, 'price' => 260.0]]
+        );
+
+        // Müşteri 1 yeniden giriş yaptığında sadece kendi siparişini görmelidir
+        $cust1Orders = $service->getFormattedOrdersForUser(['id' => 1, 'role' => 'customer']);
+        $this->assertCount(1, $cust1Orders);
+        $this->assertSame(1, $cust1Orders[0]['customer_id']);
+        $this->assertSame('alindi', $cust1Orders[0]['status']);
+        $this->assertSame('Adana Kebap Dürüm', $cust1Orders[0]['items'][0]['name']);
+        $this->assertSame('Kurye Veli', $cust1Orders[0]['courier']);
+
+        // Müşteri 2 kendi siparişini görür, Müşteri 1'in siparişini asla göremez (IDOR izolasyonu)
+        $cust2Orders = $service->getFormattedOrdersForUser(['id' => 2, 'role' => 'customer']);
+        $this->assertCount(1, $cust2Orders);
+        $this->assertSame(2, $cust2Orders[0]['customer_id']);
+        $this->assertSame('Urfa Kebap', $cust2Orders[0]['items'][0]['name']);
     }
 }

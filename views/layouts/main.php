@@ -17,6 +17,7 @@
         })();
         window.BASE_PATH = <?= json_encode($request->getBasePath(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
         window.ACTIVE_SESSION = <?= json_encode($currentUser ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        window.SERVER_ORDERS = <?= json_encode($serializedOrders ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
     </script>
 
     <!-- Google Fonts & FontAwesome CDN -->
