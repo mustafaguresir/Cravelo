@@ -104,11 +104,30 @@ const GustoState = (function () {
         return o;
     }
 
+    function syncMenuAvailabilityFromOutOfStock() {
+        const outSet = new Set((state.outOfStockItemIds || []).map(id => Number(id)));
+        state.menuItems.forEach(m => {
+            m.available = !outSet.has(m.id);
+        });
+    }
+
     /**
      * LocalStorage'dan Durumu Yükler (Varsa)
      */
     function loadPersistedState() {
         try {
+            let loadedSharedStock = false;
+            try {
+                const sharedOutRaw = localStorage.getItem('cravelo_out_of_stock');
+                if (sharedOutRaw !== null) {
+                    const parsedOut = JSON.parse(sharedOutRaw);
+                    if (Array.isArray(parsedOut)) {
+                        state.outOfStockItemIds = parsedOut.map(id => Number(id)).filter(n => !isNaN(n));
+                        loadedSharedStock = true;
+                    }
+                }
+            } catch (stockErr) {}
+
             const raw = localStorage.getItem('cravelo_state_v2') || localStorage.getItem('kuryo_state_v2') || localStorage.getItem(STORAGE_KEY) || localStorage.getItem('tgo_state_v2');
             if (raw) {
                 const parsed = JSON.parse(raw);
@@ -118,6 +137,9 @@ const GustoState = (function () {
                 if (Array.isArray(parsed.favoriteRestaurants)) state.favoriteRestaurants = parsed.favoriteRestaurants;
                 if (typeof parsed.userPoints === 'number') state.userPoints = parsed.userPoints;
                 if (parsed.cart) state.cart = parsed.cart;
+                if (!loadedSharedStock && Array.isArray(parsed.outOfStockItemIds)) {
+                    state.outOfStockItemIds = parsed.outOfStockItemIds.map(id => Number(id)).filter(n => !isNaN(n));
+                }
                 
                 if (parsed.activeOrder) {
                     state.activeOrder = sanitizeOrderRecord(parsed.activeOrder, 1050);
@@ -145,8 +167,12 @@ const GustoState = (function () {
                 if (parsed.deliveryMode) state.deliveryMode = parsed.deliveryMode;
                 if (typeof parsed.isEcoFriendly === 'boolean') state.isEcoFriendly = parsed.isEcoFriendly;
 
+                syncMenuAvailabilityFromOutOfStock();
+
                 // Temizlenmiş veriyi hemen localStorage'a yazarak undefined kalıntılarını sil
                 persist();
+            } else {
+                syncMenuAvailabilityFromOutOfStock();
             }
         } catch (e) {
             console.warn('LocalStorage yükleme hatası:', e);
@@ -221,6 +247,7 @@ const GustoState = (function () {
                 orderHistory: state.orderHistory,
                 auditLogs: state.auditLogs,
                 orderCounter: state.orderCounter,
+                outOfStockItemIds: state.outOfStockItemIds,
                 currentUser: state.currentUser,
                 currentRole: state.currentRole
             };
@@ -228,6 +255,7 @@ const GustoState = (function () {
             localStorage.setItem('cravelo_state_v2', JSON.stringify(dataToSave));
             localStorage.setItem('kuryo_state_v2', JSON.stringify(dataToSave));
             localStorage.setItem('tgo_state_v2', JSON.stringify(dataToSave));
+            localStorage.setItem('cravelo_out_of_stock', JSON.stringify(state.outOfStockItemIds));
             if (state.ownerUsername) {
                 saveUserVault(state.ownerUsername);
             }
@@ -439,14 +467,20 @@ const GustoState = (function () {
     }
 
     function toggleStock(itemId) {
-        const idx = state.outOfStockItemIds.indexOf(itemId);
+        const idNum = Number(itemId);
+        const idx = state.outOfStockItemIds.indexOf(idNum);
         if (idx >= 0) {
             state.outOfStockItemIds.splice(idx, 1);
         } else {
-            state.outOfStockItemIds.push(itemId);
+            state.outOfStockItemIds.push(idNum);
+        }
+        const isOut = state.outOfStockItemIds.includes(idNum);
+        const item = state.menuItems.find(m => m.id === idNum);
+        if (item) {
+            item.available = !isOut;
         }
         persist();
-        return state.outOfStockItemIds.includes(itemId);
+        return isOut;
     }
 
     function applyRoadsideAddon(addon) {

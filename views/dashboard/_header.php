@@ -75,13 +75,25 @@
         </div>
 
         <!-- Authenticated User Actions -->
+        <?php
+            $displayFullName = (string)($user['fullName'] ?? $currentUser['fullName'] ?? 'Kullanıcı');
+            $avatarInitial = preg_match('/^./u', trim($displayFullName), $mInitial) ? $mInitial[0] : 'C';
+            $rawSessionRole = (string)($user['role'] ?? $currentUser['role'] ?? '');
+            $roleLabelTr = match ($rawSessionRole) {
+                'admin' => 'SİSTEM YÖNETİCİSİ',
+                'restaurant' => 'RESTORAN / KDS',
+                'courier' => 'KURYE 🛵',
+                'customer' => 'MÜŞTERİ',
+                default => 'GİRİŞ YAPILDI',
+            };
+        ?>
         <div id="nav-user-actions" style="display: <?= (!empty($currentUser) || \App\Core\Session::has('user')) ? 'flex' : 'none' ?>; align-items: center; gap: 10px;">
             <!-- User Profile Pill -->
             <div class="user-pill" onclick="openAccountModal()" role="button" tabindex="0" title="Profil & Cravelo Cüzdan">
-                <div class="user-avatar" id="nav-avatar"><?= htmlspecialchars(substr($user['fullName'] ?? $currentUser['fullName'] ?? 'A', 0, 1), ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="user-avatar" id="nav-avatar"><?= htmlspecialchars($avatarInitial, ENT_QUOTES, 'UTF-8') ?></div>
                 <div class="user-meta">
-                    <div class="user-name" id="nav-name"><?= htmlspecialchars($user['fullName'] ?? $currentUser['fullName'] ?? 'Kullanıcı', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div class="user-role-badge" id="nav-role"><i class="fa-solid fa-coins"></i> <?= htmlspecialchars(strtoupper($user['role'] ?? $currentUser['role'] ?? 'Giriş Yapıldı'), ENT_QUOTES, 'UTF-8') ?></div>
+                    <div class="user-name" id="nav-name"><?= htmlspecialchars($displayFullName, ENT_QUOTES, 'UTF-8') ?></div>
+                    <div class="user-role-badge" id="nav-role"><i class="fa-solid fa-coins"></i> <?= htmlspecialchars($roleLabelTr, ENT_QUOTES, 'UTF-8') ?></div>
                 </div>
             </div>
 
@@ -95,6 +107,8 @@
         <script>
             (function() {
                 try {
+                    // Aktif sunucu PHP oturumu varsa eski localStorage verisinin üst barı ezmesini engelle
+                    if (window.ACTIVE_SESSION && window.ACTIVE_SESSION.username) return;
                     var s = JSON.parse(localStorage.getItem('cravelo_session') || localStorage.getItem('kuryo_session') || localStorage.getItem('tgo_session') || localStorage.getItem('gustogo_session') || '{}');
                     if (s && s.fullName) {
                         var el = document.getElementById('nav-name');

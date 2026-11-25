@@ -570,8 +570,8 @@
                     </div>
                 </div>
                 <div>
-                    <a href="<?= $request->url('/register') ?>" class="landing-nav-cta" style="padding: 15px 34px; font-size: 15px;">
-                        <i class="fa-solid fa-motorcycle"></i> Hemen Başvur & Kurye Ol
+                    <a href="<?= $request->url('/login') ?>?demo=kurye_ali" class="landing-nav-cta" style="padding: 15px 34px; font-size: 15px;">
+                        <i class="fa-solid fa-motorcycle"></i> Kurye Kokpitini Dene
                     </a>
                 </div>
             </div>

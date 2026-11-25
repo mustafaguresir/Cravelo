@@ -522,6 +522,31 @@ final class OrderService
     }
 
     /**
+     * RBAC + Sahiplik doğrulamalı günlük restoran satış raporu.
+     *
+     * @param array<string, mixed> $sessionUser
+     * @return array<string, mixed>
+     */
+    public function getDailyReportForUser(int $restaurantId, string $date, array $sessionUser): array
+    {
+        $role = (string)($sessionUser['role'] ?? '');
+        if ($role === 'admin') {
+            return $this->orderRepo->getDailyReport($restaurantId, $date);
+        }
+
+        if ($role === 'restaurant') {
+            $rest = $this->restaurantRepo->findById($restaurantId);
+            $userId = (int)($sessionUser['id'] ?? 0);
+            if ($rest === null || $rest->userId !== $userId) {
+                throw new RuntimeException('Yetkisiz erişim! Yalnızca kendi restoranınızın günlük raporunu görüntüleyebilirsiniz.', 403);
+            }
+            return $this->orderRepo->getDailyReport($restaurantId, $date);
+        }
+
+        throw new RuntimeException('Yetkisiz erişim! Günlük satış raporuna yalnızca restoran yetkilisi veya yönetici erişebilir.', 403);
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function getFleetScores(): array

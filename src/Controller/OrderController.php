@@ -104,7 +104,18 @@ final class OrderController extends Controller
             return;
         }
 
+        if (Session::has('__csrf_token') && !Session::validateCsrfToken((string)$request->post('_csrf_token', ''))) {
+            Session::setFlash('danger', 'Güvenlik doğrulaması (CSRF) başarısız oldu. Lütfen sayfayı yenileyip tekrar deneyin.');
+            Response::redirect($request->url('/'), 303);
+            return;
+        }
+
         $user = (array)Session::get('user');
+        if (!in_array((string)($user['role'] ?? ''), ['customer', 'admin'], true)) {
+            Session::setFlash('danger', 'Yalnızca müşteri veya yönetici hesapları yeni sipariş oluşturabilir.');
+            Response::redirect($request->url('/'), 303);
+            return;
+        }
         $restaurantId = (int)$request->post('restaurant_id', 1);
         $totalAmount = (float)$request->post('total_amount', 0.0);
         $delX = (int)$request->post('del_x', 18);

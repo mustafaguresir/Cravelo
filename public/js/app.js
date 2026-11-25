@@ -17,6 +17,16 @@ function getSessionObject() {
     }
 }
 
+function escapeHtml(value) {
+    if (value === null || typeof value === 'undefined') return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function getRealDistanceKm(entityA, entityB) {
     if (!entityA || !entityB) return 0.8;
     let lat1 = entityA.lat;
@@ -1074,15 +1084,15 @@ function updateCartUI() {
             itemsBox.innerHTML = cart.map(c => `
                 <div class="cart-item" style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:11px 12px;margin-bottom:8px;">
                     <div class="cart-item-top" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                        <div class="cart-item-name" style="font-weight:800;font-size:13.5px;color:var(--text);flex:1;min-width:0;">${c.name}</div>
+                        <div class="cart-item-name" style="font-weight:800;font-size:13.5px;color:var(--text);flex:1;min-width:0;">${escapeHtml(c.name)}</div>
                         <div class="qty-ctrl">
-                            <button type="button" class="qty-btn" onclick="changeCartQty('${c.id}', -1)" title="Azalt">−</button>
+                            <button type="button" class="qty-btn" onclick="changeCartQty('${escapeHtml(c.id)}', -1)" title="Azalt">−</button>
                             <span class="qty-val">${c.qty}</span>
-                            <button type="button" class="qty-btn" onclick="changeCartQty('${c.id}', +1)" title="Arttır">+</button>
+                            <button type="button" class="qty-btn" onclick="changeCartQty('${escapeHtml(c.id)}', +1)" title="Arttır">+</button>
                         </div>
                         <div class="cart-item-price" style="font-weight:900;font-size:13.5px;color:var(--primary);min-width:62px;text-align:right;">${(c.price * c.qty).toFixed(2)} ₺</div>
                     </div>
-                    ${c.options ? `<div class="cart-item-options" style="font-size:11.5px;color:var(--text-3);margin-top:5px;line-height:1.35;">${c.options}</div>` : ''}
+                    ${c.options ? `<div class="cart-item-options" style="font-size:11.5px;color:var(--text-3);margin-top:5px;line-height:1.35;">${escapeHtml(c.options)}</div>` : ''}
                 </div>
             `).join('');
         }
@@ -1138,21 +1148,21 @@ function updateCartUI() {
                 const imgUrl = c.img || fullItem?.img || '';
                 return `
                     <div class="cart-item" style="padding:12px;background:var(--surface-2);border-radius:16px;margin-bottom:10px;border:1px solid var(--border);display:flex;gap:12px;align-items:center;">
-                        ${imgUrl ? `<img src="${imgUrl}" alt="${c.name}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;">` : ''}
+                        ${imgUrl ? `<img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(c.name)}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;">` : ''}
                         <div style="flex:1;min-width:0;">
                             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                                 <div style="min-width:0;">
-                                    <div class="cart-item-name" style="font-weight:800;color:var(--text);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</div>
+                                    <div class="cart-item-name" style="font-weight:800;color:var(--text);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.name)}</div>
                                     <div style="font-size:12px;color:var(--primary);font-weight:700;">${c.price.toFixed(2)} ₺ / adet</div>
                                 </div>
                                 <div class="qty-ctrl" style="display:flex;align-items:center;gap:6px;">
-                                    <button type="button" class="qty-btn" onclick="changeCartQty('${c.id}', -1)" title="Azalt">−</button>
+                                    <button type="button" class="qty-btn" onclick="changeCartQty('${escapeHtml(c.id)}', -1)" title="Azalt">−</button>
                                     <span class="qty-val" style="min-width:18px;text-align:center;font-weight:800;">${c.qty}</span>
-                                    <button type="button" class="qty-btn" onclick="changeCartQty('${c.id}', +1)" title="Arttır">+</button>
+                                    <button type="button" class="qty-btn" onclick="changeCartQty('${escapeHtml(c.id)}', +1)" title="Arttır">+</button>
                                 </div>
                                 <div class="cart-item-price" style="font-weight:900;color:var(--text);font-size:14.5px;min-width:68px;text-align:right;">${(c.price * c.qty).toFixed(2)} ₺</div>
                             </div>
-                            ${c.options ? `<div class="cart-item-options" style="font-size:11.5px;color:var(--text-3);margin-top:4px;line-height:1.35;">${c.options}</div>` : ''}
+                            ${c.options ? `<div class="cart-item-options" style="font-size:11.5px;color:var(--text-3);margin-top:4px;line-height:1.35;">${escapeHtml(c.options)}</div>` : ''}
                         </div>
                     </div>
                 `;
@@ -1870,13 +1880,13 @@ function renderGroupOrderMembers() {
         return `
             <div class="group-member-item" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;">
                 <div style="display:flex;align-items:center;gap:11px;min-width:0;">
-                    <div style="width:36px;height:36px;border-radius:12px;background:${col}20;color:${col};font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</div>
+                    <div style="width:36px;height:36px;border-radius:12px;background:${col}20;color:${col};font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${escapeHtml(initials)}</div>
                     <div style="min-width:0;">
-                        <strong style="font-size:13.5px;color:var(--text);display:block;">${name}</strong>
-                        <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">${items}</div>
+                        <strong style="font-size:13.5px;color:var(--text);display:block;">${escapeHtml(name)}</strong>
+                        <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">${escapeHtml(items)}</div>
                     </div>
                 </div>
-                <strong style="color:var(--primary);font-size:13.5px;font-weight:900;white-space:nowrap;">${total}</strong>
+                <strong style="color:var(--primary);font-size:13.5px;font-weight:900;white-space:nowrap;">${escapeHtml(total)}</strong>
             </div>
         `;
     }).join('');
@@ -1973,7 +1983,7 @@ function appendChatMessage(sender, text) {
     const nowStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     const div = document.createElement('div');
     div.className = `chat-msg ${sender}`;
-    const safeText = String(text).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const safeText = escapeHtml(text);
     div.innerHTML = `
         <div style="line-height:1.45;">${safeText}</div>
         <div style="font-size:10px;opacity:0.7;margin-top:4px;text-align:${sender === 'user' ? 'right' : 'left'};">${nowStr} ${sender === 'user' ? '✓✓' : ''}</div>
@@ -2013,16 +2023,16 @@ function openReceiptModal(orderId) {
         <div class="receipt-paper">
             <div class="receipt-header">
                 <div class="receipt-logo"><i class="fa-solid fa-fire-flame-curved" style="color:var(--primary);"></i> Cravelo Sipariş Fişi</div>
-                <div class="receipt-sub">${restName} • Tel: ${restPhone}</div>
+                <div class="receipt-sub">${escapeHtml(restName)} • Tel: ${escapeHtml(restPhone)}</div>
             </div>
 
             <div class="receipt-meta">
                 <div><strong>Sipariş No:</strong> #ORD-${oId}</div>
-                <div><strong>Tarih:</strong> ${dateText} ${timeText}</div>
-                <div><strong>Müşteri:</strong> ${order.customerName || GustoState.get().currentUser?.fullName || 'Ahmet Yılmaz'}</div>
-                <div><strong>Ödeme:</strong> ${order.payMethod ? order.payMethod.toUpperCase() : 'KREDİ KARTI'}</div>
-                <div><strong>Kurye:</strong> ${courierName}</div>
-                <div><strong>Durum:</strong> <span class="badge ${statusInfo.badge}" style="font-size:10.5px;">${statusInfo.label}</span></div>
+                <div><strong>Tarih:</strong> ${escapeHtml(dateText)} ${escapeHtml(timeText)}</div>
+                <div><strong>Müşteri:</strong> ${escapeHtml(order.customerName || GustoState.get().currentUser?.fullName || 'Ahmet Yılmaz')}</div>
+                <div><strong>Ödeme:</strong> ${escapeHtml(order.payMethod ? order.payMethod.toUpperCase() : 'KREDİ KARTI')}</div>
+                <div><strong>Kurye:</strong> ${escapeHtml(courierName)}</div>
+                <div><strong>Durum:</strong> <span class="badge ${statusInfo.badge}" style="font-size:10.5px;">${escapeHtml(statusInfo.label)}</span></div>
             </div>
 
             <table class="receipt-table">
@@ -2032,7 +2042,7 @@ function openReceiptModal(orderId) {
                 <tbody>
                     ${(order.items && order.items.length ? order.items : [{ name: 'Adana Zırh Dürüm', qty: 1, price: totalVal }]).map(it => `
                         <tr>
-                            <td><strong>${it.name || 'Menü Lezzeti'}</strong> ${it.options ? `<br><small style="color:var(--text-3);">${it.options}</small>` : ''}</td>
+                            <td><strong>${escapeHtml(it.name || 'Menü Lezzeti')}</strong> ${it.options ? `<br><small style="color:var(--text-3);">${escapeHtml(it.options)}</small>` : ''}</td>
                             <td style="text-align:center;">${it.qty || 1}</td>
                             <td style="text-align:right;font-weight:700;">${((it.price || totalVal) * (it.qty || 1)).toFixed(2)} ₺</td>
                         </tr>
@@ -2101,11 +2111,11 @@ function renderSavedAddressesList() {
                     </div>
                     <div style="min-width:0;">
                         <div style="font-weight:800;color:var(--text);font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                            <span>${a.title}</span>
+                            <span>${escapeHtml(a.title)}</span>
                             ${a.isDefault ? '<span class="badge badge-musait" style="font-size:10px;padding:2px 8px;">AKTİF</span>' : ''}
                         </div>
                         <div style="font-size:12px;color:var(--text-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                            <i class="fa-solid fa-location-dot" style="font-size:11px;color:var(--primary);margin-right:4px;"></i>${cleanDesc}
+                            <i class="fa-solid fa-location-dot" style="font-size:11px;color:var(--primary);margin-right:4px;"></i>${escapeHtml(cleanDesc)}
                         </div>
                     </div>
                 </div>
@@ -2281,7 +2291,7 @@ function openAccountModal() {
     const addrTitle = document.getElementById('profile-addr-title');
     if (addrTitle) addrTitle.innerText = loc.name || 'Evim (Moda)';
     const addrCoord = document.getElementById('profile-addr-coord');
-    if (addrCoord) addrCoord.innerHTML = `<i class="fa-solid fa-location-dot" style="margin-right:5px;"></i> ${getRealStreetLabel(loc, 'Moda Caddesi, Kadıköy')}`;
+    if (addrCoord) addrCoord.innerHTML = `<i class="fa-solid fa-location-dot" style="margin-right:5px;"></i> ${escapeHtml(getRealStreetLabel(loc, 'Moda Caddesi, Kadıköy'))}`;
 
     const uniqueOrders = new Set();
     if (state.activeOrder && state.activeOrder.id) uniqueOrders.add(state.activeOrder.id);
@@ -2408,7 +2418,7 @@ function renderAccountOrders() {
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
                 <div style="display:flex;align-items:center;gap:10px;">
                     <span class="live-pulse-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10B981;box-shadow:0 0 10px #10B981;"></span>
-                    <strong style="color:var(--text);font-size:15.5px;letter-spacing:-0.2px;">#ORD-${activeOrder.id} • ${activeOrder.restaurant}</strong>
+                    <strong style="color:var(--text);font-size:15.5px;letter-spacing:-0.2px;">#ORD-${activeOrder.id} • ${escapeHtml(activeOrder.restaurant)}</strong>
                 </div>
                 <span class="badge badge-${s}" style="font-weight:800;font-size:11.5px;padding:5px 12px;border-radius:999px;">${curInfo.badge}</span>
             </div>
@@ -2456,7 +2466,7 @@ function renderAccountOrders() {
                         <i class="fa-solid ${isTakeaway ? 'fa-person-walking' : 'fa-motorcycle'}"></i>
                     </div>
                     <div>
-                        <div style="font-size:14px;font-weight:800;color:var(--text);">${activeOrder.courier}</div>
+                        <div style="font-size:14px;font-weight:800;color:var(--text);">${escapeHtml(activeOrder.courier)}</div>
                         <div style="font-size:11.5px;color:var(--blue);font-weight:700;"><i class="fa-solid fa-shield-halved"></i> ${isTakeaway ? 'Gel-Al Teslimat Modu Aktif' : 'Canlı GPS izleme yalnızca size özel'}</div>
                     </div>
                 </div>
@@ -2507,7 +2517,7 @@ function renderAccountOrders() {
             const timeText = (!o.createdAt || o.createdAt === 'undefined' || o.createdAt === 'null') ? (o.dateStr || 'Bugün') : o.createdAt;
             const st = getStatusMeta(o.status || 'teslim_edildi');
             const itemsChips = (o.items && o.items.length)
-                ? o.items.map(i => `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:600;color:var(--text-2);">${i.name || 'Menü Lezzeti'} <strong style="color:var(--primary);">×${i.qty || 1}</strong></span>`).join('')
+                ? o.items.map(i => `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:600;color:var(--text-2);">${escapeHtml(i.name || 'Menü Lezzeti')} <strong style="color:var(--primary);">×${i.qty || 1}</strong></span>`).join('')
                 : '<span style="font-size:12px;color:var(--text-2);">Adana Zırh Dürüm ×1</span>';
             const totalNum = (typeof o.total === 'number' && !isNaN(o.total)) ? o.total : (o.total_amount || 190);
             const totalText = totalNum.toFixed(2) + ' ₺';
@@ -2516,8 +2526,8 @@ function renderAccountOrders() {
             <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:12px;transition:border-color 0.2s;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;">
                     <div>
-                        <strong style="color:var(--text);font-size:15px;">#ORD-${orderId} • ${restName}</strong>
-                        <div style="font-size:12px;color:var(--text-3);margin-top:2px;"><i class="fa-regular fa-clock" style="margin-right:4px;"></i>${timeText}</div>
+                        <strong style="color:var(--text);font-size:15px;">#ORD-${orderId} • ${escapeHtml(restName)}</strong>
+                        <div style="font-size:12px;color:var(--text-3);margin-top:2px;"><i class="fa-regular fa-clock" style="margin-right:4px;"></i>${escapeHtml(timeText)}</div>
                     </div>
                     <span class="badge ${st.badge}"><i class="fa-solid ${st.icon}" style="margin-right:4px;"></i>${st.label}</span>
                 </div>
@@ -2888,14 +2898,48 @@ function applyRoleIsolation(role) {
         GustoMap.drawMap('admin-map-canvas');
     }
 
-    // Seçici dropdownlarını aktif ID ile senkronize et
+    // Seçici dropdownlarını aktif ID ile senkronize et ve yetki bazlı kilitle
+    const sessionRole = (sess && sess.role) || (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || '';
     const rSel = document.getElementById('res-selector');
-    if (rSel && state.selectedVendorRestId) rSel.value = state.selectedVendorRestId;
+    if (rSel) {
+        if (sessionRole === 'restaurant' && state.selectedVendorRestId) {
+            const ownRest = state.restaurants.find(r => r.id === state.selectedVendorRestId);
+            if (ownRest) {
+                rSel.innerHTML = `<option value="${ownRest.id}">${escapeHtml(ownRest.emoji)} ${escapeHtml(ownRest.name)}</option>`;
+            }
+            rSel.value = String(state.selectedVendorRestId);
+            rSel.disabled = true;
+            rSel.title = 'Hesabınız yalnızca kendi restoranınıza yetkilidir';
+        } else {
+            if (rSel.disabled) {
+                rSel.innerHTML = state.restaurants.map(r => `<option value="${r.id}">${escapeHtml(r.emoji)} ${escapeHtml(r.name)}</option>`).join('');
+            }
+            rSel.disabled = false;
+            rSel.title = '';
+            if (state.selectedVendorRestId) rSel.value = state.selectedVendorRestId;
+        }
+    }
     const cSel = document.getElementById('courier-selector');
-    if (cSel && state.selectedCourierId) cSel.value = state.selectedCourierId;
+    if (cSel) {
+        if (sessionRole === 'courier' && state.selectedCourierId) {
+            const ownCourier = state.couriers.find(c => c.id === state.selectedCourierId);
+            if (ownCourier) {
+                cSel.innerHTML = `<option value="${ownCourier.id}">${escapeHtml(ownCourier.name)} (${escapeHtml(ownCourier.vehicle)})</option>`;
+            }
+            cSel.value = String(state.selectedCourierId);
+            cSel.disabled = true;
+            cSel.title = 'Hesabınız yalnızca kendi kurye profilinize yetkilidir';
+        } else {
+            if (cSel.disabled) {
+                cSel.innerHTML = state.couriers.map(c => `<option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.vehicle)})</option>`).join('');
+            }
+            cSel.disabled = false;
+            cSel.title = '';
+            if (state.selectedCourierId) cSel.value = state.selectedCourierId;
+        }
+    }
 
     // Yönetici başka bir ekranı önizliyorsa geri dönüş barını göster
-    const sessionRole = (sess && sess.role) || (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || '';
     if (returnBar) {
         returnBar.style.display = (sessionRole === 'admin' && role !== 'admin') ? 'flex' : 'none';
     }
@@ -2964,7 +3008,16 @@ function handleUpdateProfile(e) {
 // RESTORAN / MUTFAK KDS PANELİ
 // ==========================================
 function changeVendorRestaurant() {
-    GustoState.get().selectedVendorRestId = parseInt(document.getElementById('res-selector')?.value, 10);
+    const sess = getSessionObject();
+    const sessionRole = (sess && sess.role) || (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || '';
+    const rSel = document.getElementById('res-selector');
+    if (sessionRole === 'restaurant') {
+        if (rSel && GustoState.get().selectedVendorRestId) {
+            rSel.value = String(GustoState.get().selectedVendorRestId);
+        }
+        return;
+    }
+    GustoState.get().selectedVendorRestId = parseInt(rSel?.value, 10);
     const r = GustoState.get().restaurants.find(x => x.id === GustoState.get().selectedVendorRestId);
     if (GustoState.get().currentRole === 'restaurant' && r) {
         const navName = document.getElementById('nav-name');
@@ -2976,8 +3029,8 @@ function changeVendorRestaurant() {
 function toggleMenuItemStock(itemId) {
     const it = GustoState.get().menuItems.find(m => m.id === itemId);
     if (!it) return;
-    it.available = !(it.available !== false);
-    GustoState.persist();
+    const isOutOfStock = GustoState.toggleStock(itemId);
+    it.available = !isOutOfStock;
     renderResPanel();
     showToast(it.available ? '✅' : '⛔', `"${it.name}" durumu "${it.available ? 'SATIŞTA' : 'TÜKENDİ'}" yapıldı.`, it.available ? 'success' : 'warn');
 }
@@ -3058,7 +3111,7 @@ function renderResPanel() {
                             <div style="display:flex;align-items:center;gap:8px;">
                                 <div style="width:30px;height:30px;border-radius:10px;background:var(--surface-3);display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--text);"><i class="fa-solid fa-user"></i></div>
                                 <div>
-                                    <div style="font-weight:700;color:var(--text);font-size:13px;">${o.customerName || state.currentUser?.fullName || 'Ahmet Yılmaz'}</div>
+                                    <div style="font-weight:700;color:var(--text);font-size:13px;">${escapeHtml(o.customerName || state.currentUser?.fullName || 'Ahmet Yılmaz')}</div>
                                     <div style="font-size:11px;color:var(--text-3);">${o.deliveryMode === 'takeaway' ? '🚶 Gel-Al' : '🛵 Kurye'}</div>
                                 </div>
                             </div>
@@ -3066,9 +3119,9 @@ function renderResPanel() {
                         <td style="max-width:260px;">
                             ${o.items.map(i => `
                                 <div style="margin-bottom:4px;">
-                                    <strong style="color:var(--text);">${i.name}</strong>
+                                    <strong style="color:var(--text);">${escapeHtml(i.name)}</strong>
                                     <span style="background:rgba(255,107,53,0.14);color:var(--primary);padding:1px 7px;border-radius:6px;font-size:11px;font-weight:800;margin-left:4px;">×${i.qty}</span>
-                                    ${i.options ? `<div style="font-size:11px;color:var(--text-3);margin-top:1px;">↳ ${i.options}</div>` : ''}
+                                    ${i.options ? `<div style="font-size:11px;color:var(--text-3);margin-top:1px;">↳ ${escapeHtml(i.options)}</div>` : ''}
                                 </div>
                             `).join('')}
                         </td>
@@ -3088,7 +3141,7 @@ function renderResPanel() {
                 } else if (o.status === 'hazirlaniyor') {
                     actionBtn = `<button type="button" class="btn btn-success" style="flex:1;" onclick="vendorChangeStatus('hazir')"><i class="fa-solid fa-box-open"></i> Hazır — Kurye Çağır</button>`;
                 } else {
-                    actionBtn = `<div style="flex:1;text-align:center;padding:10px;border-radius:12px;background:rgba(16,185,129,0.12);color:var(--success);font-weight:800;font-size:13px;"><i class="fa-solid fa-motorcycle"></i> Kuryeye Teslim Edildi (${o.courier || 'Kurye'})</div>`;
+                    actionBtn = `<div style="flex:1;text-align:center;padding:10px;border-radius:12px;background:rgba(16,185,129,0.12);color:var(--success);font-weight:800;font-size:13px;"><i class="fa-solid fa-motorcycle"></i> Kuryeye Teslim Edildi (${escapeHtml(o.courier || 'Kurye')})</div>`;
                 }
                 return `
                     <div class="kds-card" style="border-top:3px solid ${st.color};">
@@ -3099,7 +3152,7 @@ function renderResPanel() {
                                     <span style="font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--text-2);"><i class="fa-regular fa-clock" style="color:var(--primary);margin-right:3px;"></i>${elapsedMin} dk önce</span>
                                 </div>
                                 <div style="font-size:12px;color:var(--text-3);margin-top:4px;">
-                                    <i class="fa-solid fa-user" style="margin-right:4px;"></i>${o.customerName || 'Ahmet Yılmaz'} • ${o.deliveryMode === 'takeaway' ? '🚶 Gel-Al' : '🛵 Kurye Teslimat'}
+                                    <i class="fa-solid fa-user" style="margin-right:4px;"></i>${escapeHtml(o.customerName || 'Ahmet Yılmaz')} • ${o.deliveryMode === 'takeaway' ? '🚶 Gel-Al' : '🛵 Kurye Teslimat'}
                                 </div>
                             </div>
                             <span class="badge ${st.badge}"><i class="fa-solid ${st.icon}" style="margin-right:4px;"></i>${st.label}</span>
@@ -3109,13 +3162,13 @@ function renderResPanel() {
                             ${o.items.map(i => `
                                 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:10px;background:var(--surface-2);margin-bottom:6px;">
                                     <div>
-                                        <div style="font-weight:800;font-size:13.5px;color:var(--text);">${i.name}</div>
-                                        ${i.options ? `<div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">${i.options}</div>` : ''}
+                                        <div style="font-weight:800;font-size:13.5px;color:var(--text);">${escapeHtml(i.name)}</div>
+                                        ${i.options ? `<div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">${escapeHtml(i.options)}</div>` : ''}
                                     </div>
                                     <span style="background:rgba(255,107,53,0.14);color:var(--primary);font-weight:900;font-size:12px;padding:3px 9px;border-radius:8px;white-space:nowrap;">×${i.qty}</span>
                                 </div>
                             `).join('')}
-                            ${o.customNote ? `<div style="font-size:12px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,0.1);color:#F59E0B;font-weight:700;margin-top:4px;"><i class="fa-solid fa-note-sticky" style="margin-right:5px;"></i>Not: ${o.customNote}</div>` : ''}
+                            ${o.customNote ? `<div style="font-size:12px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,0.1);color:#F59E0B;font-weight:700;margin-top:4px;"><i class="fa-solid fa-note-sticky" style="margin-right:5px;"></i>Not: ${escapeHtml(o.customNote)}</div>` : ''}
                         </div>
 
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px dashed var(--border);margin-top:6px;">
@@ -3211,7 +3264,16 @@ function vendorChangeStatus(targetStatus) {
 // KURYE KOKPİTİ PANELİ
 // ==========================================
 function changeCourierUser() {
-    GustoState.get().selectedCourierId = parseInt(document.getElementById('courier-selector')?.value, 10);
+    const sess = getSessionObject();
+    const sessionRole = (sess && sess.role) || (window.ACTIVE_SESSION && window.ACTIVE_SESSION.role) || '';
+    const cSel = document.getElementById('courier-selector');
+    if (sessionRole === 'courier') {
+        if (cSel && GustoState.get().selectedCourierId) {
+            cSel.value = String(GustoState.get().selectedCourierId);
+        }
+        return;
+    }
+    GustoState.get().selectedCourierId = parseInt(cSel?.value, 10);
     const c = GustoState.get().couriers.find(x => x.id === GustoState.get().selectedCourierId);
     if (GustoState.get().currentRole === 'courier' && c) {
         const navName = document.getElementById('nav-name');
@@ -3389,8 +3451,8 @@ function renderCourierPanel() {
                         <div style="font-size:11px;font-weight:800;color:var(--success);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">
                             <i class="fa-solid fa-house" style="margin-right:4px;"></i> 2. Teslimat Noktası (Müşteri)
                         </div>
-                        <div style="font-weight:800;font-size:14.5px;color:var(--text);">${o.customerName || state.currentUser?.fullName || 'Ahmet Yılmaz'} • ${state.customerLocation?.name || 'Evim'}</div>
-                        <div style="font-size:12px;color:var(--text-2);margin-top:4px;"><i class="fa-solid fa-map-pin" style="color:var(--success);margin-right:4px;"></i>${custStreet}</div>
+                        <div style="font-weight:800;font-size:14.5px;color:var(--text);">${escapeHtml(o.customerName || state.currentUser?.fullName || 'Ahmet Yılmaz')} • ${escapeHtml(state.customerLocation?.name || 'Evim')}</div>
+                        <div style="font-size:12px;color:var(--text-2);margin-top:4px;"><i class="fa-solid fa-map-pin" style="color:var(--success);margin-right:4px;"></i>${escapeHtml(custStreet)}</div>
                     </div>
                 </div>
 
@@ -3398,11 +3460,11 @@ function renderCourierPanel() {
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));gap:12px;margin-top:12px;">
                     <div style="background:var(--surface);padding:12px 15px;border-radius:14px;border:1px solid var(--border);font-size:13px;">
                         <div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;margin-bottom:4px;"><i class="fa-solid fa-box" style="color:#F59E0B;margin-right:4px;"></i> Paket İçeriği</div>
-                        <div style="font-weight:700;color:var(--text);">${o.items.map(i => `${i.name} ×${i.qty}`).join(', ')}</div>
+                        <div style="font-weight:700;color:var(--text);">${o.items.map(i => `${escapeHtml(i.name)} ×${i.qty}`).join(', ')}</div>
                     </div>
                     <div style="background:var(--surface);padding:12px 15px;border-radius:14px;border:1px solid var(--border);font-size:13px;">
                         <div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;margin-bottom:4px;"><i class="fa-solid fa-bell-concierge" style="color:var(--purple);margin-right:4px;"></i> Teslimat Talimatı</div>
-                        <div style="font-weight:700;color:var(--text);">${deliveryInst}${o.customNote ? ` • "${o.customNote}"` : ''}</div>
+                        <div style="font-weight:700;color:var(--text);">${escapeHtml(deliveryInst)}${o.customNote ? ` • "${escapeHtml(o.customNote)}"` : ''}</div>
                     </div>
                 </div>
 
@@ -3563,7 +3625,7 @@ function renderAdminAudit() {
         return `
             <tr>
                 <td>
-                    <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--text-2);background:var(--surface-2);padding:3px 8px;border-radius:8px;border:1px solid var(--border);">${l.time}</span>
+                    <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--text-2);background:var(--surface-2);padding:3px 8px;border-radius:8px;border:1px solid var(--border);">${escapeHtml(l.time)}</span>
                 </td>
                 <td>
                     <button type="button" onclick="openReceiptModal(${l.orderId})" style="background:none;border:none;padding:0;cursor:pointer;font-weight:900;color:var(--primary);font-size:13px;letter-spacing:0.2px;" title="Sipariş Fişini Aç">
@@ -3582,10 +3644,10 @@ function renderAdminAudit() {
                 <td>
                     <span style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--text);font-size:12.5px;">
                         <i class="fa-solid ${actorIcon}" style="color:var(--blue);font-size:11px;"></i>
-                        ${l.actor}
+                        ${escapeHtml(l.actor)}
                     </span>
                 </td>
-                <td style="color:var(--text-2);font-size:12.5px;max-width:300px;">${l.comment}</td>
+                <td style="color:var(--text-2);font-size:12.5px;max-width:300px;">${escapeHtml(l.comment)}</td>
             </tr>
         `;
     }).join('');
@@ -3728,7 +3790,7 @@ function globalSearch() {
             grid.innerHTML = `
                 <div style="padding:52px 20px;text-align:center;color:var(--text-2);grid-column:1/-1;background:var(--surface);border:1px solid var(--border);border-radius:22px;">
                     <i class="fa-solid fa-magnifying-glass" style="font-size:32px;color:var(--text-3);margin-bottom:12px;"></i>
-                    <div style="font-size:16px;font-weight:800;color:var(--text);">"${q}" ile eşleşen lezzet veya restoran bulunamadı</div>
+                    <div style="font-size:16px;font-weight:800;color:var(--text);">"${escapeHtml(q)}" ile eşleşen lezzet veya restoran bulunamadı</div>
                     <div style="font-size:13px;color:var(--text-3);margin-top:4px;">Burger, Kebap, Pizza, Sushi veya Moda yazarak tekrar deneyin.</div>
                 </div>
             `;
@@ -3760,7 +3822,7 @@ function showToast(icon, msg, type = 'info') {
     t.style.opacity = '0';
     t.style.transform = 'translateX(24px) scale(0.96)';
     t.style.transition = 'all 0.28s cubic-bezier(0.16, 1, 0.3, 1)';
-    t.innerHTML = `<span style="font-size:20px;line-height:1;">${finalIcon}</span><span style="font-weight:700;font-size:13.5px;line-height:1.35;">${finalMsg}</span>`;
+    t.innerHTML = `<span style="font-size:20px;line-height:1;">${escapeHtml(finalIcon)}</span><span style="font-weight:700;font-size:13.5px;line-height:1.35;">${escapeHtml(finalMsg)}</span>`;
 
     if (finalType === 'danger') t.style.borderLeftColor = 'var(--danger, #EF4444)';
     else if (finalType === 'warn' || finalType === 'warning') t.style.borderLeftColor = 'var(--yellow, #F59E0B)';

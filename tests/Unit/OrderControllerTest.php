@@ -199,4 +199,51 @@ final class OrderControllerTest extends TestCase
         $this->assertSame(2, $cust2Orders[0]['customer_id']);
         $this->assertSame('Urfa Kebap', $cust2Orders[0]['items'][0]['name']);
     }
+
+    public function testDailyReportEnforcesRbacAndRestaurantOwnership(): void
+    {
+        $service = new OrderService(
+            orderRepo: $this->orderRepo,
+            restaurantRepo: $this->restaurantRepo,
+            courierRepo: $this->courierRepo,
+            stateMachine: $this->stateMachine
+        );
+
+        $service->createOrder(1, 1, 240.0, 18, 14, []);
+        $today = date('Y-m-d');
+
+        // 1. Müşteri başka restoranın günlük raporunu okuyamaz (403)
+        try {
+            $service->getDailyReportForUser(1, $today, ['id' => 1, 'role' => 'customer']);
+            $this->fail('Müşteri günlük ciro raporuna erişememelidir.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame(403, $e->getCode());
+        }
+
+        // 2. Kurye günlük ciro raporunu okuyamaz (403)
+        try {
+            $service->getDailyReportForUser(1, $today, ['id' => 7, 'role' => 'courier']);
+            $this->fail('Kurye günlük ciro raporuna erişememelidir.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame(403, $e->getCode());
+        }
+
+        // 3. Farklı bir restoran kullanıcısı (#5), #4 kullanıcısının restoranını okuyamaz (403)
+        try {
+            $service->getDailyReportForUser(1, $today, ['id' => 5, 'role' => 'restaurant']);
+            $this->fail('Farklı restoran sahibi bu rapora erişememelidir.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame(403, $e->getCode());
+        }
+
+        // 4. Restoranın gerçek sahibi (#4) kendi raporunu okuyabilir
+        $ownerReport = $service->getDailyReportForUser(1, $today, ['id' => 4, 'role' => 'restaurant']);
+        $this->assertSame(1, $ownerReport['total_orders']);
+        $this->assertEqualsWithDelta(240.0, (float)$ownerReport['total_revenue'], 0.01);
+
+        // 5. Sistem yöneticisi (admin) herhangi bir restoranın raporunu okuyabilir
+        $adminReport = $service->getDailyReportForUser(1, $today, ['id' => 99, 'role' => 'admin']);
+        $this->assertSame(1, $adminReport['total_orders']);
+        $this->assertEqualsWithDelta(240.0, (float)$adminReport['total_revenue'], 0.01);
+    }
 }

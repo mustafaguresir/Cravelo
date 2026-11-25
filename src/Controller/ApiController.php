@@ -197,7 +197,15 @@ final class ApiController extends Controller
                 $body = $request->all();
                 $restId = (int)($body['restaurant_id'] ?? 1);
                 $date = (string)($body['date'] ?? date('Y-m-d'));
-                Response::json(['status' => 'success', 'report' => $this->orderService->getDailyReport($restId, $date)]);
+                try {
+                    Response::json([
+                        'status' => 'success',
+                        'report' => $this->orderService->getDailyReportForUser($restId, $date, $user)
+                    ]);
+                } catch (RuntimeException $e) {
+                    $code = in_array($e->getCode(), [401, 403, 404], true) ? $e->getCode() : 403;
+                    Response::json(['status' => 'error', 'message' => $e->getMessage()], $code);
+                }
                 return;
 
             case 'run_proofs':
@@ -321,6 +329,15 @@ final class ApiController extends Controller
      */
     private function createOrder(Request $request, array $user): void
     {
+        $role = (string)($user['role'] ?? '');
+        if (!in_array($role, ['customer', 'admin'], true)) {
+            Response::json([
+                'status' => 'error',
+                'message' => 'Yetkisiz erişim! Yalnızca müşteri veya yönetici hesapları sipariş oluşturabilir.'
+            ], 403);
+            return;
+        }
+
         $body = $request->all();
         $restaurantId = (int)($body['restaurant_id'] ?? 1);
         $totalAmount = (float)($body['total_amount'] ?? 0.0);
