@@ -1,3 +1,12 @@
+<?php
+$crvAsset = static function (string $relativePath) use ($request): string {
+    $clean = ltrim($relativePath, '/');
+    $fullPath = dirname(__DIR__, 2) . '/public/' . $clean;
+    $ver = @filemtime($fullPath);
+    $url = $request->asset($clean);
+    return $ver !== false ? ($url . '?v=' . $ver) : $url;
+};
+?>
 <!DOCTYPE html>
 <html lang="tr" data-theme="dark">
 <head>
@@ -30,7 +39,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
     <!-- Cravelo Tasarım Sistemi Stilleri -->
-    <link rel="stylesheet" href="<?= $request->asset('css/style.css') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars($crvAsset('css/style.css'), ENT_QUOTES, 'UTF-8') ?>">
 
     <style>
         .crv-flash-wrap {
@@ -146,16 +155,16 @@
 
     <?= $content ?>
 
-    <!-- Çekirdek JavaScript Kütüphaneleri -->
-    <script src="<?= $request->asset('js/gsap.min.js') ?>"></script>
-    <script src="<?= $request->asset('js/ScrollTrigger.min.js') ?>"></script>
-    <script src="<?= $request->asset('js/burger-scrollytelling.js') ?>"></script>
-    <script src="<?= $request->asset('js/data.js') ?>"></script>
-    <script src="<?= $request->asset('js/state.js') ?>"></script>
+    <!-- Çekirdek JavaScript Kütüphaneleri (Otomatik Sürüm / Cache-Busting) -->
+    <script src="<?= htmlspecialchars($crvAsset('js/gsap.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/ScrollTrigger.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/burger-scrollytelling.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/data.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/state.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     <!-- Leaflet Engine for Real Google Maps Tiles -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="<?= $request->asset('js/map.js') ?>"></script>
-    <script src="<?= $request->asset('js/audio.js') ?>"></script>
-    <script src="<?= $request->asset('js/app.js') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/map.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/audio.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= htmlspecialchars($crvAsset('js/app.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>
