@@ -183,8 +183,8 @@ const POPULAR_SHOWCASE_IDS = [1, 6, 10, 14, 19, 22];
 
 const PROMO_COUPONS = [
     {code: "CRAVELO30", desc: "İlk siparişe özel %30 İndirim (Cravelo)", discountType: "percent", val: 0.30, minOrder: 100},
-    {code: "PIZZA50", desc: "180 ₺ üzeri lezzetlerde 50 ₺ anında indirim", discountType: "fixed", val: 50.0, minOrder: 180},
-    {code: "BURGERFEST", desc: "Tüm burgerlerde 35 ₺ net indirim", discountType: "fixed", val: 35.0, minOrder: 150},
+    {code: "PIZZA50", desc: "Pizza siparişlerinde 180 ₺ üzeri 50 ₺ anında indirim", discountType: "fixed", val: 50.0, minOrder: 180, category: "Pizza"},
+    {code: "BURGERFEST", desc: "Tüm burgerlerde 35 ₺ net indirim", discountType: "fixed", val: 35.0, minOrder: 150, category: "Burger"},
     {code: "HEMEN10", desc: "Her siparişte 10 ₺ anında indirim", discountType: "fixed", val: 10.0, minOrder: 80}
 ];
 

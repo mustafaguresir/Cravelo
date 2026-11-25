@@ -38,7 +38,7 @@ const GustoState = (function () {
         deliveryMode: 'courier', // 'courier' or 'takeaway' (Gel-Al %20 indirim)
         selectedInstruction: 'baby', // id from DELIVERY_INSTRUCTIONS
         deliveryNote: '',
-        isEcoFriendly: false, // Plastik çatal/bıçak istemiyorum
+        isEcoFriendly: true, // Plastik çatal/bıçak istemiyorum (HTML varsayılanıyla uyumlu)
         scheduledTime: 'now', // 'now' or '19:30' etc.
         groupOrder: {
             active: false,
@@ -248,6 +248,8 @@ const GustoState = (function () {
                 auditLogs: state.auditLogs,
                 orderCounter: state.orderCounter,
                 outOfStockItemIds: state.outOfStockItemIds,
+                deliveryMode: state.deliveryMode,
+                isEcoFriendly: state.isEcoFriendly,
                 currentUser: state.currentUser,
                 currentRole: state.currentRole
             };
@@ -382,6 +384,50 @@ const GustoState = (function () {
 
         if (newStatus === 'teslim_edildi' && state.activeOrder.deliveryMode !== 'takeaway' && state.activeOrder.courierId) {
             const cObj = state.couriers.find(c => c.id === state.activeOrder.courierId);
+            if (cObj && cObj.active > 0) {
+                cObj.active--;
+            }
+        }
+
+        persist();
+        return true;
+    }
+
+    /**
+     * Belirli bir sipariş ID'si üzerinden durum geçişi yapar (Çoklu aktif KDS siparişleri için)
+     */
+    function transitionOrderById(orderId, newStatus, actor, comment) {
+        let target = null;
+        if (state.activeOrder && (state.activeOrder.id === orderId || state.activeOrder.serverOrderId === orderId)) {
+            target = state.activeOrder;
+        } else if (Array.isArray(state.orderHistory)) {
+            target = state.orderHistory.find(o => o && (o.id === orderId || o.serverOrderId === orderId)) || null;
+        }
+        if (!target) return false;
+
+        const isTakeaway = target.deliveryMode === 'takeaway';
+        const allowedTransitions = {
+            'alindi': ['hazirlaniyor', 'iptal'],
+            'hazirlaniyor': ['hazir'],
+            'hazir': isTakeaway ? ['teslim_edildi'] : ['yolda'],
+            'yolda': ['teslim_edildi'],
+            'teslim_edildi': [],
+            'iptal': []
+        };
+
+        const currentStatus = target.status;
+        const validNextStates = allowedTransitions[currentStatus] || [];
+        if (!validNextStates.includes(newStatus)) {
+            console.error(`Geçersiz durum geçişi: ${currentStatus} -> ${newStatus}`);
+            return false;
+        }
+
+        const oldStatus = target.status;
+        target.status = newStatus;
+        logAudit(target.id, oldStatus, newStatus, actor, comment);
+
+        if (newStatus === 'teslim_edildi' && target.deliveryMode !== 'takeaway' && target.courierId) {
+            const cObj = state.couriers.find(c => c.id === target.courierId);
             if (cObj && cObj.active > 0) {
                 cObj.active--;
             }
@@ -547,6 +593,7 @@ const GustoState = (function () {
         findBestCourier,
         logAudit,
         transitionOrderStatus,
+        transitionOrderById,
         cancelActiveOrder,
         startSimulation,
         stopSimulation,
