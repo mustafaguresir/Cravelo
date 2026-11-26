@@ -105,6 +105,10 @@ has_order_create = (
 test("TEST 20 (UYGULAMA MİMARİSİ): OrderController::createOrder() Başlangıç 'alindi' Durumu", has_order_create, "Controller -> OrderService katmanı InMemory ile gerçek sipariş oluşturup kurye atar")
 
 print("=" * 75)
-print(f"  SONUÇ: {passed} TEST BAŞARILI, {failed} BAŞARISIZ — TÜM ŞARTLAR DOĞRULANDI!")
+if failed == 0:
+    print(f"  SONUÇ: {passed} TEST BAŞARILI, 0 BAŞARISIZ — TÜM ŞARTLAR DOĞRULANDI!")
+else:
+    print(f"  SONUÇ: {passed} TEST BAŞARILI, {failed} BAŞARISIZ — HATA TESPİT EDİLDİ!")
 print("=" * 75)
+sys.exit(0 if failed == 0 else 1)
 

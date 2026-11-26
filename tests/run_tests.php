@@ -317,4 +317,5 @@ runTest("TEST 20 (DURUM İLERLETME): OrderController üzerinden aşama aşama du
 echo "======================================================================\n";
 echo "TEST SONUCU: {$passCount} Başarılı, {$failCount} Başarısız (Toplam: " . ($passCount + $failCount) . " Test)\n";
 echo "======================================================================\n";
+exit($failCount > 0 ? 1 : 0);
 
